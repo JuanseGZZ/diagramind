@@ -1,0 +1,179 @@
+<head>
+  <meta charset="utf-8" />
+  <title>Diagrama</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="bolzaDeEstilos/styles.css">
+</head>
+
+<body style="background-color: #212121;">
+  <header class="app-header">
+    <nav class="nav">
+      <a class="brand" href="#">
+        <span class="logo-dot"></span> DiagraMind
+      </a>
+
+      <!-- Toggle mobile (CSS-only) -->
+      <input id="nav-open" class="nav-open" type="checkbox" hidden>
+      <label for="nav-open" class="nav-toggle" aria-label="Abrir menú" title="Menú"></label>
+
+      <ul class="nav-list">
+        <li class="nav-item">
+          <details>
+            <summary>File</summary>
+            <ul class="menu">
+              <li><button data-act="new" id="new-diagram">New</button></li>
+              <li><button data-act="open" disabled>Open…</button></li>
+              <li class="sep"></li>
+              <li><button data-act="import-json" id="import-json">Import JSON</button></li>
+              <li><button data-act="export-json" id="export-json">Export JSON</button></li>
+              <li><button data-act="import-toon" id="import-toon">Import Toon</button></li>
+              <li><button data-act="export-toon" id="export-toon">Export Toon</button></li>
+              <li><button data-act="export-png" disabled>Export PNG</button></li>
+              <li><button data-act="export-pdf" disabled>Export PDF</button></li>
+            </ul>
+          </details>
+        </li>
+
+        <li class="nav-item">
+          <details>
+            <summary>Edit</summary>
+            <ul class="menu">
+              <li><button data-act="undo" disabled>Undo</button></li>
+              <li><button data-act="redo" disabled>Redo</button></li>
+              <li class="sep"></li>
+              <li><button data-act="dup" disabled>Duplicate node</button></li>
+              <li><button data-act="del" disabled>Delete node</button></li>
+            </ul>
+          </details>
+        </li>
+
+        <li class="nav-item">
+          <details>
+            <summary>View</summary>
+            <ul class="menu">
+              <li><button data-act="zoom-out">Zoom −</button></li>
+              <li><button data-act="zoom-in">Zoom +</button></li>
+              <li><button data-act="fit">Fit to screen</button></li>
+              <li class="sep"></li>
+            </ul>
+          </details>
+        </li>
+
+        <li class="nav-item">
+          <details>
+            <summary>Mode</summary>
+            <ul class="menu">
+              <li><button data-act="layout-ltr">Left to right</button></li>
+              <li><button data-act="layout-star" disabled>Star</button></li>
+              <li><button data-act="layout-organigram">Organigram</button></li>
+              <li><button data-act="layout-activities"disabled>Activities</button></li>
+              <li><button data-act="layout-object"disabled>Object</button></li>
+            </ul>
+          </details>
+        </li>
+
+        <li class="nav-spacer" aria-hidden="true"></li>
+
+        <li class="nav-item nav-search">
+          <input type="search" placeholder="Search…" aria-label="Search by title or ID" />
+        </li>
+
+        <li class="nav-item">
+          <details>
+            <summary>Help</summary>
+            <ul class="menu">
+              <li><button data-act="shortcuts" disabled>Shortcuts</button></li>
+              <li><button data-act="docs" disabled>Documentation</button></li>
+              <li><button data-act="whatsnew" disabled>What's new</button></li>
+            </ul>
+          </details>
+        </li>
+
+        <li class="nav-item profile">
+          <button class="avatar" title="Profile">DM</button>
+        </li>
+        <li>
+          <button id="theme-toggle" title="Toggle theme">☀</button>
+        </li>
+      </ul>
+    </nav>
+  </header>
+
+  <button id="agregarPrincipalBtn">Add to root</button>
+
+  <div id="modal-overlay" class="modal-overlay hidden">
+    <div class="modal">
+      <p class="modal-hint">Editando carta</p>
+      <div class="modal-field">
+        <label for="modal-titulo">Título</label>
+        <input id="modal-titulo" type="text" placeholder="Título de la carta..." />
+      </div>
+      <div class="modal-field">
+        <label for="modal-textarea">Contenido</label>
+        <textarea id="modal-textarea" rows="14" placeholder="Escribí el contenido de la carta..."></textarea>
+      </div>
+      <div class="modal-actions">
+        <button id="modal-cancel">Cancelar</button>
+        <button id="modal-save">Guardar</button>
+      </div>
+    </div>
+  </div>
+  <div id="color-modal-overlay" class="modal-overlay hidden">
+    <div class="modal">
+      <p class="modal-hint">Elegí un color</p>
+      <div class="color-swatches">
+        <button class="color-swatch" data-color="default" title="Sin color"></button>
+        <button class="color-swatch" data-color="#1e3a5f" style="background:#1e3a5f"></button>
+        <button class="color-swatch" data-color="#0d3b2e" style="background:#0d3b2e"></button>
+        <button class="color-swatch" data-color="#3b1f0d" style="background:#3b1f0d"></button>
+        <button class="color-swatch" data-color="#3b0d1f" style="background:#3b0d1f"></button>
+        <button class="color-swatch" data-color="#2a1f3b" style="background:#2a1f3b"></button>
+        <button class="color-swatch" data-color="#2563eb" style="background:#2563eb"></button>
+        <button class="color-swatch" data-color="#16a34a" style="background:#16a34a"></button>
+        <button class="color-swatch" data-color="#ea580c" style="background:#ea580c"></button>
+        <button class="color-swatch" data-color="#dc2626" style="background:#dc2626"></button>
+        <button class="color-swatch" data-color="#7c3aed" style="background:#7c3aed"></button>
+        <button class="color-swatch" data-color="#0891b2" style="background:#0891b2"></button>
+      </div>
+      <div class="color-palette-row">
+        <input id="color-picker-native" type="color" value="#242424" title="Elegí cualquier color" />
+        <span class="color-palette-label">Paleta</span>
+      </div>
+      <div class="color-hex-row">
+        <label for="color-hex-input">Hex</label>
+        <input id="color-hex-input" type="text" maxlength="7" placeholder="#rrggbb" spellcheck="false" />
+      </div>
+      <div class="modal-actions">
+        <button id="color-cancel">Cancelar</button>
+        <button id="color-save">Aplicar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="shape-modal-overlay" class="modal-overlay hidden">
+    <div class="modal">
+      <p class="modal-hint">Elegí una forma</p>
+      <div class="shape-options">
+        <button class="shape-opt" data-shape="default">▭ Rectángulo</button>
+        <button class="shape-opt" data-shape="sharp">◻ Esquinas rectas</button>
+        <button class="shape-opt" data-shape="rounded">▢ Redondeado</button>
+        <button class="shape-opt" data-shape="pill">⬭ Pastilla</button>
+      </div>
+      <div class="modal-actions">
+        <button id="shape-cancel">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="boardContainer">
+    <div id="board"></div>
+  </div>
+
+  <div id="zoom-controls">
+    <button id="fab-zoom-in"  class="zoom-fab" title="Acercar">+</button>
+    <button id="fab-fit"      class="zoom-fab" title="Reset zoom">⊙</button>
+    <button id="fab-zoom-out" class="zoom-fab" title="Alejar">−</button>
+  </div>
+  <script type="module" src="./dist/event.js"></script>
+  <script type="module" src="./dist/ui.js"></script>
+</body>
