@@ -2,7 +2,7 @@
   <meta charset="utf-8" />
   <title>Diagrama</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="app/bolzaDeEstilos/styles.css">
 </head>
 
 <body style="background-color: #212121;">
@@ -26,8 +26,10 @@
               <li class="sep"></li>
               <li><button data-act="import-json" id="import-json">Import JSON</button></li>
               <li><button data-act="export-json" id="export-json">Export JSON</button></li>
-              <li><button data-act="import-toon" id="import-toon">Import Toon</button></li>
-              <li><button data-act="export-toon" id="export-toon">Export Toon</button></li>
+              <li><button data-act="import-toon" id="import-toon" disabled>Import Toon</button></li>
+              <li><button data-act="export-toon" id="export-toon" disabled>Export Toon</button></li>
+              <li><button data-act="import-soft" id="import-soft">Import Soft</button></li>
+              <li><button data-act="download-soft-skill" id="download-soft-skill">Download Soft Skill</button></li>
               <li><button data-act="export-png" disabled>Export PNG</button></li>
               <li><button data-act="export-pdf" disabled>Export PDF</button></li>
             </ul>
@@ -55,6 +57,7 @@
               <li><button data-act="zoom-in">Zoom +</button></li>
               <li><button data-act="fit">Fit to screen</button></li>
               <li class="sep"></li>
+              <li><button data-act="toggle-dots" id="toggle-dots">Hide dots</button></li>
             </ul>
           </details>
         </li>
@@ -174,6 +177,5 @@
     <button id="fab-fit"      class="zoom-fab" title="Reset zoom">⊙</button>
     <button id="fab-zoom-out" class="zoom-fab" title="Alejar">−</button>
   </div>
-  <script type="module" src="./event.js"></script>
-  <script type="module" src="./ui.js"></script>
+  <script type="module" src="./dist/bundle.js"></script>
 </body>
