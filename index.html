@@ -5,7 +5,7 @@
   <link rel="stylesheet" href="bolzaDeEstilos/styles.css">
 </head>
 
-<body style="background-color: #212121;">
+<body>
   <header class="app-header">
     <nav class="nav">
       <a class="brand" href="#">
@@ -66,17 +66,27 @@
           <details>
             <summary>Mode</summary>
             <ul class="menu">
+              <li class="menu-label">Modo</li>
               <li><button data-act="mode-home" id="mode-home-btn">Home</button></li>
               <li class="sep"></li>
+              <li class="menu-label">Carts</li>
               <li><button data-act="layout-ltr">Left to right</button></li>
               <li><button data-act="layout-star" disabled>Star</button></li>
               <li><button data-act="layout-organigram">Organigram</button></li>
+              <li class="sep"></li>
+              <li class="menu-label">Tipos propios</li>
+              <li><button data-act="layout-freestyle" disabled>Freestyle</button></li>
               <li><button data-act="layout-activities" disabled>Activities</button></li>
               <li><button data-act="layout-object" disabled>Object</button></li>
-              <li><button data-act="layout-freestyle" disabled>Freestyle</button></li>
-              <li class="sep"></li>
               <li><button data-act="layout-ia-director" disabled>IA Director</button></li>
             </ul>
+          </details>
+        </li>
+
+        <li class="nav-item nav-trees">
+          <details id="tree-menu">
+            <summary id="tree-current">Árbol</summary>
+            <ul class="menu" id="tree-list"></ul>
           </details>
         </li>
 
@@ -107,7 +117,17 @@
     </nav>
   </header>
 
-  <button id="agregarPrincipalBtn">Add to root</button>
+  <aside id="tree-aside">
+    <div class="aside-header">
+      <span class="aside-title">Explorador</span>
+      <button id="aside-toggle" class="aside-toggle" title="Ocultar / mostrar panel">◀</button>
+    </div>
+    <div id="aside-tree" class="aside-tree"></div>
+  </aside>
+
+  <div id="toolbar" class="toolbar">
+    <button id="agregarPrincipalBtn">Add to root</button>
+  </div>
 
   <div id="modal-overlay" class="modal-overlay hidden">
     <div class="modal">
