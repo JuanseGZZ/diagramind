@@ -29,17 +29,22 @@
 }
 
 [data-theme="light"] {
-  --bg:            hsl(200, 90%, 11%);
-  --surface:       #002065;
-  --surface2:      #17004e;
-  --border:        rgba(0,0,0,.08);
-  --border-strong: rgba(0,0,0,.15);
-  --text:          #ffffff;
-  --text-muted:    #ffffff;
-  --accent:        #2c5df6;
-  --accent-dim:    rgba(44,93,246,.1);
-  --wire-color:    #d0d0d0;
-  --wire-inner:    rgba(44,93,246,.4);
+  --bg:            #eef0f4;              /* fondo del board: gris muy claro */
+  --surface:       #ffffff;             /* navbar, toolbar, aside, cards, modales */
+  --surface2:      #f3f4f7;             /* inputs y cuerpo de carta */
+  --border:        rgba(17, 24, 39, .10);
+  --border-strong: rgba(17, 24, 39, .18);
+  --text:          #1f2328;             /* casi negro */
+  --text-muted:    #5b626b;             /* gris medio */
+  --accent:        #2563eb;
+  --accent-dim:    rgba(37, 99, 235, .12);
+  --wire-color:    #c4cad3;             /* cables en gris suave */
+  --wire-inner:    rgba(37, 99, 235, .45);
+}
+
+/* puntos del canvas en oscuro para que se vean sobre el fondo claro */
+[data-theme="light"] #board {
+  background-image: radial-gradient(circle, rgba(17, 24, 39, .12) 1px, transparent 1px);
 }
 
 /* ===== BASE ===== */
@@ -59,7 +64,7 @@ body {
   background: var(--bg);
   width: 100%;
   overflow: auto;
-  height: calc(100vh - 56px);
+  height: calc(100vh - 56px - 52px); /* navbar + toolbar */
   scrollbar-width: none;
 }
 #boardContainer::-webkit-scrollbar { display: none; }
@@ -570,12 +575,23 @@ body {
 }
 
 /* ===== BOTÓN AGREGAR PRINCIPAL ===== */
+/* segunda barra de herramientas (debajo del navbar, a la derecha del aside) */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 52px;
+  padding: 0 14px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border-strong);
+}
+
 #agregarPrincipalBtn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   padding: 8px 14px;
-  margin: 14px 16px 0;
+  margin: 0;
   border-radius: 8px;
   border: 1px solid var(--border-strong);
   background: var(--surface);
@@ -722,6 +738,161 @@ body {
   cursor: not-allowed;
   pointer-events: none;
 }
+
+/* ===== Menú de árboles ===== */
+.menu .tree-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.menu .tree-row .tree-pick { flex: 1; }
+.menu .tree-row .tree-del,
+.menu .tree-row .tree-rename {
+  width: auto;
+  flex: 0 0 auto;
+  padding: 8px;
+}
+.menu .tree-row .tree-del:hover {
+  background: rgba(220, 38, 38, .18);
+  color: #f87171;
+}
+/* label de grupo dentro de un menú (Mode, etc.) */
+.menu .menu-label {
+  padding: 6px 10px 2px;
+  font: 600 10px/1.2 system-ui, sans-serif;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  opacity: .55;
+}
+
+/* cartel de "próximamente" para tipos de árbol todavía no implementados */
+.coming-soon {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 18px 26px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 12px;
+  background: var(--surface);
+  font: 600 20px/1.4 system-ui, sans-serif;
+  color: var(--text-muted);
+  opacity: .75;
+  white-space: nowrap;
+}
+
+/* ===== Explorador de árbol (aside) ===== */
+#tree-aside {
+  position: fixed;
+  top: 56px;
+  left: 0;
+  bottom: 0;
+  width: 260px;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border-right: 1px solid var(--border-strong);
+  z-index: 40;
+  overflow: hidden;
+  transition: width .15s ease;
+}
+.aside-header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.aside-title {
+  font: 600 11px/1 system-ui, sans-serif;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  opacity: .7;
+  white-space: nowrap;
+}
+.aside-toggle {
+  flex: 0 0 auto;
+  width: 24px; height: 24px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: transparent; border: none; border-radius: 5px;
+  color: var(--text); cursor: pointer; font-size: 12px;
+}
+.aside-toggle:hover { background: var(--accent-dim); color: var(--accent); }
+.aside-tree { flex: 1 1 auto; overflow: auto; padding: 6px 4px; }
+
+/* colapsado: rail angosto, solo el botón para traerlo de vuelta */
+body.aside-collapsed #tree-aside { width: 34px; }
+body.aside-collapsed .aside-title,
+body.aside-collapsed .aside-tree { display: none; }
+body.aside-collapsed .aside-header { justify-content: center; padding: 8px 0; }
+
+/* el board y el toolbar se corren según el estado del aside (a la derecha del panel) */
+#boardContainer { margin-left: 260px; transition: margin-left .15s ease; }
+.toolbar        { margin-left: 260px; transition: margin-left .15s ease; }
+body.aside-collapsed #boardContainer { margin-left: 34px; }
+body.aside-collapsed .toolbar        { margin-left: 34px; }
+
+/* en Home no se muestra el explorador */
+body.view-home #tree-aside { display: none; }
+
+/* filas del explorador */
+.aside-row {
+  display: flex; align-items: center; gap: 4px;
+  padding: 3px 6px; border-radius: 5px; cursor: pointer;
+  color: var(--text); font: 500 13px/1.2 system-ui, sans-serif;
+  white-space: nowrap; user-select: none;
+}
+.aside-row:hover { background: var(--accent-dim); color: var(--accent); }
+.aside-chevron {
+  flex: 0 0 auto;
+  width: 16px; height: 16px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: transparent; border: none; color: inherit; cursor: pointer;
+  font-size: 9px;
+}
+.aside-chevron.leaf { cursor: default; opacity: .35; font-size: 7px; }
+.aside-label { overflow: hidden; text-overflow: ellipsis; }
+.aside-empty {
+  padding: 10px; opacity: .55;
+  color: var(--text-muted); font: 400 12px/1.4 system-ui, sans-serif;
+}
+
+/* highlight temporal al navegar desde el explorador */
+.box.aside-highlight,
+.free-node.aside-highlight {
+  outline: 2px solid var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-dim);
+}
+
+@media (max-width: 860px) {
+  /* en mobile el aside flota sobre el board */
+  #boardContainer, body.aside-collapsed #boardContainer,
+  .toolbar, body.aside-collapsed .toolbar { margin-left: 0; }
+  #tree-aside { box-shadow: 0 8px 24px rgba(0,0,0,.45); }
+}
+
+/* submenu flotante de "Agregar árbol" */
+.menu .tree-add-wrap { position: relative; }
+.menu .submenu {
+  display: none;
+  position: absolute;
+  left: 100%;
+  top: 0;
+  min-width: 140px;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.25);
+}
+.menu .tree-add-wrap:hover .submenu,
+.menu .tree-add-wrap:focus-within .submenu { display: block; }
 
 /* spacer y search */
 .nav-spacer { flex: 1; }
