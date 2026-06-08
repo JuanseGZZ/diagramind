@@ -24,10 +24,8 @@
               <li><button data-act="new" id="new-diagram">New</button></li>
               <li><button data-act="open" disabled>Open…</button></li>
               <li class="sep"></li>
-              <li><button data-act="import-json" id="import-json">Import JSON</button></li>
-              <li><button data-act="export-json" id="export-json">Export JSON</button></li>
-              <li><button data-act="import-toon" id="import-toon" disabled>Import Toon</button></li>
-              <li><button data-act="export-toon" id="export-toon" disabled>Export Toon</button></li>
+              <li><button data-act="import-dmer" id="import-dmer">Import .dmer</button></li>
+              <li><button data-act="export-dmer" id="export-dmer">Export .dmer</button></li>
               <li><button data-act="import-soft" id="import-soft">Import Soft</button></li>
               <li><button data-act="download-soft-skill" id="download-soft-skill">Download Soft Skill</button></li>
               <li><button data-act="export-png" disabled>Export PNG</button></li>
@@ -92,10 +90,6 @@
 
         <li class="nav-spacer" aria-hidden="true"></li>
 
-        <li class="nav-item nav-search">
-          <input type="search" placeholder="Search…" aria-label="Search by title or ID" />
-        </li>
-
         <li class="nav-item">
           <details>
             <summary>Help</summary>
@@ -122,23 +116,168 @@
       <span class="aside-title">Explorador</span>
       <button id="aside-toggle" class="aside-toggle" title="Ocultar / mostrar panel">◀</button>
     </div>
+    <div class="aside-search-wrap">
+      <input id="aside-search" type="search" placeholder="Buscar…" aria-label="Buscar en explorador" />
+    </div>
     <div id="aside-tree" class="aside-tree"></div>
+    <div id="aside-resizer" class="aside-resizer" title="Arrastrá para cambiar el ancho"></div>
   </aside>
 
   <div id="toolbar" class="toolbar">
     <button id="agregarPrincipalBtn">Add to root</button>
+
+    <div id="free-toolbar-controls" class="hidden free-toolbar-controls">
+      <button id="freeAddNodeBtn" class="toolbar-btn">+ Add node ▾</button>
+      <button id="shapesBtn" class="toolbar-btn">◻ Formas</button>
+
+      <div class="toolbar-sep"></div>
+
+      <button id="free-options-btn" class="toolbar-btn">Options ›</button>
+
+      <div id="free-options-panel" class="free-options-panel free-options-panel--collapsed">
+        <div class="toolbar-sep"></div>
+
+        <!-- color por defecto de nodos -->
+        <div class="toolbar-color-group" title="Color de nodo por defecto">
+          <span class="tcg-label">Nodo</span>
+          <button id="free-node-color-btn" class="toolbar-color-dot" data-color="none"></button>
+          <input id="free-node-color-input" type="color" class="hidden-color-input" value="#4f7eff" />
+          <button id="free-node-color-clear" class="toolbar-color-clear hidden" title="Limpiar color de nodo">✕</button>
+        </div>
+
+        <!-- color por defecto de flechas -->
+        <div class="toolbar-color-group" title="Color de flecha por defecto">
+          <span class="tcg-label">Flecha</span>
+          <button id="free-arrow-color-btn" class="toolbar-color-dot" data-color="none"></button>
+          <input id="free-arrow-color-input" type="color" class="hidden-color-input" value="#4f7eff" />
+          <button id="free-arrow-color-clear" class="toolbar-color-clear hidden" title="Limpiar color de flecha">✕</button>
+        </div>
+
+        <div class="toolbar-sep"></div>
+
+        <!-- tamaño por defecto de nodos -->
+        <div class="toolbar-size-group" title="Tamaño de nodo por defecto — dejar vacío para usar el del tipo">
+          <input id="free-size-w" type="number" min="80" max="800" placeholder="W" class="toolbar-size-input" />
+          <span class="tcg-label">×</span>
+          <input id="free-size-h" type="number" min="60" max="600" placeholder="H" class="toolbar-size-input" />
+        </div>
+
+        <div class="toolbar-sep"></div>
+
+        <!-- modo malla -->
+        <button id="free-grid-btn" class="toolbar-btn" title="Activar/desactivar malla de fondo">⊞ Malla</button>
+
+        <div class="toolbar-sep"></div>
+
+        <!-- limpiar filtros -->
+        <button id="free-clear-btn" class="toolbar-btn toolbar-btn--clear" title="Limpiar todos los filtros">✕ Limpiar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="media-picker-overlay" class="modal-overlay hidden">
+    <div class="modal modal-narrow">
+      <p class="modal-hint">Agregar media</p>
+      <div class="modal-field">
+        <label for="media-picker-file">Subir archivo</label>
+        <input id="media-picker-file" type="file" accept="image/*,video/*" />
+      </div>
+      <div class="modal-field media-picker-sep"><span>— o —</span></div>
+      <div class="modal-field">
+        <label for="media-picker-url">URL</label>
+        <input id="media-picker-url" type="url" placeholder="https://..." />
+      </div>
+      <div class="modal-actions">
+        <button id="media-picker-cancel">Cancelar</button>
+        <button id="media-picker-ok">Agregar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="shape-img-overlay" class="modal-overlay hidden">
+    <div class="modal modal-narrow">
+      <p class="modal-hint">Agregar imagen</p>
+      <div class="modal-field">
+        <label for="shape-img-file">Subir archivo</label>
+        <input id="shape-img-file" type="file" accept="image/*" />
+      </div>
+      <div class="modal-field shape-img-sep"><span>— o —</span></div>
+      <div class="modal-field">
+        <label for="shape-img-url">URL externa</label>
+        <input id="shape-img-url" type="url" placeholder="https://..." />
+      </div>
+      <div class="modal-actions">
+        <button id="shape-img-cancel">Cancelar</button>
+        <button id="shape-img-ok">Agregar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="shapes-panel" class="shapes-panel shapes-panel--hidden">
+    <div class="shapes-header">
+      <span class="shapes-title">Formas</span>
+      <button id="shapes-panel-close" class="shapes-close-btn" title="Cerrar">✕</button>
+    </div>
+    <div id="shapes-grid" class="shapes-grid"></div>
+  </div>
+
+  <div id="node-type-menu" class="free-menu hidden"></div>
+
+  <div id="custom-catalog-overlay" class="modal-overlay hidden">
+    <div class="modal modal-narrow">
+      <p class="modal-hint">Catálogo de nodos custom</p>
+      <div id="custom-catalog-grid" class="catalog-grid"></div>
+      <div class="modal-actions">
+        <button id="custom-make-yours">Make yours</button>
+        <button id="custom-catalog-cancel">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="arrow-modal-overlay" class="modal-overlay hidden">
+    <div class="modal modal-narrow">
+      <p class="modal-hint">Editando flecha</p>
+      <div class="modal-field">
+        <label for="arrow-titulo">Título</label>
+        <input id="arrow-titulo" type="text" placeholder="Relación / título..." />
+      </div>
+      <div class="modal-field">
+        <label>Color</label>
+        <div class="arrow-swatches">
+          <button class="arrow-swatch" data-color="default" title="Por defecto"></button>
+          <button class="arrow-swatch" data-color="#4f7eff" style="background:#4f7eff"></button>
+          <button class="arrow-swatch" data-color="#16a34a" style="background:#16a34a"></button>
+          <button class="arrow-swatch" data-color="#ea580c" style="background:#ea580c"></button>
+          <button class="arrow-swatch" data-color="#dc2626" style="background:#dc2626"></button>
+          <button class="arrow-swatch" data-color="#7c3aed" style="background:#7c3aed"></button>
+          <button class="arrow-swatch" data-color="#0891b2" style="background:#0891b2"></button>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button id="arrow-cancel">Cancelar</button>
+        <button id="arrow-save">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="free-node-menu" class="free-menu hidden">
+    <button data-fact="edit">Editar</button>
+    <button data-fact="color">Color</button>
   </div>
 
   <div id="modal-overlay" class="modal-overlay hidden">
-    <div class="modal">
+    <div class="modal modal-rich">
       <p class="modal-hint">Editando carta</p>
       <div class="modal-field">
         <label for="modal-titulo">Título</label>
         <input id="modal-titulo" type="text" placeholder="Título de la carta..." />
       </div>
-      <div class="modal-field">
-        <label for="modal-textarea">Contenido</label>
-        <textarea id="modal-textarea" rows="14" placeholder="Escribí el contenido de la carta..."></textarea>
+      <div class="modal-field modal-field--editor">
+        <div class="modal-editor-header">
+          <label>Contenido</label>
+          <button id="modal-mode-toggle" class="modal-mode-btn" title="Alternar vista/edición">✏ Editar</button>
+        </div>
+        <div id="modal-editor-wrap" class="modal-editor-wrap"></div>
       </div>
       <div class="modal-actions">
         <button id="modal-cancel">Cancelar</button>
@@ -219,5 +358,6 @@
     <button id="fab-fit"      class="zoom-fab" title="Reset zoom">⊙</button>
     <button id="fab-zoom-out" class="zoom-fab" title="Alejar">−</button>
   </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script type="module" src="./dist/bundle.js"></script>
 </body>
