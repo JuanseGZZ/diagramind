@@ -2,7 +2,7 @@
   <meta charset="utf-8" />
   <title>Diagrama</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="bolzaDeEstilos/styles.css">
+  <link rel="stylesheet" href="app/bolzaDeEstilos/styles.css">
 </head>
 
 <body>
@@ -26,10 +26,12 @@
               <li class="sep"></li>
               <li><button data-act="import-dmer" id="import-dmer">Import .dmer</button></li>
               <li><button data-act="export-dmer" id="export-dmer">Export .dmer</button></li>
+              <li><button data-act="export-obsidian" id="export-obsidian">Export Obsidian</button></li>
               <li><button data-act="import-soft" id="import-soft">Import Soft</button></li>
               <li><button data-act="download-soft-skill" id="download-soft-skill">Download Soft Skill</button></li>
-              <li><button data-act="export-png" disabled>Export PNG</button></li>
-              <li><button data-act="export-pdf" disabled>Export PDF</button></li>
+              <li><button data-act="export-png" id="export-png">Export PNG</button></li>
+              <li><button data-act="export-pdf" id="export-pdf">Export PDF</button></li>
+              <li><button data-act="export-word" id="export-word">Export Word</button></li>
             </ul>
           </details>
         </li>
@@ -69,7 +71,6 @@
               <li class="sep"></li>
               <li class="menu-label">Carts</li>
               <li><button data-act="layout-ltr">Left to right</button></li>
-              <li><button data-act="layout-star" disabled>Star</button></li>
               <li><button data-act="layout-organigram">Organigram</button></li>
               <li class="sep"></li>
               <li class="menu-label">Tipos propios</li>
@@ -290,17 +291,19 @@
       <p class="modal-hint">Elegí un color</p>
       <div class="color-swatches">
         <button class="color-swatch" data-color="default" title="Sin color"></button>
-        <button class="color-swatch" data-color="#1e3a5f" style="background:#1e3a5f"></button>
-        <button class="color-swatch" data-color="#0d3b2e" style="background:#0d3b2e"></button>
-        <button class="color-swatch" data-color="#3b1f0d" style="background:#3b1f0d"></button>
-        <button class="color-swatch" data-color="#3b0d1f" style="background:#3b0d1f"></button>
-        <button class="color-swatch" data-color="#2a1f3b" style="background:#2a1f3b"></button>
-        <button class="color-swatch" data-color="#2563eb" style="background:#2563eb"></button>
-        <button class="color-swatch" data-color="#16a34a" style="background:#16a34a"></button>
-        <button class="color-swatch" data-color="#ea580c" style="background:#ea580c"></button>
-        <button class="color-swatch" data-color="#dc2626" style="background:#dc2626"></button>
-        <button class="color-swatch" data-color="#7c3aed" style="background:#7c3aed"></button>
-        <button class="color-swatch" data-color="#0891b2" style="background:#0891b2"></button>
+        <!-- fila 1: oscuros mate -->
+        <button class="color-swatch" data-color="#2e3f58" style="background:#2e3f58" title="Pizarra"></button>
+        <button class="color-swatch" data-color="#1e3528" style="background:#1e3528" title="Bosque"></button>
+        <button class="color-swatch" data-color="#40281a" style="background:#40281a" title="Cacao"></button>
+        <button class="color-swatch" data-color="#3e1a28" style="background:#3e1a28" title="Vino"></button>
+        <button class="color-swatch" data-color="#2c2042" style="background:#2c2042" title="Uva"></button>
+        <!-- fila 2: pasteles -->
+        <button class="color-swatch" data-color="#93c5fd" style="background:#93c5fd" title="Azul pastel"></button>
+        <button class="color-swatch" data-color="#86efac" style="background:#86efac" title="Verde pastel"></button>
+        <button class="color-swatch" data-color="#fdba74" style="background:#fdba74" title="Naranja pastel"></button>
+        <button class="color-swatch" data-color="#fca5a5" style="background:#fca5a5" title="Rosa pastel"></button>
+        <button class="color-swatch" data-color="#c4b5fd" style="background:#c4b5fd" title="Lavanda pastel"></button>
+        <button class="color-swatch" data-color="#7dd3fc" style="background:#7dd3fc" title="Cielo pastel"></button>
       </div>
       <div class="color-palette-row">
         <input id="color-picker-native" type="color" value="#242424" title="Elegí cualquier color" />
@@ -359,5 +362,9 @@
     <button id="fab-zoom-out" class="zoom-fab" title="Alejar">−</button>
   </div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://unpkg.com/html-docx-js@0.3.1/dist/html-docx.js"></script>
   <script type="module" src="./dist/bundle.js"></script>
 </body>

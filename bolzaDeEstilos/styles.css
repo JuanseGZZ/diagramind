@@ -927,7 +927,18 @@ body.aside-resizing .toolbar { transition: none; }
   color: var(--text); cursor: pointer; font-size: 12px;
 }
 .aside-toggle:hover { background: var(--accent-dim); color: var(--accent); }
-.aside-tree { flex: 1 1 auto; overflow: auto; padding: 6px 4px; }
+.aside-tree {
+  flex: 1 1 auto; overflow: auto; padding: 6px 4px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-dim) transparent;
+}
+.aside-tree::-webkit-scrollbar { width: 4px; height: 4px; }
+.aside-tree::-webkit-scrollbar-track { background: transparent; }
+.aside-tree::-webkit-scrollbar-thumb {
+  background: var(--accent-dim);
+  border-radius: 2px;
+}
+.aside-tree::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
 .aside-search-wrap {
   flex: 0 0 auto;
@@ -967,11 +978,23 @@ body.view-home #tree-aside { display: none; }
 
 /* filas del explorador */
 .aside-row {
+  position: relative;
   display: flex; align-items: center; gap: 4px;
   padding: 3px 6px; border-radius: 5px; cursor: pointer;
   color: var(--text); font: 500 13px/1.2 system-ui, sans-serif;
   white-space: nowrap; user-select: none;
 }
+/* indicadores drag & drop del explorador */
+.aside-row--dragging { opacity: 0.35; }
+.aside-row--drop-on  { background: var(--accent-dim) !important; color: var(--accent); outline: 1px dashed var(--accent); }
+.aside-row--drop-before::before,
+.aside-row--drop-after::after {
+  content: ""; position: absolute;
+  left: 6px; right: 6px; height: 2px;
+  background: var(--accent); border-radius: 1px; pointer-events: none; z-index: 2;
+}
+.aside-row--drop-before::before { top: 0; }
+.aside-row--drop-after::after   { bottom: 0; }
 .aside-row:hover { background: var(--accent-dim); color: var(--accent); }
 .aside-chevron {
   flex: 0 0 auto;
@@ -2403,3 +2426,110 @@ body.view-home #tree-aside { display: none; }
 /* Active state for alignment buttons */
 .rich-tb-btn.rich-tb-align:hover { background: var(--accent-dim); color: var(--accent); border-color: var(--accent); }
 .rich-tb-btn.rich-tb-valign { font-size: 15px; min-width: 28px; }
+
+/* ─── Text color picker (toolbar) ───────────────────────────────────────────── */
+.rich-color-wrap {
+  display: inline-flex; flex-direction: column; align-items: center; justify-content: center;
+  width: 28px; height: 28px; gap: 1px;
+  padding: 3px 4px 2px;
+  border: 1px solid var(--border-strong);
+  border-radius: 5px;
+  background: var(--surface2);
+  cursor: pointer;
+  position: relative;
+  box-sizing: border-box;
+  vertical-align: middle;
+  transition: border-color .1s;
+}
+.rich-color-wrap:hover { border-color: var(--accent); background: var(--accent-dim); }
+.rich-color-char {
+  font: 700 13px/1 system-ui, sans-serif;
+  color: var(--text);
+  pointer-events: none;
+  user-select: none;
+}
+.rich-color-bar {
+  width: 14px; height: 3px;
+  border-radius: 1px;
+  background: #e879f9;
+  pointer-events: none;
+}
+.rich-color-input {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  border: none; padding: 0;
+}
+
+/* ─── Markdown mode toggle button ────────────────────────────────────────────── */
+.rich-tb-md {
+  font-family: 'Consolas', 'Courier New', ui-monospace, monospace;
+  font-size: 11px; font-weight: 700; letter-spacing: .5px;
+  min-width: 38px;
+}
+.rich-tb-md--active,
+.rich-tb-md--active:hover {
+  background: var(--accent-dim) !important;
+  color: var(--accent) !important;
+  border-color: var(--accent) !important;
+}
+
+/* ─── Markdown textarea (raw MD mode) ───────────────────────────────────────── */
+.rich-md-area {
+  display: none;         /* shown via JS when in MD mode */
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 160px;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  font: 13px/1.7 'Consolas', 'Courier New', ui-monospace, monospace;
+  color: var(--text);
+  background: var(--surface2);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  resize: vertical;
+  outline: none;
+  tab-size: 2;
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow-x: auto;
+  transition: border-color .15s;
+}
+.rich-md-area:focus { border-color: var(--accent); }
+
+/* ─── Image resize overlay ───────────────────────────────────────────────────── */
+.rich-img-overlay {
+  position: fixed;
+  z-index: 1300;
+  border: 2px solid var(--accent);
+  border-radius: 3px;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+.rich-img-overlay.hidden { display: none; }
+
+.rich-img-handle {
+  position: absolute;
+  width: 10px; height: 10px;
+  background: var(--accent);
+  border: 2px solid #fff;
+  border-radius: 2px;
+  pointer-events: auto;
+  box-sizing: border-box;
+  box-shadow: 0 1px 4px rgba(0,0,0,.35);
+}
+.rich-img-handle[data-dir="nw"] { top:  -5px; left:  -5px; cursor: nw-resize; }
+.rich-img-handle[data-dir="n"]  { top:  -5px; left: calc(50% - 5px); cursor: n-resize; }
+.rich-img-handle[data-dir="ne"] { top:  -5px; right: -5px; cursor: ne-resize; }
+.rich-img-handle[data-dir="e"]  { top: calc(50% - 5px); right: -5px; cursor: e-resize; }
+.rich-img-handle[data-dir="se"] { bottom: -5px; right: -5px; cursor: se-resize; }
+.rich-img-handle[data-dir="s"]  { bottom: -5px; left: calc(50% - 5px); cursor: s-resize; }
+.rich-img-handle[data-dir="sw"] { bottom: -5px; left: -5px; cursor: sw-resize; }
+.rich-img-handle[data-dir="w"]  { top: calc(50% - 5px); left: -5px; cursor: w-resize; }
+
+/* Cursor global durante el resize para que no cambie al salir del handle */
+body.rich-resizing * { cursor: inherit !important; user-select: none; }
+
+/* Imagen seleccionada (outline sutil en read mode para confirmar selección) */
+.rich-editor img.rich-img:hover { outline: 2px solid var(--accent-dim); outline-offset: 1px; }
