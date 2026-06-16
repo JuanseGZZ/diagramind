@@ -2547,6 +2547,104 @@ body.view-home #tree-aside { display: none; }
 .modal-overlay.hidden { display: none; }
 
 .modal.modal-narrow { width: 340px; }
+.modal.modal-wide { width: min(1180px, 96vw); }
+.versiones-body {
+  min-height: 260px;
+  max-height: 80vh;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  text-align: left;
+}
+
+/* secciones del modal de versiones */
+.ver-section { display: flex; flex-direction: column; gap: 6px; }
+.ver-section-head { display: flex; align-items: baseline; gap: 8px; }
+.ver-section-head strong { font-size: 13px; }
+.ver-section-sub { font-size: 11px; color: var(--muted, #8a8a8a); }
+
+/* barra horizontal de versiones (chips) */
+.ver-bar {
+  display: flex; gap: 8px;
+  overflow-x: auto;
+  padding: 8px;
+  background: var(--bg, #1e1e1e);
+  border: 1px solid var(--border-strong, #3a3a3a);
+  border-radius: 8px;
+  scrollbar-width: thin;
+}
+.ver-bar-empty { font-size: 12px; color: var(--muted, #8a8a8a); padding: 6px 4px; }
+
+.ver-chip {
+  flex: 0 0 auto;
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 10px;
+  background: var(--surface, #272727);
+  border: 1px solid var(--border-strong, #3a3a3a);
+  border-radius: 999px;
+  color: inherit; cursor: pointer;
+  font-size: 12px;
+  transition: border-color .12s, background .12s, opacity .12s;
+}
+.ver-chip:hover { border-color: var(--accent, #6aa6ff); }
+.ver-chip.is-selected { border-color: var(--accent, #6aa6ff); background: color-mix(in srgb, var(--accent, #6aa6ff) 16%, transparent); }
+.ver-chip.is-head { box-shadow: 0 0 0 2px var(--accent, #6aa6ff) inset; }
+.ver-chip.is-dimmed { opacity: .45; }
+.ver-chip-dot { width: 8px; height: 8px; border-radius: 50%; background: #8a8a8a; flex: 0 0 auto; }
+.ver-chip-dot.ver-author-user { background: #6aa6ff; }
+.ver-chip-dot.ver-author-ia   { background: #b07cff; }
+.ver-chip-label { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ver-chip-time { color: var(--muted, #8a8a8a); font-variant-numeric: tabular-nums; }
+
+/* acciones */
+.ver-actions { display: flex; align-items: center; gap: 8px; min-height: 24px; }
+.ver-actions-tag { font-size: 12px; color: var(--muted, #8a8a8a); }
+.ver-btn {
+  padding: 6px 12px; border-radius: 6px;
+  background: var(--surface, #272727);
+  border: 1px solid var(--border-strong, #3a3a3a);
+  color: inherit; cursor: pointer; font-size: 12px;
+}
+.ver-btn:hover { border-color: var(--accent, #6aa6ff); }
+
+/* pestañas State / Código dentro de "Cambios" */
+.ver-tabs { display: inline-flex; gap: 2px; margin-left: 4px; background: var(--bg, #1e1e1e); border: 1px solid var(--border-strong, #3a3a3a); border-radius: 7px; padding: 2px; }
+.ver-tab {
+  padding: 3px 12px; border-radius: 5px;
+  background: transparent; border: 0; color: var(--muted, #9a9a9a);
+  cursor: pointer; font-size: 12px;
+}
+.ver-tab.is-active { background: var(--surface, #272727); color: inherit; box-shadow: 0 1px 2px rgba(0,0,0,.25); }
+
+/* preview del diagrama (pestaña State) — navegable: arrastrar = mover, rueda = zoom */
+.ver-preview {
+  position: relative;
+  height: 520px;
+  overflow: hidden;
+  background: var(--bg, #1e1e1e);
+  border: 1px solid var(--border-strong, #3a3a3a);
+  border-radius: 8px;
+  cursor: grab;
+  touch-action: none;
+}
+.ver-preview-board { position: absolute; top: 0; left: 0; pointer-events: none; will-change: transform; }
+.ver-preview-msg { color: var(--muted, #8a8a8a); font-size: 12px; padding: 16px; margin: 0; }
+
+/* diff estilo VS Code */
+.ver-diff-hint { font-size: 12px; color: var(--muted, #8a8a8a); margin: 0; padding: 6px 2px; }
+.ver-diff-pre {
+  margin: 0; max-height: 46vh; overflow: auto;
+  background: var(--bg, #1e1e1e);
+  border: 1px solid var(--border-strong, #3a3a3a);
+  border-radius: 8px;
+  font-family: ui-monospace, "Cascadia Code", Menlo, Consolas, monospace;
+  font-size: 12px; line-height: 1.45;
+}
+.ver-diff-line { padding: 0 10px; white-space: pre-wrap; word-break: break-word; }
+.ver-diff-add { background: rgba(63, 185, 80, .14); color: #7ee787; }
+.ver-diff-del { background: rgba(248, 81, 73, .14); color: #ff9a92; }
+.ver-diff-ctx { color: var(--muted, #b0b0b0); }
 .arrow-swatches { display: flex; gap: 6px; flex-wrap: wrap; }
 .arrow-swatch {
   width: 22px; height: 22px;

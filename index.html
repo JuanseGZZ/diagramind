@@ -47,8 +47,8 @@
           <details>
             <summary>Edit</summary>
             <ul class="menu">
-              <li><button data-act="undo" disabled>Undo</button></li>
-              <li><button data-act="redo" disabled>Redo</button></li>
+              <li><button data-act="undo">Undo</button></li>
+              <li><button data-act="redo">Redo</button></li>
               <li class="sep"></li>
               <li><button data-act="dup" disabled>Duplicate node</button></li>
               <li><button data-act="del" disabled>Delete node</button></li>
@@ -319,7 +319,7 @@
           <!-- modelo (popup) -->
           <div class="ia-chat-pop ia-chat-pop-up" id="ia-chat-model">
             <button class="ia-chat-ctl-btn" id="ia-chat-model-btn">
-              <span class="ia-chat-ctl-label" id="ia-chat-model-label">Opus 4.8</span>
+              <span class="ia-chat-ctl-label" id="ia-chat-model-label">Sonnet 4.6</span>
               <svg class="ia-chat-caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
             </button>
             <ul class="ia-chat-menu hidden" id="ia-chat-model-menu"></ul>
@@ -334,6 +334,8 @@
 
   <div id="toolbar" class="toolbar">
     <button id="agregarPrincipalBtn">Add to root</button>
+    <div class="toolbar-sep"></div>
+    <button id="versiones-btn" class="toolbar-btn" title="Historial de versiones del árbol">⏱ Versiones</button>
 
     <div id="act-toolbar-controls" class="hidden act-toolbar-controls">
       <span class="tcg-label">Unidad de tiempo</span>
@@ -447,6 +449,16 @@
   </div>
 
   <div id="node-type-menu" class="free-menu hidden"></div>
+
+  <div id="versiones-overlay" class="modal-overlay hidden">
+    <div class="modal modal-wide">
+      <p class="modal-hint">Versiones del proyecto</p>
+      <div id="versiones-body" class="versiones-body"></div>
+      <div class="modal-actions">
+        <button id="versiones-cerrar">Cerrar</button>
+      </div>
+    </div>
+  </div>
 
   <div id="custom-catalog-overlay" class="modal-overlay hidden">
     <div class="modal modal-narrow">
