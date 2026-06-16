@@ -130,6 +130,7 @@
       <button class="side-panel-close" data-close="ia-aside" title="Cerrar">✕</button>
     </div>
     <div class="side-panel-body">
+      <button class="side-panel-btn side-panel-btn-primary" id="ia-open-chat">Abrir chat</button>
       <button class="side-panel-btn" id="ia-download-local">Descargar local</button>
       <div class="ia-download hidden" id="ia-download-options">
 
@@ -175,7 +176,22 @@
       </div>
 
       <button class="side-panel-btn" id="ia-connect-local">Conectar local</button>
-      <button class="side-panel-btn" id="ia-select-api">Seleccionar API</button>
+
+      <button class="side-panel-btn" id="ia-manage-apis">Agregar API</button>
+      <div class="ia-apis hidden" id="ia-apis-panel">
+        <ul class="ia-apis-list" id="ia-apis-list"></ul>
+        <form class="ia-apis-form" id="ia-apis-form">
+          <input class="ia-apis-input" id="ia-api-name" type="text" placeholder="Nombre (ej. Mi clave Anthropic)" required />
+          <select class="ia-apis-input" id="ia-api-provider">
+            <option value="anthropic">Anthropic (Claude)</option>
+            <option value="openai">OpenAI (GPT)</option>
+            <option value="google">Google (Gemini)</option>
+            <option value="other">Otra</option>
+          </select>
+          <input class="ia-apis-input" id="ia-api-key" type="password" placeholder="API key" autocomplete="off" required />
+          <button class="ia-apis-add" type="submit">Agregar API</button>
+        </form>
+      </div>
       <div class="ia-status" id="ia-status" data-state="disconnected">
         <span class="ia-status-dot"></span>
         <span class="ia-status-text">Desconectado</span>
@@ -197,6 +213,124 @@
       </div>
     </div>
   </aside>
+
+  <!-- ===== CHAT IA ===== -->
+  <section id="ia-chat" class="ia-chat" aria-hidden="true">
+    <div class="ia-chat-resizer" id="ia-chat-resizer" title="Arrastrá para cambiar el ancho"></div>
+
+    <header class="ia-chat-header">
+      <div class="ia-chat-project ia-chat-pop" id="ia-chat-project" title="Proyecto sobre el que trabaja el chat">
+        <button class="ia-chat-project-btn" id="ia-chat-project-btn">
+          <span class="ia-chat-project-dot"></span>
+          <span class="ia-chat-project-name" id="ia-chat-project-name">Sin proyecto</span>
+          <svg class="ia-chat-caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <ul class="ia-chat-menu hidden" id="ia-chat-project-menu"></ul>
+      </div>
+      <div class="ia-chat-header-actions">
+        <button class="ia-chat-icon-btn" id="ia-chat-history" title="Historial de sesiones" aria-label="Historial">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        </button>
+        <button class="ia-chat-icon-btn" id="ia-chat-new" title="Nuevo chat" aria-label="Nuevo chat">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+        <button class="ia-chat-icon-btn" id="ia-chat-close" title="Cerrar chat" aria-label="Cerrar">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- barra de backend (arriba): conector local o una API agregada -->
+    <div class="ia-chat-backend-bar">
+      <div class="ia-chat-pop ia-chat-pop-block" id="ia-chat-backend">
+        <button class="ia-chat-backend-btn" id="ia-chat-backend-btn">
+          <span class="ia-chat-backend-label" id="ia-chat-backend-label">Local · Claude Code</span>
+          <svg class="ia-chat-caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <ul class="ia-chat-menu hidden" id="ia-chat-backend-menu"></ul>
+      </div>
+    </div>
+
+    <!-- drawer de historial de sesiones -->
+    <aside class="ia-chat-sessions hidden" id="ia-chat-sessions">
+      <div class="ia-chat-sessions-head">
+        <span class="ia-chat-sessions-title">Historial</span>
+        <button class="ia-chat-icon-btn" id="ia-chat-sessions-close" title="Cerrar" aria-label="Cerrar">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+      <ul class="ia-chat-sessions-list" id="ia-chat-sessions-list"></ul>
+    </aside>
+
+    <div class="ia-chat-messages" id="ia-chat-messages"></div>
+
+    <div class="ia-chat-activity hidden" id="ia-chat-activity" aria-live="polite">
+      <span class="ia-chat-activity-spin" aria-hidden="true"></span>
+      <span class="ia-chat-activity-text" id="ia-chat-activity-text">Pensando…</span>
+      <span class="ia-chat-activity-time" id="ia-chat-activity-time"></span>
+      <button class="ia-chat-activity-stop" id="ia-chat-activity-stop" title="Detener">Detener</button>
+    </div>
+
+    <div class="ia-chat-composer">
+      <div class="ia-chat-input-wrap">
+        <textarea id="ia-chat-input" class="ia-chat-input" rows="1"
+          placeholder="Escribí un mensaje…" aria-label="Mensaje para la IA"></textarea>
+      </div>
+      <div class="ia-chat-controls">
+        <!-- modo (popup tipo VSCode) -->
+        <div class="ia-chat-pop ia-chat-pop-up" id="ia-chat-mode">
+          <button class="ia-chat-ctl-btn" id="ia-chat-mode-btn">
+            <span class="ia-chat-ctl-label" id="ia-chat-mode-label">Editar automáticamente</span>
+            <svg class="ia-chat-caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="ia-chat-menu ia-chat-menu-modes hidden" id="ia-chat-mode-menu">
+            <button class="ia-chat-mode-opt" data-mode="ask">
+              <span class="ia-chat-mode-opt-text">
+                <span class="ia-chat-mode-opt-title">Preguntar antes de editar</span>
+                <span class="ia-chat-mode-opt-desc">Pide aprobación antes de cada edición</span>
+              </span>
+              <svg class="ia-chat-check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>
+            </button>
+            <button class="ia-chat-mode-opt" data-mode="auto-edit">
+              <span class="ia-chat-mode-opt-text">
+                <span class="ia-chat-mode-opt-title">Editar automáticamente</span>
+                <span class="ia-chat-mode-opt-desc">Edita el texto seleccionado o el archivo</span>
+              </span>
+              <svg class="ia-chat-check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>
+            </button>
+            <button class="ia-chat-mode-opt" data-mode="plan">
+              <span class="ia-chat-mode-opt-text">
+                <span class="ia-chat-mode-opt-title">Modo plan</span>
+                <span class="ia-chat-mode-opt-desc">Explora y propone un plan antes de editar</span>
+              </span>
+              <svg class="ia-chat-check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>
+            </button>
+            <button class="ia-chat-mode-opt" data-mode="auto">
+              <span class="ia-chat-mode-opt-text">
+                <span class="ia-chat-mode-opt-title">Modo auto</span>
+                <span class="ia-chat-mode-opt-desc">Elige el mejor permiso para cada tarea</span>
+              </span>
+              <svg class="ia-chat-check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="ia-chat-controls-right">
+          <!-- modelo (popup) -->
+          <div class="ia-chat-pop ia-chat-pop-up" id="ia-chat-model">
+            <button class="ia-chat-ctl-btn" id="ia-chat-model-btn">
+              <span class="ia-chat-ctl-label" id="ia-chat-model-label">Opus 4.8</span>
+              <svg class="ia-chat-caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            <ul class="ia-chat-menu hidden" id="ia-chat-model-menu"></ul>
+          </div>
+          <button class="ia-chat-send" id="ia-chat-send" title="Enviar (Enter)" aria-label="Enviar">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <div id="toolbar" class="toolbar">
     <button id="agregarPrincipalBtn">Add to root</button>
