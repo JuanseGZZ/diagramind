@@ -17,6 +17,13 @@
       <label for="nav-open" class="nav-toggle" aria-label="Abrir menú" title="Menú"></label>
 
       <ul class="nav-list">
+        <li class="nav-item nav-trees">
+          <details id="tree-menu">
+            <summary id="tree-current">Árbol</summary>
+            <ul class="menu" id="tree-list"></ul>
+          </details>
+        </li>
+
         <li class="nav-item">
           <details>
             <summary>File</summary>
@@ -64,7 +71,7 @@
 
         <li class="nav-item">
           <details>
-            <summary>Mode</summary>
+            <summary>Move</summary>
             <ul class="menu">
               <li class="menu-label">Modo</li>
               <li><button data-act="mode-home" id="mode-home-btn">Home</button></li>
@@ -82,13 +89,6 @@
           </details>
         </li>
 
-        <li class="nav-item nav-trees">
-          <details id="tree-menu">
-            <summary id="tree-current">Árbol</summary>
-            <ul class="menu" id="tree-list"></ul>
-          </details>
-        </li>
-
         <li class="nav-spacer" aria-hidden="true"></li>
 
         <li class="nav-item">
@@ -103,10 +103,10 @@
         </li>
 
         <li class="nav-item profile">
-          <button class="avatar" title="Profile">DM</button>
+          <button id="profile-btn" class="avatar" title="Profile">DM</button>
         </li>
         <li>
-          <button id="theme-toggle" title="Toggle theme">☀</button>
+          <button id="ia-btn" title="IA">IA</button>
         </li>
       </ul>
     </nav>
@@ -124,8 +124,98 @@
     <div id="aside-resizer" class="aside-resizer" title="Arrastrá para cambiar el ancho"></div>
   </aside>
 
+  <aside id="ia-aside" class="side-panel side-panel-right">
+    <div class="side-panel-header">
+      <span class="side-panel-title">IA</span>
+      <button class="side-panel-close" data-close="ia-aside" title="Cerrar">✕</button>
+    </div>
+    <div class="side-panel-body">
+      <button class="side-panel-btn" id="ia-download-local">Descargar local</button>
+      <div class="ia-download hidden" id="ia-download-options">
+
+        <div class="ia-dl-group">
+          <p class="ia-dl-title">Ejecutable <span class="ia-dl-badge">recomendado</span></p>
+          <p class="ia-download-hint">Listo para usar: doble clic y arranca. No requiere instalar nada.</p>
+          <a class="ia-download-link" id="ia-bin-win" href="https://github.com/JuanseGZZ/diagramind-local/releases/latest/download/DiagraMind-Local-win.exe" download>
+            ⬇ Windows<span class="ia-download-tag">64-bit</span>
+          </a>
+          <a class="ia-download-link" id="ia-bin-mac" href="https://github.com/JuanseGZZ/diagramind-local/releases/latest/download/DiagraMind-Local-mac" download>
+            ⬇ macOS<span class="ia-download-tag">Apple Silicon</span>
+          </a>
+          <a class="ia-download-link" id="ia-bin-linux" href="https://github.com/JuanseGZZ/diagramind-local/releases/latest/download/DiagraMind-Local-linux" download>
+            ⬇ Linux<span class="ia-download-tag">64-bit</span>
+          </a>
+        </div>
+
+        <div class="ia-dl-group">
+          <p class="ia-dl-title">Instalador</p>
+          <p class="ia-download-hint">Instala el ejecutable y lo deja arrancando solo al encender.</p>
+          <a class="ia-download-link" id="ia-installer-win" href="https://github.com/JuanseGZZ/diagramind-local/releases/latest/download/Instalar-DiagraMind-win.bat" download>
+            ⬇ Windows<span class="ia-download-tag"></span>
+          </a>
+          <a class="ia-download-link" id="ia-installer-mac" href="https://github.com/JuanseGZZ/diagramind-local/releases/latest/download/Instalar-DiagraMind-mac.command" download>
+            ⬇ macOS<span class="ia-download-tag"></span>
+          </a>
+          <a class="ia-download-link" id="ia-installer-linux" href="https://github.com/JuanseGZZ/diagramind-local/releases/latest/download/Instalar-DiagraMind-linux.sh" download>
+            ⬇ Linux<span class="ia-download-tag"></span>
+          </a>
+        </div>
+
+        <div class="ia-dl-group">
+          <p class="ia-dl-title">Script Python</p>
+          <p class="ia-download-hint">Liviano, pero requiere Python 3 instalado.</p>
+          <a class="ia-download-link" id="ia-download-zip" href="https://github.com/JuanseGZZ/diagramind-local/releases/latest/download/diagramind-local.zip" download>
+            ⬇ Descargar .zip<span class="ia-download-tag">requiere Python</span>
+          </a>
+        </div>
+
+        <a class="ia-dl-repo" href="https://github.com/JuanseGZZ/diagramind-local" target="_blank" rel="noopener">
+          ↗ Ver el código en GitHub
+        </a>
+      </div>
+
+      <button class="side-panel-btn" id="ia-connect-local">Conectar local</button>
+      <button class="side-panel-btn" id="ia-select-api">Seleccionar API</button>
+      <div class="ia-status" id="ia-status" data-state="disconnected">
+        <span class="ia-status-dot"></span>
+        <span class="ia-status-text">Desconectado</span>
+      </div>
+    </div>
+  </aside>
+
+  <aside id="profile-aside" class="side-panel side-panel-right">
+    <div class="side-panel-header">
+      <span class="side-panel-title">Perfil</span>
+      <button class="side-panel-close" data-close="profile-aside" title="Cerrar">✕</button>
+    </div>
+    <div class="side-panel-body">
+      <button class="side-panel-btn" id="profile-login">Iniciar sesión</button>
+      <button class="side-panel-btn" id="profile-register">Registrarse</button>
+      <div class="side-panel-row">
+        <span class="side-panel-row-label">Tema</span>
+        <button id="theme-toggle" title="Toggle theme">☀</button>
+      </div>
+    </div>
+  </aside>
+
   <div id="toolbar" class="toolbar">
     <button id="agregarPrincipalBtn">Add to root</button>
+
+    <div id="act-toolbar-controls" class="hidden act-toolbar-controls">
+      <span class="tcg-label">Unidad de tiempo</span>
+      <select id="act-unit-select" class="act-unit-select">
+        <option value="horas">Horas</option>
+        <option value="dias">Días</option>
+        <option value="semanas">Semanas</option>
+        <option value="años">Años</option>
+      </select>
+      <div class="toolbar-sep"></div>
+      <button id="act-levels-btn" class="toolbar-btn" title="Mostrar/ocultar divisiones por nivel">⊞ Niveles</button>
+      <div class="toolbar-sep"></div>
+      <button id="act-critical-btn" class="toolbar-btn" title="Resaltar el camino crítico">🎯 Camino crítico</button>
+      <div class="toolbar-sep"></div>
+      <button id="act-gantt-btn" class="toolbar-btn" title="Alternar vista flechas / Gantt">📊 Vista Gantt</button>
+    </div>
 
     <div id="free-toolbar-controls" class="hidden free-toolbar-controls">
       <button id="freeAddNodeBtn" class="toolbar-btn">+ Add node ▾</button>
@@ -264,6 +354,48 @@
   <div id="free-node-menu" class="free-menu hidden">
     <button data-fact="edit">Editar</button>
     <button data-fact="color">Color</button>
+  </div>
+
+  <div id="act-arrow-modal-overlay" class="modal-overlay hidden">
+    <div class="modal modal-narrow">
+      <p class="modal-hint">Color del enlace</p>
+      <div class="modal-field">
+        <div class="arrow-swatches">
+          <button class="arrow-swatch" data-color="default" title="Por defecto"></button>
+          <button class="arrow-swatch" data-color="#4f7eff" style="background:#4f7eff"></button>
+          <button class="arrow-swatch" data-color="#16a34a" style="background:#16a34a"></button>
+          <button class="arrow-swatch" data-color="#ea580c" style="background:#ea580c"></button>
+          <button class="arrow-swatch" data-color="#dc2626" style="background:#dc2626"></button>
+          <button class="arrow-swatch" data-color="#7c3aed" style="background:#7c3aed"></button>
+          <button class="arrow-swatch" data-color="#0891b2" style="background:#0891b2"></button>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button id="act-arrow-close">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="act-modal-overlay" class="modal-overlay hidden">
+    <div class="modal modal-narrow">
+      <p class="modal-hint">Editando actividad</p>
+      <div class="modal-field">
+        <label for="act-titulo">Título</label>
+        <input id="act-titulo" type="text" placeholder="Nombre de la actividad..." />
+      </div>
+      <div class="modal-field">
+        <label for="act-duracion">Duración</label>
+        <input id="act-duracion" type="number" min="0" step="1" value="1" />
+      </div>
+      <div class="modal-field">
+        <label>Color</label>
+        <button id="act-color-btn" type="button" class="act-color-btn">🎨 Cambiar color</button>
+      </div>
+      <div class="modal-actions">
+        <button id="act-cancel">Cancelar</button>
+        <button id="act-save">Guardar</button>
+      </div>
+    </div>
   </div>
 
   <div id="modal-overlay" class="modal-overlay hidden">
