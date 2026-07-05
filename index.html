@@ -1,6 +1,6 @@
 <head>
   <meta charset="utf-8" />
-  <title>Diagrama</title>
+  <title>DiagraMinder</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="bolzaDeEstilos/styles.css">
 </head>
@@ -14,12 +14,19 @@
 
       <!-- Toggle mobile (CSS-only) -->
       <input id="nav-open" class="nav-open" type="checkbox" hidden>
-      <label for="nav-open" class="nav-toggle" aria-label="Abrir menú" title="Menú"></label>
+      <label for="nav-open" class="nav-toggle" aria-label="Open menu" title="Menu"></label>
 
       <ul class="nav-list">
+        <li class="nav-item nav-folders">
+          <details id="folder-menu">
+            <summary id="folder-current">Folder</summary>
+            <ul class="menu" id="folder-list"></ul>
+          </details>
+        </li>
+
         <li class="nav-item nav-trees">
           <details id="tree-menu">
-            <summary id="tree-current">Árbol</summary>
+            <summary id="tree-current">Tree</summary>
             <ul class="menu" id="tree-list"></ul>
           </details>
         </li>
@@ -29,13 +36,11 @@
             <summary>File</summary>
             <ul class="menu">
               <li><button data-act="new" id="new-diagram">New</button></li>
-              <li><button data-act="open" disabled>Open…</button></li>
+              <li><button data-act="open" id="open-diagram">Open…</button></li>
+              <li><button data-act="export-dmer" id="export-dmer">Save</button></li>
               <li class="sep"></li>
-              <li><button data-act="import-dmer" id="import-dmer">Import .dmer</button></li>
-              <li><button data-act="export-dmer" id="export-dmer">Export .dmer</button></li>
-              <li><button data-act="export-obsidian" id="export-obsidian">Export Obsidian</button></li>
+              <li><button data-act="export-obsidian" id="export-obsidian">Export to Obsidian</button></li>
               <li><button data-act="import-soft" id="import-soft">Import Soft</button></li>
-              <li><button data-act="download-soft-skill" id="download-soft-skill">Download Soft Skill</button></li>
               <li><button data-act="export-png" id="export-png">Export PNG</button></li>
               <li><button data-act="export-pdf" id="export-pdf">Export PDF</button></li>
               <li><button data-act="export-word" id="export-word">Export Word</button></li>
@@ -49,9 +54,6 @@
             <ul class="menu">
               <li><button data-act="undo">Undo</button></li>
               <li><button data-act="redo">Redo</button></li>
-              <li class="sep"></li>
-              <li><button data-act="dup" disabled>Duplicate node</button></li>
-              <li><button data-act="del" disabled>Delete node</button></li>
             </ul>
           </details>
         </li>
@@ -73,15 +75,16 @@
           <details>
             <summary>Move</summary>
             <ul class="menu">
-              <li class="menu-label">Modo</li>
+              <li class="menu-label">Mode</li>
               <li><button data-act="mode-home" id="mode-home-btn">Home</button></li>
               <li class="sep"></li>
               <li class="menu-label">Carts</li>
               <li><button data-act="layout-ltr">Left to right</button></li>
               <li><button data-act="layout-organigram">Organigram</button></li>
               <li class="sep"></li>
-              <li class="menu-label">Tipos propios</li>
+              <li class="menu-label">Custom types</li>
               <li><button data-act="layout-freestyle" disabled>Freestyle</button></li>
+              <li><button data-act="layout-treeQuestionary" disabled>Questionnaire</button></li>
               <li><button data-act="layout-activities" disabled>Activities</button></li>
               <li><button data-act="layout-object" disabled>Object</button></li>
               <li><button data-act="layout-ia-director" disabled>IA Director</button></li>
@@ -89,7 +92,23 @@
           </details>
         </li>
 
+        <li class="nav-item">
+          <details>
+            <summary>Skills</summary>
+            <ul class="menu">
+              <li><button data-act="download-soft-skill" id="download-soft-skill">Download Soft Skill</button></li>
+            </ul>
+          </details>
+        </li>
+
         <li class="nav-spacer" aria-hidden="true"></li>
+
+        <li class="nav-item nav-lang">
+          <select id="lang-select" class="nav-lang-select" aria-label="Language" title="Language">
+            <option value="en">English</option>
+            <option value="es">Español</option>
+          </select>
+        </li>
 
         <li class="nav-item">
           <details>
@@ -114,29 +133,29 @@
 
   <aside id="tree-aside">
     <div class="aside-header">
-      <span class="aside-title">Explorador</span>
-      <button id="aside-toggle" class="aside-toggle" title="Ocultar / mostrar panel">◀</button>
+      <span class="aside-title">Explorer</span>
+      <button id="aside-toggle" class="aside-toggle" title="Hide / show panel">◀</button>
     </div>
     <div class="aside-search-wrap">
-      <input id="aside-search" type="search" placeholder="Buscar…" aria-label="Buscar en explorador" />
+      <input id="aside-search" type="search" placeholder="Search…" aria-label="Search explorer" />
     </div>
     <div id="aside-tree" class="aside-tree"></div>
-    <div id="aside-resizer" class="aside-resizer" title="Arrastrá para cambiar el ancho"></div>
+    <div id="aside-resizer" class="aside-resizer" title="Drag to resize width"></div>
   </aside>
 
   <aside id="ia-aside" class="side-panel side-panel-right">
     <div class="side-panel-header">
       <span class="side-panel-title">IA</span>
-      <button class="side-panel-close" data-close="ia-aside" title="Cerrar">✕</button>
+      <button class="side-panel-close" data-close="ia-aside" title="Close">✕</button>
     </div>
     <div class="side-panel-body">
-      <button class="side-panel-btn side-panel-btn-primary" id="ia-open-chat">Abrir chat</button>
-      <button class="side-panel-btn" id="ia-download-local">Descargar local</button>
+      <button class="side-panel-btn side-panel-btn-primary" id="ia-open-chat">Open chat</button>
+      <button class="side-panel-btn" id="ia-download-local">Download local</button>
       <div class="ia-download hidden" id="ia-download-options">
 
         <div class="ia-dl-group">
-          <p class="ia-dl-title">Ejecutable <span class="ia-dl-badge">recomendado</span></p>
-          <p class="ia-download-hint">Listo para usar: doble clic y arranca. No requiere instalar nada.</p>
+          <p class="ia-dl-title">Executable <span class="ia-dl-badge">recommended</span></p>
+          <p class="ia-download-hint">Ready to use: double-click and go. No installation required.</p>
           <a class="ia-download-link" id="ia-bin-win" href="https://github.com/JuanseGZZ/diagramind-local/releases/latest/download/DiagraMind-Local-win.exe" download>
             ⬇ Windows<span class="ia-download-tag">64-bit</span>
           </a>
@@ -149,8 +168,8 @@
         </div>
 
         <div class="ia-dl-group">
-          <p class="ia-dl-title">Instalador</p>
-          <p class="ia-download-hint">Instala el ejecutable y lo deja arrancando solo al encender.</p>
+          <p class="ia-dl-title">Installer</p>
+          <p class="ia-download-hint">Installs the executable and sets it to start automatically on boot.</p>
           <a class="ia-download-link" id="ia-installer-win" href="https://github.com/JuanseGZZ/diagramind-local/releases/latest/download/Instalar-DiagraMind-win.bat" download>
             ⬇ Windows<span class="ia-download-tag"></span>
           </a>
@@ -163,52 +182,68 @@
         </div>
 
         <div class="ia-dl-group">
-          <p class="ia-dl-title">Script Python</p>
-          <p class="ia-download-hint">Liviano, pero requiere Python 3 instalado.</p>
+          <p class="ia-dl-title">Python Script</p>
+          <p class="ia-download-hint">Lightweight, but requires Python 3 installed.</p>
           <a class="ia-download-link" id="ia-download-zip" href="https://github.com/JuanseGZZ/diagramind-local/releases/latest/download/diagramind-local.zip" download>
-            ⬇ Descargar .zip<span class="ia-download-tag">requiere Python</span>
+            ⬇ Download .zip<span class="ia-download-tag">requires Python</span>
           </a>
         </div>
 
         <a class="ia-dl-repo" href="https://github.com/JuanseGZZ/diagramind-local" target="_blank" rel="noopener">
-          ↗ Ver el código en GitHub
+          ↗ View the code on GitHub
         </a>
       </div>
 
-      <button class="side-panel-btn" id="ia-connect-local">Conectar local</button>
-
-      <button class="side-panel-btn" id="ia-manage-apis">Agregar API</button>
+      <button class="side-panel-btn" id="ia-manage-apis">Add API</button>
       <div class="ia-apis hidden" id="ia-apis-panel">
         <ul class="ia-apis-list" id="ia-apis-list"></ul>
         <form class="ia-apis-form" id="ia-apis-form">
-          <input class="ia-apis-input" id="ia-api-name" type="text" placeholder="Nombre (ej. Mi clave Anthropic)" required />
+          <input class="ia-apis-input" id="ia-api-name" type="text" placeholder="Name (e.g. My Anthropic key)" required />
           <select class="ia-apis-input" id="ia-api-provider">
             <option value="anthropic">Anthropic (Claude)</option>
             <option value="openai">OpenAI (GPT)</option>
             <option value="google">Google (Gemini)</option>
-            <option value="other">Otra</option>
+            <option value="other">Other</option>
           </select>
           <input class="ia-apis-input" id="ia-api-key" type="password" placeholder="API key" autocomplete="off" required />
-          <button class="ia-apis-add" type="submit">Agregar API</button>
+          <input class="ia-apis-input ia-apis-other-only hidden" id="ia-api-url" type="text" placeholder="Endpoint URL (OpenAI-compatible)" autocomplete="off" />
+          <input class="ia-apis-input ia-apis-other-only hidden" id="ia-api-model" type="text" placeholder="Model (e.g. gpt-4o-mini, llama-3.1…)" autocomplete="off" />
+          <button class="ia-apis-add" type="submit">Add API</button>
         </form>
       </div>
+
+      <button class="side-panel-btn" id="ia-add-connector">Add external connector</button>
+      <div class="ia-apis hidden" id="ia-connectors-panel">
+        <ul class="ia-apis-list" id="ia-connectors-list"></ul>
+        <form class="ia-apis-form" id="ia-connectors-form">
+          <input class="ia-apis-input" id="ia-connector-name" type="text" placeholder="Name (e.g. Office server)" required />
+          <input class="ia-apis-input" id="ia-connector-url" type="text" placeholder="URL (e.g. http://192.168.1.20:8770)" required />
+          <button class="ia-apis-add" type="submit">Add connector</button>
+        </form>
+      </div>
+
+    </div>
+
+    <!-- footer pinneado al fondo: conectar local + estado de conexión, con línea separadora -->
+    <div class="side-panel-footer">
+      <button class="side-panel-btn" id="ia-connect-local">Connect local</button>
       <div class="ia-status" id="ia-status" data-state="disconnected">
         <span class="ia-status-dot"></span>
-        <span class="ia-status-text">Desconectado</span>
+        <span class="ia-status-text">Disconnected</span>
       </div>
     </div>
   </aside>
 
   <aside id="profile-aside" class="side-panel side-panel-right">
     <div class="side-panel-header">
-      <span class="side-panel-title">Perfil</span>
-      <button class="side-panel-close" data-close="profile-aside" title="Cerrar">✕</button>
+      <span class="side-panel-title">Profile</span>
+      <button class="side-panel-close" data-close="profile-aside" title="Close">✕</button>
     </div>
     <div class="side-panel-body">
-      <button class="side-panel-btn" id="profile-login">Iniciar sesión</button>
-      <button class="side-panel-btn" id="profile-register">Registrarse</button>
+      <button class="side-panel-btn" id="profile-login">Log in</button>
+      <button class="side-panel-btn" id="profile-register">Sign up</button>
       <div class="side-panel-row">
-        <span class="side-panel-row-label">Tema</span>
+        <span class="side-panel-row-label">Theme</span>
         <button id="theme-toggle" title="Toggle theme">☀</button>
       </div>
     </div>
@@ -216,25 +251,25 @@
 
   <!-- ===== CHAT IA ===== -->
   <section id="ia-chat" class="ia-chat" aria-hidden="true">
-    <div class="ia-chat-resizer" id="ia-chat-resizer" title="Arrastrá para cambiar el ancho"></div>
+    <div class="ia-chat-resizer" id="ia-chat-resizer" title="Drag to resize width"></div>
 
     <header class="ia-chat-header">
-      <div class="ia-chat-project ia-chat-pop" id="ia-chat-project" title="Proyecto sobre el que trabaja el chat">
+      <div class="ia-chat-project ia-chat-pop" id="ia-chat-project" title="Project the chat works on">
         <button class="ia-chat-project-btn" id="ia-chat-project-btn">
           <span class="ia-chat-project-dot"></span>
-          <span class="ia-chat-project-name" id="ia-chat-project-name">Sin proyecto</span>
+          <span class="ia-chat-project-name" id="ia-chat-project-name">No project</span>
           <svg class="ia-chat-caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
         </button>
         <ul class="ia-chat-menu hidden" id="ia-chat-project-menu"></ul>
       </div>
       <div class="ia-chat-header-actions">
-        <button class="ia-chat-icon-btn" id="ia-chat-history" title="Historial de sesiones" aria-label="Historial">
+        <button class="ia-chat-icon-btn" id="ia-chat-history" title="Session history" aria-label="History">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
         </button>
-        <button class="ia-chat-icon-btn" id="ia-chat-new" title="Nuevo chat" aria-label="Nuevo chat">
+        <button class="ia-chat-icon-btn" id="ia-chat-new" title="New chat" aria-label="New chat">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
         </button>
-        <button class="ia-chat-icon-btn" id="ia-chat-close" title="Cerrar chat" aria-label="Cerrar">
+        <button class="ia-chat-icon-btn" id="ia-chat-close" title="Close chat" aria-label="Close">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
         </button>
       </div>
@@ -254,8 +289,8 @@
     <!-- drawer de historial de sesiones -->
     <aside class="ia-chat-sessions hidden" id="ia-chat-sessions">
       <div class="ia-chat-sessions-head">
-        <span class="ia-chat-sessions-title">Historial</span>
-        <button class="ia-chat-icon-btn" id="ia-chat-sessions-close" title="Cerrar" aria-label="Cerrar">
+        <span class="ia-chat-sessions-title">History</span>
+        <button class="ia-chat-icon-btn" id="ia-chat-sessions-close" title="Close" aria-label="Close">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
         </button>
       </div>
@@ -266,49 +301,42 @@
 
     <div class="ia-chat-activity hidden" id="ia-chat-activity" aria-live="polite">
       <span class="ia-chat-activity-spin" aria-hidden="true"></span>
-      <span class="ia-chat-activity-text" id="ia-chat-activity-text">Pensando…</span>
+      <span class="ia-chat-activity-text" id="ia-chat-activity-text">Thinking…</span>
       <span class="ia-chat-activity-time" id="ia-chat-activity-time"></span>
-      <button class="ia-chat-activity-stop" id="ia-chat-activity-stop" title="Detener">Detener</button>
+      <button class="ia-chat-activity-stop" id="ia-chat-activity-stop" title="Stop">Stop</button>
     </div>
 
     <div class="ia-chat-composer">
+      <!-- adjuntos pendientes (chips con scroll horizontal) -->
+      <div class="ia-chat-attachments hidden" id="ia-chat-attachments" aria-label="Attachments"></div>
       <div class="ia-chat-input-wrap">
         <textarea id="ia-chat-input" class="ia-chat-input" rows="1"
-          placeholder="Escribí un mensaje…" aria-label="Mensaje para la IA"></textarea>
+          placeholder="Type a message…" aria-label="Message for the AI"></textarea>
       </div>
       <div class="ia-chat-controls">
+        <!-- adjuntar archivos (selección múltiple, cualquier tipo) -->
+        <button class="ia-chat-attach-btn" id="ia-chat-attach" title="Attach files" aria-label="Attach files">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.44 11.05l-8.49 8.49a5 5 0 0 1-7.07-7.07l8.49-8.49a3 3 0 0 1 4.24 4.24l-8.49 8.49a1 1 0 0 1-1.41-1.41l7.78-7.78"/></svg>
+        </button>
+        <input type="file" id="ia-chat-file-input" multiple hidden aria-hidden="true" />
         <!-- modo (popup tipo VSCode) -->
         <div class="ia-chat-pop ia-chat-pop-up" id="ia-chat-mode">
           <button class="ia-chat-ctl-btn" id="ia-chat-mode-btn">
-            <span class="ia-chat-ctl-label" id="ia-chat-mode-label">Editar automáticamente</span>
+            <span class="ia-chat-ctl-label" id="ia-chat-mode-label">Edit automatically</span>
             <svg class="ia-chat-caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
           </button>
           <div class="ia-chat-menu ia-chat-menu-modes hidden" id="ia-chat-mode-menu">
-            <button class="ia-chat-mode-opt" data-mode="ask">
-              <span class="ia-chat-mode-opt-text">
-                <span class="ia-chat-mode-opt-title">Preguntar antes de editar</span>
-                <span class="ia-chat-mode-opt-desc">Pide aprobación antes de cada edición</span>
-              </span>
-              <svg class="ia-chat-check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>
-            </button>
             <button class="ia-chat-mode-opt" data-mode="auto-edit">
               <span class="ia-chat-mode-opt-text">
-                <span class="ia-chat-mode-opt-title">Editar automáticamente</span>
-                <span class="ia-chat-mode-opt-desc">Edita el texto seleccionado o el archivo</span>
+                <span class="ia-chat-mode-opt-title">Edit automatically</span>
+                <span class="ia-chat-mode-opt-desc">Edits the selected text or file</span>
               </span>
               <svg class="ia-chat-check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>
             </button>
             <button class="ia-chat-mode-opt" data-mode="plan">
               <span class="ia-chat-mode-opt-text">
-                <span class="ia-chat-mode-opt-title">Modo plan</span>
-                <span class="ia-chat-mode-opt-desc">Explora y propone un plan antes de editar</span>
-              </span>
-              <svg class="ia-chat-check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>
-            </button>
-            <button class="ia-chat-mode-opt" data-mode="auto">
-              <span class="ia-chat-mode-opt-text">
-                <span class="ia-chat-mode-opt-title">Modo auto</span>
-                <span class="ia-chat-mode-opt-desc">Elige el mejor permiso para cada tarea</span>
+                <span class="ia-chat-mode-opt-title">Plan mode</span>
+                <span class="ia-chat-mode-opt-desc">Explores and proposes a plan before editing</span>
               </span>
               <svg class="ia-chat-check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>
             </button>
@@ -324,10 +352,27 @@
             </button>
             <ul class="ia-chat-menu hidden" id="ia-chat-model-menu"></ul>
           </div>
-          <button class="ia-chat-send" id="ia-chat-send" title="Enviar (Enter)" aria-label="Enviar">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          <!-- esfuerzo (popup) — visible solo si el modelo lo soporta -->
+          <div class="ia-chat-pop ia-chat-pop-up hidden" id="ia-chat-effort">
+            <button class="ia-chat-ctl-btn" id="ia-chat-effort-btn" title="Effort / reasoning">
+              <span class="ia-chat-ctl-label" id="ia-chat-effort-label">high</span>
+              <svg class="ia-chat-caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            <ul class="ia-chat-menu hidden" id="ia-chat-effort-menu"></ul>
+          </div>
+          <button class="ia-chat-send" id="ia-chat-send" title="Send (Enter)" aria-label="Send">
+            <svg class="ia-chat-send-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            <svg class="ia-chat-stop-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2"/></svg>
           </button>
         </div>
+      </div>
+    </div>
+
+    <!-- overlay de drag & drop: aparece al arrastrar archivos sobre el chat -->
+    <div class="ia-chat-drop hidden" id="ia-chat-drop" aria-hidden="true">
+      <div class="ia-chat-drop-inner">
+        <svg class="ia-chat-drop-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M5 16v3a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3"/></svg>
+        <span class="ia-chat-drop-text">Drop the files to attach them</span>
       </div>
     </div>
   </section>
@@ -335,27 +380,27 @@
   <div id="toolbar" class="toolbar">
     <button id="agregarPrincipalBtn">Add to root</button>
     <div class="toolbar-sep"></div>
-    <button id="versiones-btn" class="toolbar-btn" title="Historial de versiones del árbol">⏱ Versiones</button>
+    <button id="versiones-btn" class="toolbar-btn" title="Tree version history">⏱ Versions</button>
 
     <div id="act-toolbar-controls" class="hidden act-toolbar-controls">
-      <span class="tcg-label">Unidad de tiempo</span>
+      <span class="tcg-label">Time unit</span>
       <select id="act-unit-select" class="act-unit-select">
-        <option value="horas">Horas</option>
-        <option value="dias">Días</option>
-        <option value="semanas">Semanas</option>
-        <option value="años">Años</option>
+        <option value="horas">Hours</option>
+        <option value="dias">Days</option>
+        <option value="semanas">Weeks</option>
+        <option value="años">Years</option>
       </select>
       <div class="toolbar-sep"></div>
-      <button id="act-levels-btn" class="toolbar-btn" title="Mostrar/ocultar divisiones por nivel">⊞ Niveles</button>
+      <button id="act-levels-btn" class="toolbar-btn" title="Show/hide level divisions">⊞ Levels</button>
       <div class="toolbar-sep"></div>
-      <button id="act-critical-btn" class="toolbar-btn" title="Resaltar el camino crítico">🎯 Camino crítico</button>
+      <button id="act-critical-btn" class="toolbar-btn" title="Highlight the critical path">🎯 Critical path</button>
       <div class="toolbar-sep"></div>
-      <button id="act-gantt-btn" class="toolbar-btn" title="Alternar vista flechas / Gantt">📊 Vista Gantt</button>
+      <button id="act-gantt-btn" class="toolbar-btn" title="Toggle arrows / Gantt view">📊 Gantt view</button>
     </div>
 
     <div id="free-toolbar-controls" class="hidden free-toolbar-controls">
       <button id="freeAddNodeBtn" class="toolbar-btn">+ Add node ▾</button>
-      <button id="shapesBtn" class="toolbar-btn">◻ Formas</button>
+      <button id="shapesBtn" class="toolbar-btn">◻ Shapes</button>
 
       <div class="toolbar-sep"></div>
 
@@ -365,25 +410,25 @@
         <div class="toolbar-sep"></div>
 
         <!-- color por defecto de nodos -->
-        <div class="toolbar-color-group" title="Color de nodo por defecto">
-          <span class="tcg-label">Nodo</span>
+        <div class="toolbar-color-group" title="Default node color">
+          <span class="tcg-label">Node</span>
           <button id="free-node-color-btn" class="toolbar-color-dot" data-color="none"></button>
           <input id="free-node-color-input" type="color" class="hidden-color-input" value="#4f7eff" />
-          <button id="free-node-color-clear" class="toolbar-color-clear hidden" title="Limpiar color de nodo">✕</button>
+          <button id="free-node-color-clear" class="toolbar-color-clear hidden" title="Clear node color">✕</button>
         </div>
 
         <!-- color por defecto de flechas -->
-        <div class="toolbar-color-group" title="Color de flecha por defecto">
-          <span class="tcg-label">Flecha</span>
+        <div class="toolbar-color-group" title="Default arrow color">
+          <span class="tcg-label">Arrow</span>
           <button id="free-arrow-color-btn" class="toolbar-color-dot" data-color="none"></button>
           <input id="free-arrow-color-input" type="color" class="hidden-color-input" value="#4f7eff" />
-          <button id="free-arrow-color-clear" class="toolbar-color-clear hidden" title="Limpiar color de flecha">✕</button>
+          <button id="free-arrow-color-clear" class="toolbar-color-clear hidden" title="Clear arrow color">✕</button>
         </div>
 
         <div class="toolbar-sep"></div>
 
         <!-- tamaño por defecto de nodos -->
-        <div class="toolbar-size-group" title="Tamaño de nodo por defecto — dejar vacío para usar el del tipo">
+        <div class="toolbar-size-group" title="Default node size — leave empty to use the type's">
           <input id="free-size-w" type="number" min="80" max="800" placeholder="W" class="toolbar-size-input" />
           <span class="tcg-label">×</span>
           <input id="free-size-h" type="number" min="60" max="600" placeholder="H" class="toolbar-size-input" />
@@ -392,58 +437,58 @@
         <div class="toolbar-sep"></div>
 
         <!-- modo malla -->
-        <button id="free-grid-btn" class="toolbar-btn" title="Activar/desactivar malla de fondo">⊞ Malla</button>
+        <button id="free-grid-btn" class="toolbar-btn" title="Toggle background grid">⊞ Grid</button>
 
         <div class="toolbar-sep"></div>
 
         <!-- limpiar filtros -->
-        <button id="free-clear-btn" class="toolbar-btn toolbar-btn--clear" title="Limpiar todos los filtros">✕ Limpiar</button>
+        <button id="free-clear-btn" class="toolbar-btn toolbar-btn--clear" title="Clear all filters">✕ Clear</button>
       </div>
     </div>
   </div>
 
   <div id="media-picker-overlay" class="modal-overlay hidden">
     <div class="modal modal-narrow">
-      <p class="modal-hint">Agregar media</p>
+      <p class="modal-hint">Add media</p>
       <div class="modal-field">
-        <label for="media-picker-file">Subir archivo</label>
+        <label for="media-picker-file">Upload file</label>
         <input id="media-picker-file" type="file" accept="image/*,video/*" />
       </div>
-      <div class="modal-field media-picker-sep"><span>— o —</span></div>
+      <div class="modal-field media-picker-sep"><span>— or —</span></div>
       <div class="modal-field">
         <label for="media-picker-url">URL</label>
         <input id="media-picker-url" type="url" placeholder="https://..." />
       </div>
       <div class="modal-actions">
-        <button id="media-picker-cancel">Cancelar</button>
-        <button id="media-picker-ok">Agregar</button>
+        <button id="media-picker-cancel">Cancel</button>
+        <button id="media-picker-ok">Add</button>
       </div>
     </div>
   </div>
 
   <div id="shape-img-overlay" class="modal-overlay hidden">
     <div class="modal modal-narrow">
-      <p class="modal-hint">Agregar imagen</p>
+      <p class="modal-hint">Add image</p>
       <div class="modal-field">
-        <label for="shape-img-file">Subir archivo</label>
+        <label for="shape-img-file">Upload file</label>
         <input id="shape-img-file" type="file" accept="image/*" />
       </div>
-      <div class="modal-field shape-img-sep"><span>— o —</span></div>
+      <div class="modal-field shape-img-sep"><span>— or —</span></div>
       <div class="modal-field">
-        <label for="shape-img-url">URL externa</label>
+        <label for="shape-img-url">External URL</label>
         <input id="shape-img-url" type="url" placeholder="https://..." />
       </div>
       <div class="modal-actions">
-        <button id="shape-img-cancel">Cancelar</button>
-        <button id="shape-img-ok">Agregar</button>
+        <button id="shape-img-cancel">Cancel</button>
+        <button id="shape-img-ok">Add</button>
       </div>
     </div>
   </div>
 
   <div id="shapes-panel" class="shapes-panel shapes-panel--hidden">
     <div class="shapes-header">
-      <span class="shapes-title">Formas</span>
-      <button id="shapes-panel-close" class="shapes-close-btn" title="Cerrar">✕</button>
+      <span class="shapes-title">Shapes</span>
+      <button id="shapes-panel-close" class="shapes-close-btn" title="Close">✕</button>
     </div>
     <div id="shapes-grid" class="shapes-grid"></div>
   </div>
@@ -452,36 +497,92 @@
 
   <div id="versiones-overlay" class="modal-overlay hidden">
     <div class="modal modal-wide">
-      <p class="modal-hint">Versiones del proyecto</p>
+      <p class="modal-hint">Project versions</p>
       <div id="versiones-body" class="versiones-body"></div>
       <div class="modal-actions">
-        <button id="versiones-cerrar">Cerrar</button>
+        <button id="versiones-cerrar">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="mirror-conflict-overlay" class="modal-overlay hidden">
+    <div class="modal modal-wide">
+      <p class="modal-hint">The connector mirror differs from this web app</p>
+      <p class="modal-hint-sub">The connector has these folders and projects. Which one do you keep?</p>
+      <div id="mirror-conflict-body" class="mirror-conflict-body"></div>
+      <div class="modal-actions">
+        <button id="mirror-keep-mirror">Keep the mirror</button>
+        <button id="mirror-overwrite">Overwrite with the web app</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="folder-modal-overlay" class="modal-overlay hidden">
+    <div class="modal modal-narrow">
+      <p class="modal-hint">New folder</p>
+      <div class="modal-field">
+        <input id="folder-name-input" type="text" placeholder="Folder name" />
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">Hosting</label>
+        <select id="folder-hosting-select" class="ia-apis-input">
+          <option value="local">Local (this PC)</option>
+          <option value="nube-propia">Own cloud</option>
+          <option value="nube-diagramind">DiagraMinder Cloud</option>
+        </select>
+      </div>
+      <div class="modal-field hidden" id="folder-connector-field">
+        <label class="modal-label">Connector</label>
+        <select id="folder-connector-select" class="ia-apis-input"></select>
+      </div>
+      <p class="modal-hint-sub" id="folder-modal-note"></p>
+      <div class="modal-actions">
+        <button id="folder-create-confirm">Create</button>
+        <button id="folder-create-cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="newtree-overlay" class="modal-overlay hidden">
+    <div class="modal newtree-modal">
+      <p class="modal-hint">New diagram</p>
+      <div class="modal-field">
+        <label class="modal-label" for="newtree-name">Name</label>
+        <input id="newtree-name" class="ia-apis-input" type="text" placeholder="My diagram" autocomplete="off" />
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">Diagram type</label>
+        <div id="newtree-grid" class="newtree-grid"></div>
+      </div>
+      <div class="modal-actions">
+        <button id="newtree-cancel">Cancel</button>
+        <button id="newtree-create" class="newtree-create">Create</button>
       </div>
     </div>
   </div>
 
   <div id="custom-catalog-overlay" class="modal-overlay hidden">
     <div class="modal modal-narrow">
-      <p class="modal-hint">Catálogo de nodos custom</p>
+      <p class="modal-hint">Custom node catalog</p>
       <div id="custom-catalog-grid" class="catalog-grid"></div>
       <div class="modal-actions">
         <button id="custom-make-yours">Make yours</button>
-        <button id="custom-catalog-cancel">Cancelar</button>
+        <button id="custom-catalog-cancel">Cancel</button>
       </div>
     </div>
   </div>
 
   <div id="arrow-modal-overlay" class="modal-overlay hidden">
     <div class="modal modal-narrow">
-      <p class="modal-hint">Editando flecha</p>
+      <p class="modal-hint">Editing arrow</p>
       <div class="modal-field">
-        <label for="arrow-titulo">Título</label>
-        <input id="arrow-titulo" type="text" placeholder="Relación / título..." />
+        <label for="arrow-titulo">Title</label>
+        <input id="arrow-titulo" type="text" placeholder="Relationship / title..." />
       </div>
       <div class="modal-field">
         <label>Color</label>
         <div class="arrow-swatches">
-          <button class="arrow-swatch" data-color="default" title="Por defecto"></button>
+          <button class="arrow-swatch" data-color="default" title="Default"></button>
           <button class="arrow-swatch" data-color="#4f7eff" style="background:#4f7eff"></button>
           <button class="arrow-swatch" data-color="#16a34a" style="background:#16a34a"></button>
           <button class="arrow-swatch" data-color="#ea580c" style="background:#ea580c"></button>
@@ -491,23 +592,23 @@
         </div>
       </div>
       <div class="modal-actions">
-        <button id="arrow-cancel">Cancelar</button>
-        <button id="arrow-save">Guardar</button>
+        <button id="arrow-cancel">Cancel</button>
+        <button id="arrow-save">Save</button>
       </div>
     </div>
   </div>
 
   <div id="free-node-menu" class="free-menu hidden">
-    <button data-fact="edit">Editar</button>
+    <button data-fact="edit">Edit</button>
     <button data-fact="color">Color</button>
   </div>
 
   <div id="act-arrow-modal-overlay" class="modal-overlay hidden">
     <div class="modal modal-narrow">
-      <p class="modal-hint">Color del enlace</p>
+      <p class="modal-hint">Link color</p>
       <div class="modal-field">
         <div class="arrow-swatches">
-          <button class="arrow-swatch" data-color="default" title="Por defecto"></button>
+          <button class="arrow-swatch" data-color="default" title="Default"></button>
           <button class="arrow-swatch" data-color="#4f7eff" style="background:#4f7eff"></button>
           <button class="arrow-swatch" data-color="#16a34a" style="background:#16a34a"></button>
           <button class="arrow-swatch" data-color="#ea580c" style="background:#ea580c"></button>
@@ -517,98 +618,112 @@
         </div>
       </div>
       <div class="modal-actions">
-        <button id="act-arrow-close">Cerrar</button>
+        <button id="act-arrow-close">Close</button>
       </div>
     </div>
   </div>
 
   <div id="act-modal-overlay" class="modal-overlay hidden">
     <div class="modal modal-narrow">
-      <p class="modal-hint">Editando actividad</p>
+      <p class="modal-hint">Editing activity</p>
       <div class="modal-field">
-        <label for="act-titulo">Título</label>
-        <input id="act-titulo" type="text" placeholder="Nombre de la actividad..." />
+        <label for="act-titulo">Title</label>
+        <input id="act-titulo" type="text" placeholder="Activity name..." />
       </div>
       <div class="modal-field">
-        <label for="act-duracion">Duración</label>
+        <label for="act-duracion">Duration</label>
         <input id="act-duracion" type="number" min="0" step="1" value="1" />
       </div>
       <div class="modal-field">
         <label>Color</label>
-        <button id="act-color-btn" type="button" class="act-color-btn">🎨 Cambiar color</button>
+        <button id="act-color-btn" type="button" class="act-color-btn">🎨 Change color</button>
       </div>
       <div class="modal-actions">
-        <button id="act-cancel">Cancelar</button>
-        <button id="act-save">Guardar</button>
+        <button id="act-cancel">Cancel</button>
+        <button id="act-save">Save</button>
       </div>
     </div>
   </div>
 
   <div id="modal-overlay" class="modal-overlay hidden">
     <div class="modal modal-rich">
-      <p class="modal-hint">Editando carta</p>
+      <p class="modal-hint">Editing card</p>
       <div class="modal-field">
-        <label for="modal-titulo">Título</label>
-        <input id="modal-titulo" type="text" placeholder="Título de la carta..." />
+        <label for="modal-titulo">Title</label>
+        <input id="modal-titulo" type="text" placeholder="Card title..." />
       </div>
       <div class="modal-field modal-field--editor">
         <div class="modal-editor-header">
-          <label>Contenido</label>
-          <button id="modal-mode-toggle" class="modal-mode-btn" title="Alternar vista/edición">✏ Editar</button>
+          <label>Content</label>
+          <div class="modal-editor-header-btns">
+            <button id="modal-mode-toggle" class="modal-mode-btn" title="Toggle view/edit"><svg class="modal-mode-ico" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10.5 2.6l2.9 2.9-7.4 7.4-3.4.5.5-3.4 7.4-7.4z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M9.2 3.9l2.9 2.9" stroke="currentColor" stroke-width="1.2"/></svg> Edit</button>
+            <button id="modal-mode-expand" class="modal-mode-btn" title="Expand to full screen (page view)"><svg class="modal-mode-ico" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5L9 7M2.5 13.5L7 9" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg> Expand</button>
+          </div>
         </div>
         <div id="modal-editor-wrap" class="modal-editor-wrap"></div>
       </div>
       <div class="modal-actions">
-        <button id="modal-cancel">Cancelar</button>
-        <button id="modal-save">Guardar</button>
+        <button id="modal-cancel">Cancel</button>
+        <button id="modal-save">Save</button>
       </div>
     </div>
   </div>
+  <!-- editor maximizado: vista "documento" (hojas A4) a pantalla completa -->
+  <div id="editor-max-overlay" class="editor-max-overlay hidden">
+    <div class="editor-max-bar">
+      <button id="editor-max-back" class="editor-max-back" title="Back to editor">
+        <svg width="18" height="18" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Back</span>
+      </button>
+      <span class="editor-max-title" id="editor-max-title"></span>
+    </div>
+    <div class="editor-max-host" id="editor-max-host"></div>
+  </div>
   <div id="color-modal-overlay" class="modal-overlay hidden">
     <div class="modal">
-      <p class="modal-hint">Elegí un color</p>
+      <p class="modal-hint">Pick a color</p>
       <div class="color-swatches">
-        <button class="color-swatch" data-color="default" title="Sin color"></button>
+        <button class="color-swatch" data-color="default" title="No color"></button>
         <!-- fila 1: oscuros mate -->
-        <button class="color-swatch" data-color="#2e3f58" style="background:#2e3f58" title="Pizarra"></button>
-        <button class="color-swatch" data-color="#1e3528" style="background:#1e3528" title="Bosque"></button>
-        <button class="color-swatch" data-color="#40281a" style="background:#40281a" title="Cacao"></button>
-        <button class="color-swatch" data-color="#3e1a28" style="background:#3e1a28" title="Vino"></button>
-        <button class="color-swatch" data-color="#2c2042" style="background:#2c2042" title="Uva"></button>
+        <button class="color-swatch" data-color="#2e3f58" style="background:#2e3f58" title="Slate"></button>
+        <button class="color-swatch" data-color="#1e3528" style="background:#1e3528" title="Forest"></button>
+        <button class="color-swatch" data-color="#40281a" style="background:#40281a" title="Cocoa"></button>
+        <button class="color-swatch" data-color="#3e1a28" style="background:#3e1a28" title="Wine"></button>
+        <button class="color-swatch" data-color="#2c2042" style="background:#2c2042" title="Grape"></button>
         <!-- fila 2: pasteles -->
-        <button class="color-swatch" data-color="#93c5fd" style="background:#93c5fd" title="Azul pastel"></button>
-        <button class="color-swatch" data-color="#86efac" style="background:#86efac" title="Verde pastel"></button>
-        <button class="color-swatch" data-color="#fdba74" style="background:#fdba74" title="Naranja pastel"></button>
-        <button class="color-swatch" data-color="#fca5a5" style="background:#fca5a5" title="Rosa pastel"></button>
-        <button class="color-swatch" data-color="#c4b5fd" style="background:#c4b5fd" title="Lavanda pastel"></button>
-        <button class="color-swatch" data-color="#7dd3fc" style="background:#7dd3fc" title="Cielo pastel"></button>
+        <button class="color-swatch" data-color="#93c5fd" style="background:#93c5fd" title="Pastel blue"></button>
+        <button class="color-swatch" data-color="#86efac" style="background:#86efac" title="Pastel green"></button>
+        <button class="color-swatch" data-color="#fdba74" style="background:#fdba74" title="Pastel orange"></button>
+        <button class="color-swatch" data-color="#fca5a5" style="background:#fca5a5" title="Pastel pink"></button>
+        <button class="color-swatch" data-color="#c4b5fd" style="background:#c4b5fd" title="Pastel lavender"></button>
+        <button class="color-swatch" data-color="#7dd3fc" style="background:#7dd3fc" title="Pastel sky"></button>
       </div>
       <div class="color-palette-row">
-        <input id="color-picker-native" type="color" value="#242424" title="Elegí cualquier color" />
-        <span class="color-palette-label">Paleta</span>
+        <input id="color-picker-native" type="color" value="#242424" title="Pick any color" />
+        <span class="color-palette-label">Palette</span>
       </div>
       <div class="color-hex-row">
         <label for="color-hex-input">Hex</label>
         <input id="color-hex-input" type="text" maxlength="7" placeholder="#rrggbb" spellcheck="false" />
       </div>
       <div class="modal-actions">
-        <button id="color-cancel">Cancelar</button>
-        <button id="color-save">Aplicar</button>
+        <button id="color-cancel">Cancel</button>
+        <button id="color-save">Apply</button>
       </div>
     </div>
   </div>
 
   <div id="shape-modal-overlay" class="modal-overlay hidden">
     <div class="modal">
-      <p class="modal-hint">Elegí una forma</p>
+      <p class="modal-hint">Pick a shape</p>
       <div class="shape-options">
-        <button class="shape-opt" data-shape="default">▭ Rectángulo</button>
-        <button class="shape-opt" data-shape="sharp">◻ Esquinas rectas</button>
-        <button class="shape-opt" data-shape="rounded">▢ Redondeado</button>
-        <button class="shape-opt" data-shape="pill">⬭ Pastilla</button>
+        <button class="shape-opt" data-shape="default">▭ Rectangle</button>
+        <button class="shape-opt" data-shape="sharp">◻ Sharp corners</button>
+        <button class="shape-opt" data-shape="rounded">▢ Rounded</button>
+        <button class="shape-opt" data-shape="pill">⬭ Pill</button>
       </div>
       <div class="modal-actions">
-        <button id="shape-cancel">Cancelar</button>
+        <button id="shape-cancel">Cancel</button>
       </div>
     </div>
   </div>
@@ -635,14 +750,14 @@
   </div>
 
   <div id="zoom-controls">
-    <button id="fab-zoom-in"  class="zoom-fab" title="Acercar">+</button>
+    <button id="fab-zoom-in"  class="zoom-fab" title="Zoom in">+</button>
     <button id="fab-fit"      class="zoom-fab" title="Reset zoom">⊙</button>
-    <button id="fab-zoom-out" class="zoom-fab" title="Alejar">−</button>
+    <button id="fab-zoom-out" class="zoom-fab" title="Zoom out">−</button>
   </div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://unpkg.com/html-docx-js@0.3.1/dist/html-docx.js"></script>
   <script type="module" src="./dist/bundle.js"></script>
 </body>
+</html>
