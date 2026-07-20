@@ -18,6 +18,11 @@
   --doc-page-muted:#9aa0a6;
   --doc-line:      #4a4a4a;
 
+  /* sombras (el tema claro las suaviza) */
+  --shadow-el:     0 2px 10px rgba(0, 0, 0, .25);
+  --shadow-pop:    0 8px 24px rgba(0, 0, 0, .35);
+  --shadow-deep:   0 14px 44px rgba(0, 0, 0, .5);
+
   /* alias para compatibilidad interna */
   --btn-border: var(--border);
 
@@ -38,17 +43,24 @@
 }
 
 [data-theme="light"] {
-  --bg:            #c9c9c9;              /* fondo del board: gris muy claro */
-  --surface:       #dbdbdb;             /* navbar, toolbar, aside, cards, modales */
-  --surface2:      #ebeaea;             /* inputs y cuerpo de carta */
-  --border:        rgba(17, 24, 39, .10);
-  --border-strong: rgba(17, 24, 39, .18);
+  /* Paleta clara "limpia": superficies BLANCAS sobre fondo gris azulado frío.
+     Antes era gris-sobre-gris (#c9/#db/#eb) y se veía turbio, sin jerarquía. */
+  --bg:            #e9edf2;             /* fondo del board: gris azulado claro */
+  --surface:       #ffffff;             /* navbar, toolbar, aside, cards, modales */
+  --surface2:      #f2f4f8;             /* inputs y cuerpo de carta */
+  --border:        rgba(17, 24, 39, .08);
+  --border-strong: rgba(17, 24, 39, .16);
   --text:          #1f2328;             /* casi negro */
-  --text-muted:    #5b626b;             /* gris medio */
+  --text-muted:    #57606a;             /* gris medio */
   --accent:        #2563eb;
-  --accent-dim:    rgba(37, 99, 235, .12);
-  --wire-color:    #c4cad3;             /* cables en gris suave */
-  --wire-inner:    rgba(37, 99, 235, .45);
+  --accent-dim:    rgba(37, 99, 235, .10);
+  --wire-color:    #9aa6b6;             /* cables visibles sobre el fondo claro */
+  --wire-inner:    rgba(37, 99, 235, .50);
+
+  /* sombras suaves (las negras del tema oscuro ensucian el claro) */
+  --shadow-el:     0 1px 3px rgba(17, 24, 39, .08), 0 2px 8px rgba(17, 24, 39, .06);
+  --shadow-pop:    0 8px 24px rgba(17, 24, 39, .14);
+  --shadow-deep:   0 14px 44px rgba(17, 24, 39, .18);
 
   /* hoja del editor maximizado — blanca en modo claro */
   --doc-page:      #ffffff;
@@ -59,13 +71,10 @@
 
 /* puntos del canvas en oscuro para que se vean sobre el fondo claro */
 [data-theme="light"] #board {
-  background-image: radial-gradient(circle, rgba(17, 24, 39, .12) 1px, transparent 1px);
+  background-image: radial-gradient(circle, rgba(17, 24, 39, .13) 1px, transparent 1px);
 }
 
-/* en tema claro la sombra del header es más suave */
-[data-theme="light"] .app-header {
-  box-shadow: 0 2px 8px rgba(17, 24, 39, 0.12);
-}
+/* (la sombra del header ya sale suave del var --shadow-el en tema claro) */
 
 /* ===== BASE ===== */
 *, *::before, *::after { box-sizing: border-box; }
@@ -106,6 +115,36 @@ body {
   display: block;
   padding: 0;
   width: auto;
+}
+
+/* botones-icono del editor (header del explorer, refresh de git, etc.): base neutra,
+   hover sutil con el acento (como el resto de la app). Reemplaza el hover inline por
+   JS (mouseenter/mouseleave) que a veces quedaba "pegado" con fondo claro. */
+.ed-icon-btn {
+  border: none;
+  background: none;
+  color: #9ca3af;
+  cursor: pointer;
+  transition: background .12s, color .12s;
+}
+.ed-icon-btn:hover { background: var(--accent-dim); color: var(--accent); }
+
+/* modo editor (doc 27): el board es un host plano que llena el contenedor; sin el
+   padding de 3000px del canvas cart (con border-box inflaba el board a 6000×6000 y
+   dejaba la UI del editor centrada fuera de la vista → "pantalla negra") */
+#board.board-editor {
+  display: block;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* modo documents (doc 30): mismo host plano full-board que el editor */
+#board.board-documents {
+  display: block;
+  padding: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .cell {
@@ -544,7 +583,7 @@ body {
   background: var(--surface);
   border: 1px solid var(--border-strong);
   border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0,0,0,.3);
+  box-shadow: var(--shadow-pop);
   transform-origin: top left;
   transform: scale(.97);
   opacity: 0;
@@ -661,6 +700,24 @@ body {
 .toolbar-btn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
 .toolbar-btn--clear { color: #dc2626; border-color: #dc262640; }
 .toolbar-btn--clear:hover { background: #dc262615; border-color: #dc2626; color: #dc2626; }
+/* gating por modo: sin esta regla la clase .hidden no ocultaba nada (no hay .hidden global) */
+.toolbar-btn.hidden { display: none; }
+/* iconos SVG de los botones del toolbar (heredan color/hover via currentColor) */
+.toolbar-btn-ico { width: 15px; height: 15px; flex: 0 0 auto; }
+
+/* ===== iconos SVG de la UI (app/ui/icons.js) — reemplazan emojis ===== */
+.ui-ico { flex: 0 0 auto; vertical-align: -0.15em; }
+.ui-ico--lead { margin-right: 0.4em; }
+/* botones/labels con icono+texto: centrar verticalmente sin depender del baseline.
+   OJO: .ag-meta NO va acá — es block con text-overflow:ellipsis y el icono va inline */
+.ag-node-btn, .orch-run-root, .orch-run-icon,
+.qz-modal-title, .orch-mem-warn, .orch-bar-status {
+  display: inline-flex; align-items: center;
+}
+.orch-run-icon { justify-content: center; }
+.orch-run-live { color: #22c55e; }        /* dot verde = run en vivo */
+/* botones solo-icono (pausa/kill/enviar): centrar el svg */
+.orch-bar-btn { display: inline-flex; align-items: center; justify-content: center; }
 
 /* vertical separator */
 .toolbar-sep {
@@ -756,7 +813,7 @@ body {
   z-index: 80;   /* por ENCIMA del chat (70): el panel queda "metido" bajo el nav */
   background: var(--surface);
   border-bottom: 1px solid var(--border-strong);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--shadow-el);
   height: 56px;
   display: flex;
   align-items: center;
@@ -793,6 +850,10 @@ body {
   display: inline-block;
 }
 
+/* wordmark del navbar: "Diagra" en texto + "Minder" en acento (sin el punto azul) */
+.brand-name { letter-spacing: -0.01em; }
+.brand-accent { color: var(--accent); }
+
 /* ocultar logo-gem si existe */
 .logo-gem, .brand-word { display: none; }
 
@@ -811,24 +872,55 @@ body {
 
 .nav-item summary {
   list-style: none;
-  padding: 6px 12px;
-  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 11px;
+  border-radius: 7px;
   color: var(--text-muted);
   cursor: pointer;
   user-select: none;
   outline: none;
   border: none;
-  font: 500 13px/1.2 system-ui, sans-serif;
+  font: 550 13px/1.2 system-ui, sans-serif;
   transition: background .12s, color .12s;
 }
 
-.nav-item summary:hover,
-.nav-item details[open] > summary {
-  background: var(--surface2);
-  color: var(--text);
+/* hover: tinte de acento sutil (como los pills/toolbar); abierto: acento pleno */
+.nav-item summary:hover { background: var(--accent-dim); color: var(--text); }
+.nav-item details[open] > summary { background: var(--accent-dim); color: var(--accent); }
+
+/* botón "Home" del navbar (a la izquierda de File): mismo look que un summary */
+.nav-home-btn {
+  padding: 6px 11px;
+  border: none;
+  background: transparent;
+  border-radius: 7px;
+  color: var(--text-muted);
+  cursor: pointer;
+  font: 550 13px/1.2 system-ui, sans-serif;
+  transition: background .12s, color .12s;
 }
+.nav-home-btn:hover { background: var(--accent-dim); color: var(--text); }
+.nav-home-btn.layout-active { background: var(--accent-dim); color: var(--accent); }
 
 .nav-item details > summary::-webkit-details-marker { display: none; }
+
+/* caret sutil en los menús desplegables (no en la casilla de ubicación ni en Home):
+   señala que son menús y gira al abrir */
+.nav-item:not(.nav-location) details > summary::after {
+  content: "";
+  width: 5px; height: 5px;
+  margin-left: 7px;
+  border-right: 1.6px solid currentColor;
+  border-bottom: 1.6px solid currentColor;
+  transform: rotate(45deg) translate(-1px, -1px);
+  opacity: .45;
+  transition: transform .15s ease, opacity .12s;
+}
+.nav-item:not(.nav-location) details[open] > summary::after {
+  transform: rotate(-135deg) translate(1px, 1px);
+  opacity: .9;
+}
 
 /* selector de idioma (i18n): mismo look que los summary del navbar */
 .nav-lang-select {
@@ -842,36 +934,58 @@ body {
   font: 500 13px/1.2 system-ui, sans-serif;
   transition: background .12s, color .12s;
 }
-.nav-lang-select:hover { background: var(--surface2); color: var(--text); }
+.nav-lang-select:hover { background: var(--accent-dim); color: var(--text); }
 .nav-lang-select option { color: initial; }
 
-/* select del árbol activo: recuadro punteado para resaltarlo como la
-   instancia en la que estás trabajando (no es un botón normal) */
-.nav-trees summary#tree-current {
-  border: 1px dashed var(--border-strong);
+/* ===== Casilla de ubicación: carpeta activa + proyecto activo agrupados =====
+   Comunica "estás trabajando ACÁ": una carpeta (icono folder) y adentro un
+   proyecto (icono file). Va en su propia casilla con borde, separada del resto
+   del navbar (File/Edit/…) por una barra vertical (.nav-loc-bar). */
+.nav-location {
+  display: flex;
+  align-items: stretch;
+  border: 1px dashed var(--border-strong);   /* entrecortado: "instancia en la que trabajás" */
+  border-radius: 8px;
   background: transparent;
+  padding: 2px;
+  margin-right: 2px;
+}
+/* summaries de la casilla: sobreescriben el estilo genérico .nav-item summary */
+.nav-location summary#folder-current,
+.nav-location summary#tree-current {
+  display: inline-flex;
+  align-items: center;
   color: var(--text);
-  padding: 5px 12px;            /* compensa el borde de 1px */
-  border-radius: 7px;
-  transition: background .12s, color .12s, border-color .12s;
+  background: transparent;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 6px;
+  transition: background .12s, color .12s;
 }
-.nav-trees summary#tree-current::before {
-  content: "◆";
-  font-size: 9px;
-  color: var(--text-muted);
-  margin-right: 7px;
-  vertical-align: middle;
-  transition: color .12s;
-}
-.nav-trees summary#tree-current:hover,
-.nav-trees details[open] > summary#tree-current {
-  border-color: var(--accent);
+.nav-location summary#folder-current:hover,
+.nav-location details#folder-menu[open] > summary#folder-current,
+.nav-location summary#tree-current:hover,
+.nav-location details#tree-menu[open] > summary#tree-current {
   background: var(--accent-dim);
-  color: var(--text);
-}
-.nav-trees summary#tree-current:hover::before,
-.nav-trees details[open] > summary#tree-current::before {
   color: var(--accent);
+}
+/* iconos folder/file que antepone el JS (refreshFolderMenu / refreshTreeMenu) */
+.nav-location summary .ui-ico { opacity: .9; }
+
+/* divisor fino entre carpeta y proyecto (dentro de la casilla) */
+.nav-loc-sep {
+  align-self: center;
+  width: 1px; height: 16px;
+  background: var(--border-strong);
+  margin: 0 1px;
+}
+/* barra vertical que separa la casilla de los menús del navbar */
+.nav-loc-bar {
+  align-self: center;
+  width: 1px; height: 22px;
+  background: var(--border-strong);
+  margin: 0 8px 0 5px;
+  list-style: none;
 }
 
 /* dropdown nav */
@@ -886,7 +1000,7 @@ body {
   background: var(--surface);
   border: 1px solid var(--border-strong);
   border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0,0,0,.25);
+  box-shadow: var(--shadow-pop);
   z-index: 200;
 }
 
@@ -948,7 +1062,7 @@ body {
   position: absolute; top: 100%; right: 0; z-index: 50;
   list-style: none; margin: 4px 0 0; padding: 4px; min-width: 140px;
   background: var(--surface); border: 1px solid var(--border-strong); border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0,0,0,.35);
+  box-shadow: var(--shadow-pop);
 }
 .folder-opts-menu.hidden { display: none; }
 .menu .folder-opt { width: 100%; text-align: left; padding: 7px 10px; border-radius: 6px; }
@@ -982,7 +1096,7 @@ body {
   position: absolute; top: 100%; right: 0; z-index: 50; list-style: none;
   margin: 4px 0 0; padding: 4px; min-width: 200px;
   background: var(--surface); border: 1px solid var(--border-strong); border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0,0,0,.35);
+  box-shadow: var(--shadow-pop);
 }
 .ia-conn-opts-menu.hidden { display: none; }
 .ia-conn-opt { width: 100%; text-align: left; background: none; border: 0; color: var(--text); cursor: pointer; padding: 7px 10px; border-radius: 6px; font: 500 12px/1.2 system-ui; }
@@ -1133,6 +1247,16 @@ body.aside-collapsed .toolbar        { margin-left: 34px; }
 /* en Home no se muestra el explorador */
 body.view-home #tree-aside { display: none; }
 
+/* modo editor (doc 27): fuera el explorador de la app y la toolbar — el editor trae
+   su propio aside (activity bar estilo VSC). El board ocupa todo el ancho y también
+   el alto de la toolbar. Va DESPUÉS de las reglas de aside-collapsed para ganarles. */
+body.editor-mode #tree-aside { display: none; }
+body.editor-mode .toolbar { display: none; }
+body.editor-mode #boardContainer {
+  margin-left: 0;
+  height: calc(100vh - 56px);   /* solo el navbar arriba (sin los 52px de toolbar) */
+}
+
 /* filas del explorador */
 .aside-row {
   position: relative;
@@ -1222,7 +1346,7 @@ body.view-home #tree-aside { display: none; }
   white-space: nowrap;
   pointer-events: none;
   user-select: none;
-  box-shadow: 0 1px 4px rgba(0,0,0,.2);
+  box-shadow: var(--shadow-el);
 }
 
 .free-node {
@@ -1233,7 +1357,7 @@ body.view-home #tree-aside { display: none; }
   background: var(--surface);
   border: 1px solid var(--border-strong);
   border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(0,0,0,.25);
+  box-shadow: var(--shadow-el);
   cursor: grab;
   user-select: none;
 }
@@ -1273,6 +1397,28 @@ body.view-home #tree-aside { display: none; }
 }
 .free-node-body img,
 .free-node-body iframe { max-width: 100%; border: none; display: block; }
+
+/* ---- tipo MD: tarjeta estilo Obsidian, todo descripción (sin título en canvas) ---- */
+.free-node.type-md > .free-node-titulo:not(:has(.free-title-input)) { display: none; }
+.free-node.type-md .free-node-body { padding: 0; }
+.free-node.type-md .free-md-content {
+  min-height: 0;
+  max-height: none;
+  height: 100%;
+  overflow-y: auto;
+  padding: 10px 12px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  cursor: inherit;
+  user-select: none;
+}
+.free-node.type-md .free-md-content:empty::before {
+  content: attr(data-placeholder);
+  color: var(--text-muted);
+}
+/* dentro de la tarjeta los headings no explotan de tamaño */
+.free-node.type-md .free-md-content h1 { font-size: 1.45em; }
+.free-node.type-md .free-md-content h2 { font-size: 1.25em; }
 
 /* ---- tipo GRUPO: rectángulo semitransparente con nombre grande arriba-izq ---- */
 .free-node.type-grupo {
@@ -1489,6 +1635,114 @@ body.view-home #tree-aside { display: none; }
 .free-node.type-objgroup .free-node-body { padding: 0; height: auto; }
 .free-node.type-objgroup .obj-group-body { padding: 6px; }
 .free-node.type-objgroup .obj-badge { align-self: flex-start; }
+
+/* ---- IA ORCHESTRATOR (doc 28): nodos de la empresa ---- */
+.ag-badge-agAgent    { background: #6366f1; }  /* indigo */
+.ag-badge-agResource { background: #14b8a6; }  /* teal   */
+.ag-badge-agTask     { background: #f59e0b; }  /* ámbar  */
+.ag-badge-agDept     { background: #64748b; }  /* slate  */
+.ag-badge-agWebhook  { background: #f43f5e; }  /* rose   */
+.ag-badge-agMcp      { background: #0ea5e9; }  /* sky    */
+.free-node.type-agAgent    { border-left: 4px solid #6366f1; }
+.free-node.type-agResource { border-left: 4px solid #14b8a6; }
+.free-node.type-agTask     { border-left: 4px solid #f59e0b; }
+/* como los obj-*: el badge reemplaza al título del header */
+.free-node[class*="type-ag"] > .free-node-titulo:not(:has(.free-title-input)) { display: none; }
+.ag-rol  { font-size: 11px; line-height: 1.35; opacity: .85; overflow: hidden; }
+.ag-meta { font-size: 11px; opacity: .65; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* departamento: sector visual detrás, no impactable (como objgroup) */
+.free-node.type-agDept {
+  z-index: 0;
+  background: rgba(99, 102, 241, 0.06);
+  border: 1.5px dashed rgba(99, 102, 241, 0.55);
+  border-left: 1.5px dashed rgba(99, 102, 241, 0.55);
+  box-shadow: none;
+}
+.free-node.type-agDept .free-node-body { padding: 0; height: auto; }
+.free-node.type-agDept .obj-group-body { padding: 6px; }
+.free-node.type-agDept .obj-badge { align-self: flex-start; }
+
+/* ---- IA ORCHESTRATOR fase 2: runtime (estados, barra del run, mini-chat) ---- */
+.ag-node-btn { margin-top: 4px; align-self: flex-start; border: 1px solid #3b3b46; background: rgba(0,0,0,.25); color: #e5e7eb; border-radius: 6px; padding: 2px 10px; cursor: pointer; font: 11px system-ui; }
+.ag-node-btn:hover { border-color: var(--accent); }
+.ag-run-btn { background: #14532d; border-color: #16a34a; }
+
+/* estados del run sobre los nodos (verde=ejecutando, amarillo=esperando respuesta,
+   violeta=esperando al humano, rojo=error, gris=en cola por lock — doc 28 §2) */
+.free-node.orch-running { box-shadow: 0 0 0 2.5px #22c55e, 0 6px 18px rgba(34,197,94,.35); }
+.free-node.orch-waiting { box-shadow: 0 0 0 2.5px #f59e0b; }
+.free-node.orch-asking  { box-shadow: 0 0 0 2.5px #a855f7, 0 6px 18px rgba(168,85,247,.35); }
+.free-node.orch-error   { box-shadow: 0 0 0 2.5px #ef4444; }
+.free-node.orch-queued  { box-shadow: 0 0 0 2.5px #64748b; opacity: .8; }
+.ag-meta.ag-director { color: #fbbf24; }
+.orch-mem-warn { position: absolute; top: -10px; right: -8px; background: #713f12; color: #fbbf24; border: 1px solid #a16207; border-radius: 999px; font: 600 10px system-ui; padding: 1px 7px; z-index: 5; }
+
+/* barra flotante del run (estado + gasto + pausa/kill + pregunta al humano) */
+.orch-bar { position: fixed; left: 50%; transform: translateX(-50%); bottom: 14px; z-index: 900; background: #15151b; border: 1px solid #3b3b46; border-radius: 12px; padding: 8px 12px; box-shadow: 0 10px 30px rgba(0,0,0,.5); font: 13px system-ui; color: #e5e7eb; min-width: 380px; max-width: 720px; }
+.orch-bar.hidden { display: none; }
+.orch-bar-row { display: flex; align-items: center; gap: 10px; }
+.orch-bar-status { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.orch-bar[data-status="error"] .orch-bar-status { color: #f87171; }
+.orch-bar[data-status="waiting_human"] .orch-bar-status { color: #c084fc; }
+.orch-bar-spend { opacity: .6; font-size: 11px; white-space: nowrap; }
+.orch-bar-btn { border: 1px solid #3b3b46; background: #22222b; color: #e5e7eb; border-radius: 6px; padding: 2px 9px; cursor: pointer; }
+.orch-ask { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.orch-ask.hidden { display: none; }
+.orch-ask-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; border-top: 1px solid #26262e; padding-top: 6px; }
+.orch-ask-q { flex-basis: 100%; color: #c084fc; font-size: 12px; }
+.orch-ask-input { flex: 1; background: #0b0b10; border: 1px solid #3b3b46; border-radius: 6px; color: #e5e7eb; padding: 5px 8px; font: 13px system-ui; }
+
+/* API keys del orquestador (🔑 — viven en el conector del proyecto) */
+.orch-keys-modal { width: min(480px, 92vw); }
+.orch-keys-note { font-size: 11.5px; opacity: .7; margin: 2px 0 10px; line-height: 1.45; }
+.orch-keys-body { display: flex; flex-direction: column; gap: 10px; }
+.orch-keys-row { display: flex; flex-direction: column; gap: 6px; border-top: 1px solid #26262e; padding-top: 8px; }
+.orch-keys-rowhead { display: flex; align-items: center; gap: 10px; }
+.orch-keys-prov { font-weight: 600; flex: 0 0 90px; }
+.orch-keys-status { flex: 1; font-size: 11.5px; opacity: .65; }
+.orch-keys-status.ok { color: #4ade80; opacity: 1; }
+.orch-keys-msg { margin-top: 8px; font-size: 12px; color: #4ade80; min-height: 16px; }
+.orch-hook-val { font: 12px ui-monospace, Menlo, monospace; background: #0b0b10; border: 1px solid #3b3b46; border-radius: 6px; padding: 6px 8px; word-break: break-all; user-select: all; }
+
+/* mini-chat por nodo (decisión S) */
+.orch-chat-modal { width: min(560px, 92vw); }
+.orch-chat-mem { font-size: 11px; opacity: .7; margin: 2px 0 8px; }
+.orch-chat-msgs { max-height: 320px; min-height: 120px; overflow: auto; display: flex; flex-direction: column; gap: 6px; padding: 4px 0; }
+.orch-chat-msg { padding: 6px 10px; border-radius: 10px; font-size: 13px; max-width: 85%; white-space: pre-wrap; }
+.orch-chat-msg.me { align-self: flex-end; background: #2563eb; color: #fff; }
+.orch-chat-msg.ai { align-self: flex-start; background: #22222b; }
+.orch-chat-inrow { display: flex; gap: 8px; margin-top: 8px; }
+.orch-chat-inrow input { flex: 1; }
+.orch-chat-foot { display: flex; gap: 8px; margin-top: 8px; }
+
+/* historial de runs + logs (observabilidad, doc 28) */
+.ag-node-btnrow { display: flex; gap: 6px; margin-top: 4px; }
+.orch-runs-modal { width: min(860px, 94vw); }
+.orch-runs-split { display: flex; gap: 12px; min-height: 340px; max-height: 62vh; }
+.orch-runs-list { flex: 0 0 240px; overflow: auto; border-right: 1px solid #26262e; padding-right: 8px; display: flex; flex-direction: column; gap: 4px; }
+.orch-run-item { padding: 7px 9px; border-radius: 8px; cursor: pointer; border: 1px solid transparent; }
+.orch-run-item:hover { background: #1b1b22; }
+.orch-run-item.sel { background: #1b1b22; border-color: #3b3b46; }
+.orch-run-item-1 { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+.orch-run-root { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.orch-run-item-2 { font-size: 11px; opacity: .6; margin-top: 2px; }
+.orch-runs-detail { flex: 1; min-width: 0; overflow: auto; }
+.orch-run-detail-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.orch-run-detail-meta { flex: 1; font-size: 12px; opacity: .8; }
+.orch-run-node-sel { max-width: 180px; }
+.orch-run-final { margin: 6px 0; padding: 6px 10px; background: #14251c; border-radius: 8px; font-size: 13px; }
+.orch-run-final.err { background: #2a1616; color: #fca5a5; }
+.orch-timeline { display: flex; flex-direction: column; gap: 2px; font: 12px/1.5 ui-monospace, Menlo, monospace; max-height: 46vh; overflow: auto; }
+.orch-tl-row { display: flex; gap: 8px; padding: 2px 4px; border-radius: 4px; }
+.orch-tl-row:hover { background: #16161c; }
+.orch-tl-time { flex: 0 0 auto; opacity: .45; }
+.orch-tl-node { flex: 0 0 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #93c5fd; }
+.orch-tl-txt { flex: 1; min-width: 0; white-space: pre-wrap; word-break: break-word; }
+.orch-tl-state .orch-tl-txt { opacity: .55; }
+.orch-tl-ask .orch-tl-txt { color: #c084fc; }
+.orch-tl-final .orch-tl-txt { color: #4ade80; }
+.orch-nodelogs-modal { width: min(720px, 92vw); }
+.orch-node-logs-hint { font-size: 11px; opacity: .6; margin-bottom: 6px; }
 
 /* barra arriba del preview de items (orden de envío + expandir) */
 .obj-items-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
@@ -1852,7 +2106,7 @@ body.view-home #tree-aside { display: none; }
   background: var(--surface);
   border: 1px solid var(--border-strong);
   border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0,0,0,.25);
+  box-shadow: var(--shadow-pop);
   z-index: 300;
 }
 .free-menu.hidden { display: none; }
@@ -1932,7 +2186,7 @@ body.view-home #tree-aside { display: none; }
   /* colapsado: el rail tiene 34px, el toolbar/board se corren para que el botón sea visible */
   body.aside-collapsed #boardContainer,
   body.aside-collapsed .toolbar { margin-left: 34px; }
-  #tree-aside { box-shadow: 0 8px 24px rgba(0,0,0,.45); }
+  #tree-aside { box-shadow: var(--shadow-pop); }
 }
 
 /* submenu flotante de "Agregar árbol" */
@@ -1949,7 +2203,7 @@ body.view-home #tree-aside { display: none; }
   background: var(--surface);
   border: 1px solid var(--border-strong);
   border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0,0,0,.25);
+  box-shadow: var(--shadow-pop);
 }
 .menu .tree-add-wrap:hover .submenu,
 .menu .tree-add-wrap:focus-within .submenu { display: block; }
@@ -2010,26 +2264,29 @@ body.view-home #tree-aside { display: none; }
   color: var(--accent);
 }
 
-/* botón IA */
-#ia-btn {
+/* pills del navbar (Account / IA · Connectors): icono de línea + label */
+.nav-pill, #ia-btn {
   height: 30px;
-  padding: 0 12px;
-  border-radius: 6px;
+  padding: 0 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 7px;
   border: 1px solid var(--border-strong);
   background: var(--surface2);
   color: var(--text-muted);
-  font: 700 12px/1 system-ui;
-  display: grid;
-  place-items: center;
+  font: 600 12px/1 system-ui;
   cursor: pointer;
   margin-left: 4px;
+  white-space: nowrap;
   transition: background .12s, color .12s, border-color .12s;
 }
-#ia-btn:hover {
+.nav-pill:hover, #ia-btn:hover {
   background: var(--accent-dim);
   border-color: var(--accent);
   color: var(--accent);
 }
+.nav-pill svg { width: 15px; height: 15px; flex: 0 0 auto; }
 
 /* ===== Paneles laterales derechos (IA / Perfil) ===== */
 .side-panel {
@@ -2949,6 +3206,47 @@ body.view-home #tree-aside { display: none; }
   gap: 8px; padding: 10px;
   align-content: start;
 }
+/* título de sección dentro del grid (ocupa las 2 columnas) */
+.shapes-section-title {
+  grid-column: 1 / -1;
+  font: 700 11px/1 system-ui, sans-serif;
+  color: var(--text-muted);
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  padding: 6px 2px 0;
+}
+.shapes-section-title:not(:first-child) {
+  margin-top: 6px;
+  border-top: 1px solid var(--border-strong);
+  padding-top: 12px;
+}
+
+/* ===== nodo SHAPE conectable (type-shape): la forma ES el nodo ===== */
+.free-node.type-shape {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+}
+.free-node.type-shape .free-node-titulo {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  border: none;
+  padding: 4px 12px;
+  font: 600 13px/1.25 system-ui, sans-serif;
+  text-align: center;
+  overflow: hidden;
+  pointer-events: none;      /* los clicks van al nodo (drag / dblclick) */
+  z-index: 2;
+}
+.free-node.type-shape .free-node-titulo:has(.free-title-input) { pointer-events: auto; }
+.free-node.type-shape .free-node-body {
+  position: absolute; inset: 0;
+  padding: 0;
+  overflow: visible;
+}
+.free-node.type-shape .shape-body-wrap,
+.free-node.type-shape .shape-body-wrap svg { width: 100%; height: 100%; display: block; }
 
 .shape-card {
   display: flex; flex-direction: column; align-items: center; gap: 5px;
@@ -3169,37 +3467,88 @@ body.view-home #tree-aside { display: none; }
 .shape-img-sep { text-align: center; color: var(--text-muted); font-size: 12px; padding: 0; }
 #shape-img-file { font-size: 13px; color: var(--text); width: 100%; }
 
-/* ===== ZOOM FAB ===== */
+/* ===== Controles flotantes (zoom + toolbar) estilo Obsidian ===== */
 #zoom-controls {
   position: fixed;
   top: 120px;
   right: 12px;
   display: flex;
   flex-direction: column;
+  align-items: flex-end;   /* martillo y stack alineados a la derecha */
   gap: 8px;
   z-index: 1000;
 }
 
-.zoom-fab {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  border: 1px solid var(--border-strong);
-  background: var(--surface);
-  color: var(--text);
-  font-size: 20px;
-  line-height: 1;
-  cursor: pointer;
+/* el panel de Shapes (derecha) tapa la zona: ocultar los controles flotantes
+   mientras esté abierto (mismo criterio que side-panel/ia-chat, ver más abajo) */
+.shapes-panel:not(.shapes-panel--hidden) ~ #zoom-controls { display: none; }
+
+/* stack agrupado: botones cuadrados JUNTOS dentro de un contenedor redondeado */
+.zoom-stack {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  overflow: hidden;
   box-shadow: 0 4px 12px rgba(0,0,0,.4);
-  transition: background .15s, transform .1s;
-  user-select: none;
 }
 
-.zoom-fab:hover  { background: var(--surface2); }
-.zoom-fab:active { transform: scale(.92); }
+.zoom-btn {
+  width: 40px; height: 40px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: background .12s, color .12s, transform .1s;
+  user-select: none;
+}
+.zoom-btn svg { width: 18px; height: 18px; }
+.zoom-btn:hover  { background: var(--accent-dim); color: var(--accent); }
+.zoom-btn:active { transform: scale(.9); }
+
+/* divisores finos entre botones apilados del grupo */
+.zoom-group .zoom-btn + .zoom-btn,
+#zoom-collapse { border-top: 1px solid var(--border); }
+
+/* martillo: cuadro propio (separado del stack), su propio contenedor redondeado */
+.zoom-btn-solo {
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.4);
+}
+
+/* --- estados de despliegue del grupo de zoom --- */
+#zoom-group, #zoom-collapse { display: none; }
+#zoom-controls.zoom-expanded #zoom-gear    { display: none; }
+#zoom-controls.zoom-expanded #zoom-group   { display: flex; flex-direction: column; }
+#zoom-controls.zoom-expanded #zoom-collapse{ display: flex; }
+
+/* --- martillo: solo cuando el toolbar está guardado --- */
+#zoom-hammer { display: none; }
+body.toolbar-collapsed #zoom-hammer { display: flex; }
+
+/* ===== toolbar guardado: se oculta y el board ocupa su lugar ===== */
+body.toolbar-collapsed .toolbar { display: none; }
+body.toolbar-collapsed #boardContainer { height: calc(100vh - 56px); }
+
+/* botón "guardar" (colapsar) el toolbar: fijo a la derecha, no scrollea con el contenido */
+.toolbar-store-btn {
+  position: sticky; right: 8px;
+  margin-left: auto;
+  flex: 0 0 auto;
+  width: 34px; height: 34px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border-strong); border-radius: 8px;
+  background: var(--surface); color: var(--text);
+  cursor: pointer;
+  box-shadow: -10px 0 10px 4px var(--surface);   /* tapa el contenido que scrollea por debajo */
+  transition: background .12s, color .12s, border-color .12s;
+}
+.toolbar-store-btn svg { width: 16px; height: 16px; }
+.toolbar-store-btn:hover { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
 
 /* ===== MODAL ===== */
 .modal-overlay {
@@ -3214,6 +3563,42 @@ body.view-home #tree-aside { display: none; }
 }
 
 .modal-overlay.hidden { display: none; }
+
+/* ===== Cuenta DiagraMinder (modal + panel Perfil, doc 26 §5) ===== */
+#account-form { display: flex; flex-direction: column; gap: 14px; }
+.account-input {
+  background: var(--surface2);
+  border: 1px solid var(--border-strong);
+  border-radius: 7px;
+  color: var(--text);
+  font: 500 14px/1.2 system-ui, sans-serif;
+  padding: 9px 12px;
+  outline: none;
+  width: 100%;
+  transition: border-color .12s;
+}
+.account-input:focus { border-color: var(--accent); }
+#account-url-field.hidden { display: none; }
+.account-error { margin: 0; color: #f87171; font: 500 12px/1.4 system-ui, sans-serif; }
+.account-error.hidden { display: none; }
+.account-captcha { display: flex; justify-content: center; min-height: 65px; }
+.account-captcha.hidden { display: none; }
+.account-switch { margin: 0; text-align: center; font: 500 12px/1.4 system-ui, sans-serif; }
+.account-switch a { color: var(--accent); text-decoration: none; }
+.account-switch a:hover { text-decoration: underline; }
+#profile-account-in.hidden { display: none; }
+#profile-login.hidden, #profile-register.hidden { display: none; }
+#profile-account-email { overflow-wrap: anywhere; }
+#profile-account-clouds { list-style: none; margin: 0 0 6px; padding: 0; }
+.profile-cloud {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 4px;
+  font: 500 13px/1.3 system-ui, sans-serif;
+  color: var(--text);
+}
+.profile-cloud-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.profile-cloud.muted-cloud { color: var(--text-muted); }
+#profile-account-buy[disabled] { opacity: .5; cursor: default; }
 
 .modal.modal-narrow { width: 340px; }
 .modal.modal-wide {
@@ -3356,6 +3741,31 @@ body.view-home #tree-aside { display: none; }
 .arrow-swatch[data-color="default"] { background: var(--accent); }
 .arrow-swatch.selected { outline: 2px solid var(--text); outline-offset: 2px; }
 
+/* ícono de paleta al final de la fila: abre el selector de color nativo */
+.arrow-swatch-palette {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--border-strong);
+  cursor: pointer;
+  padding: 0;
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface2);
+  color: var(--text);
+}
+.arrow-swatch-palette:hover { border-color: var(--accent); }
+.arrow-swatch-palette.selected { outline: 2px solid var(--text); outline-offset: 2px; }
+.arrow-swatch-palette svg { width: 14px; height: 14px; pointer-events: none; }
+.arrow-swatch-palette input[type="color"] {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  opacity: 0; cursor: pointer;
+  border: none; padding: 0; margin: 0;
+}
+
 .modal {
   background: var(--surface);
   border: 1px solid var(--border-strong);
@@ -3447,40 +3857,74 @@ body.view-home #tree-aside { display: none; }
 }
 
 /* ===== MODAL NUEVO DIAGRAMA ===== */
-.newtree-modal { width: 480px; max-width: 92vw; gap: 16px; }
-.newtree-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+/* modal ancho, flex-column con altura acotada: el modal NO scrollea entero — solo
+   la grilla de tipos — así el header (nombre) y el footer (Cancel/Create) quedan
+   SIEMPRE visibles sin scrollear. */
+.newtree-modal {
+  width: 820px; max-width: 94vw;
+  max-height: 90vh;
+  overflow: hidden;            /* anula el overflow-y:auto de .modal */
+  gap: 14px;
 }
+.newtree-typefield {
+  flex: 1 1 auto; min-height: 0;   /* ocupa el espacio sobrante y permite scroll interno */
+  display: flex; flex-direction: column; gap: 6px;
+}
+.newtree-grid {
+  flex: 1 1 auto; min-height: 0;
+  overflow-y: auto;
+  align-content: start;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding-right: 4px;          /* aire para el scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+.newtree-grid::-webkit-scrollbar { width: 8px; }
+.newtree-grid::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 8px; }
+/* footer fijo abajo, separado por una línea cuando la grilla scrollea */
+.newtree-actions {
+  flex: 0 0 auto;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+@media (max-width: 720px) { .newtree-grid { grid-template-columns: repeat(2, 1fr); } }
 .newtree-card {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  padding: 12px;
+  gap: 12px;
+  padding: 14px;
   text-align: left;
-  background: var(--surface2);
-  border: 1.5px solid var(--border-strong);
-  border-radius: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
   color: var(--text);
   cursor: pointer;
-  transition: border-color .12s, background .12s, transform .08s, box-shadow .12s;
+  transition: border-color .15s, background .15s, transform .12s, box-shadow .15s;
 }
-.newtree-card:hover:not(.is-soon) { border-color: var(--accent); background: var(--accent-dim); }
-.newtree-card:active:not(.is-soon) { transform: scale(.98); }
+.newtree-card:hover:not(.is-soon) { border-color: var(--border-strong); transform: translateY(-2px); }
+.newtree-card:active:not(.is-soon) { transform: translateY(0) scale(.99); }
 .newtree-card.is-selected {
   border-color: var(--accent);
-  background: var(--accent-dim);
-  box-shadow: 0 0 0 3px var(--accent-dim);
+  box-shadow: 0 0 0 1px var(--accent-dim);
 }
 .newtree-card.is-soon { opacity: .5; cursor: not-allowed; }
-.newtree-card-icon { font-size: 22px; line-height: 1; flex: 0 0 auto; }
-.newtree-card-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.newtree-card-title {
-  display: flex; align-items: center; gap: 6px;
-  font: 700 13.5px/1.2 system-ui, sans-serif;
+/* tile del icono: cuadro accent-dim con el SVG en color de acento (como el Home) */
+.newtree-card-icon {
+  width: 36px; height: 36px; flex: 0 0 auto;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 9px;
+  background: var(--accent-dim);
+  color: var(--accent);
 }
-.newtree-card-desc { font: 500 11.5px/1.35 system-ui, sans-serif; color: var(--text-muted); }
+.newtree-card-icon svg { width: 20px; height: 20px; }
+.newtree-card-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.newtree-card-title {
+  display: flex; align-items: center; gap: 8px;
+  font: 650 14.5px/1.2 system-ui, sans-serif;
+}
+.newtree-card-desc { font: 500 12px/1.45 system-ui, sans-serif; color: var(--text-muted); }
 .newtree-soon-badge {
   font: 700 9px/1 system-ui, sans-serif;
   letter-spacing: .06em;
@@ -3618,76 +4062,47 @@ body.view-home #tree-aside { display: none; }
 }
 
 /* ===== HOME SCREEN ===== */
+/* ===== Home screen (diseño nuevo) =====
+   Tokens del diseño SCOPEADOS al home: no tocan el resto de la app. En dark casi
+   todos coinciden con la app (solo bordes un poco más sutiles); en light usa la
+   paleta calibrada del diseño. Posición/fondo/scroll van inline en el elemento. */
 #home-screen {
-  position: fixed;
-  inset: 56px 0 0 0;
-  background: var(--bg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  --bg:#242424; --surface:#272727; --surface2:#1f1f1f;
+  --text:#e0e0e0; --text-muted:#d4d4d4;
+  --accent:#4f7eff; --accent-dim:rgba(79,126,255,.15);
+  --border:rgba(239,239,239,.07); --border-strong:rgba(239,239,239,.14);
   z-index: 10;
+}
+:root[data-theme="light"] #home-screen {
+  --bg:#f6f6f5; --surface:#ffffff; --surface2:#eeeeec;
+  --text:#1c1c1c; --text-muted:#4a4a4a;
+  --accent:#3b63e0; --accent-dim:rgba(59,99,224,.10);
+  --border:rgba(20,20,20,.08); --border-strong:rgba(20,20,20,.16);
 }
 #home-screen.hidden { display: none; }
 
-.home-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 28px;
-  max-width: 480px;
-  width: 90%;
-  text-align: center;
+/* animaciones del home (prefijo dm-, sin conflicto con el resto) */
+@keyframes dm-float{0%,100%{transform:translate(0,0)}50%{transform:translate(0,-14px)}}
+@keyframes dm-float2{0%,100%{transform:translate(0,0)}50%{transform:translate(0,16px)}}
+@keyframes dm-float3{0%,100%{transform:translate(0,0)}50%{transform:translate(10px,-8px)}}
+@keyframes dm-draw{to{stroke-dashoffset:0}}
+@keyframes dm-token{0%{offset-distance:0%;opacity:0}6%{opacity:1}94%{opacity:1}100%{offset-distance:100%;opacity:0}}
+@keyframes dm-token2{0%{offset-distance:0%;opacity:0}8%{opacity:1}92%{opacity:1}100%{offset-distance:100%;opacity:0}}
+@keyframes dm-glow{0%,100%{box-shadow:0 0 0 0 var(--accent-dim),0 1px 2px rgba(0,0,0,.2)}50%{box-shadow:0 0 0 9px var(--accent-dim),0 1px 2px rgba(0,0,0,.2)}}
+@keyframes dm-pulse{0%,100%{opacity:.5}50%{opacity:1}}
+@keyframes dm-fadeup{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@media (prefers-reduced-motion: reduce){
+  .dm-anim, .dm-anim *{animation:none !important}
+  .dm-in{animation:none !important;opacity:1 !important;transform:none !important}
 }
-
-.home-logo {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-.home-logo h1 {
-  font-size: 2rem;
-  font-weight: 700;
-  margin: 0;
-  color: var(--text);
-  letter-spacing: -0.5px;
-}
-.home-logo-dot {
-  width: 16px;
-  height: 16px;
-}
-
-.home-desc {
-  color: var(--text-muted);
-  font-size: 15px;
-  line-height: 1.7;
-  margin: 0;
-  opacity: 0.55;
-}
-
-.home-actions {
-  display: flex;
-  gap: 12px;
-}
-
-.home-btn {
-  padding: 10px 28px;
-  border-radius: 8px;
-  font: 600 14px/1 system-ui, sans-serif;
-  cursor: pointer;
-  border: 1px solid var(--border-strong);
-  transition: opacity 0.15s, background 0.15s;
-}
-.home-btn:hover { opacity: 0.82; }
-
-.home-btn-primary {
-  background: var(--accent);
-  color: #fff;
-  border-color: var(--accent);
-}
-.home-btn-secondary {
-  background: transparent;
-  color: var(--text);
-}
+.dm-btn-primary{appearance:none;border:1px solid var(--accent);background:var(--accent);color:#fff;font:inherit;font-weight:600;font-size:15.5px;padding:13px 24px;border-radius:9px;cursor:pointer;animation:dm-glow 3.2s ease-in-out infinite;transition:background .15s,border-color .15s}
+.dm-btn-primary:hover{background:color-mix(in srgb, var(--accent) 88%, white);border-color:color-mix(in srgb, var(--accent) 88%, white)}
+.dm-btn-secondary{appearance:none;border:1px solid var(--border-strong);background:transparent;color:var(--text);font:inherit;font-weight:600;font-size:15.5px;padding:13px 24px;border-radius:9px;cursor:pointer;transition:border-color .15s}
+.dm-btn-secondary:hover{border-color:var(--accent)}
+.dm-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:12px;transition:transform .18s,border-color .18s}
+.dm-card:hover{border-color:var(--border-strong);transform:translateY(-2px)}
+.dm-card-flagship{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent-dim)}
+.dm-card-flagship:hover{border-color:var(--accent)}
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 860px) {
@@ -3746,6 +4161,10 @@ body.view-home #tree-aside { display: none; }
     padding: 4px 0 4px 12px;
   }
 
+  /* casilla de ubicación en el menú vertical mobile: no estirar; sin barra vertical */
+  .nav-location { align-self: flex-start; }
+  .nav-loc-bar { display: none; }
+
   .nav-search input { width: 100%; max-width: none; }
 }
 
@@ -3781,6 +4200,171 @@ body.view-home #tree-aside { display: none; }
 }
 .modal-mode-btn:hover { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
 .modal-editor-header-btns { display: flex; align-items: center; gap: 6px; }
+/* botón Read mientras está leyendo (TTS activo) */
+.modal-mode-btn.modal-read-active {
+  background: var(--accent-dim); border-color: var(--accent); color: var(--accent);
+}
+
+/* ===== barra del reproductor TTS (abajo, centrada; sobrevive al modal) ===== */
+.tts-bar {
+  position: fixed;
+  bottom: 16px; left: 50%; transform: translateX(-50%);
+  z-index: 1300;                    /* por encima del modal (1000) y del editor max (1100) */
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  box-shadow: var(--shadow-pop);
+  color: var(--text);
+}
+.tts-bar.hidden { display: none; }
+.tts-bar-ico { color: var(--accent); flex-shrink: 0; }
+.tts-bar-label {
+  max-width: 240px;
+  font: 600 12px/1.2 system-ui, sans-serif;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-right: 4px;
+}
+.tts-bar-btn {
+  min-width: 30px; height: 26px;
+  padding: 0 7px;
+  border: 1px solid var(--border-strong); border-radius: 6px;
+  background: var(--surface2); color: var(--text);
+  font: 700 12px/1 ui-monospace, monospace; cursor: pointer;
+  transition: background .1s, border-color .1s, color .1s;
+}
+.tts-bar-btn:hover { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+.tts-bar-btn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+.tts-bar-close:hover { border-color: #dc2626; color: #dc2626; background: rgba(220,38,38,.12); }
+.tts-bar-btn svg { display: block; margin: 0 auto; }
+.tts-bar-select {
+  height: 26px; padding: 0 4px;
+  border: 1px solid var(--border-strong); border-radius: 6px;
+  background: var(--surface2); color: var(--text);
+  font: 600 11px/1 system-ui, sans-serif; cursor: pointer; outline: none;
+}
+.tts-bar-select:hover { border-color: var(--accent); }
+.tts-bar-voice { max-width: 130px; }
+
+/* ===== peek de carta: vista rápida flotante (un click, tablets/lectura) ===== */
+/* el cursor distingue el cuerpo de la carta (click → peek) de su contenido */
+.box { cursor: pointer; }
+.box .box-body { cursor: text; }
+
+.cart-peek {
+  position: fixed;
+  z-index: 900;                     /* sobre el board, debajo de los modales (1000) */
+  display: flex; flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  box-shadow: var(--shadow-deep);
+  overflow: hidden;
+  animation: cart-peek-in .12s ease-out;
+}
+.cart-peek.hidden { display: none; }
+@keyframes cart-peek-in {
+  from { opacity: 0; transform: scale(.94); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.cart-peek-title {
+  flex: 0 0 auto;
+  padding: 10px 14px 8px;
+  font: 700 15px/1.25 system-ui, sans-serif;
+  color: var(--text);
+  border-bottom: 1px solid var(--border-strong);
+}
+.cart-peek-body {
+  flex: 1; min-height: 0;
+  overflow-y: auto;
+  padding: 10px 14px;
+  cursor: auto;
+  user-select: text;
+}
+/* pisa el min/max-height que trae .rich-editor (acá manda el tamaño del peek) */
+.cart-peek .cart-peek-body.rich-editor { min-height: 0; max-height: none; }
+
+/* ===== navbar colapsable (▲ a la derecha del nav → más canvas) ===== */
+.nav-collapse-btn {
+  margin-left: 6px;
+  width: 28px; height: 28px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border-strong); border-radius: 6px;
+  background: var(--surface2); color: var(--text);
+  cursor: pointer; flex-shrink: 0;
+  transition: background .1s, border-color .1s, color .1s;
+}
+.nav-collapse-btn:hover { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+
+body.nav-collapsed .app-header { display: none; }
+body.nav-collapsed #tree-aside { top: 0; }
+body.nav-collapsed #boardContainer { height: calc(100vh - 52px); }
+body.nav-collapsed.toolbar-collapsed #boardContainer { height: 100vh; }
+/* editor/documents ocultan la toolbar por su cuenta (body.editor-mode): con el
+   nav retraído el board debe ocupar TODO el alto (sin esto quedaba "cortado" con
+   el alto fijo de 100vh - 56px de la regla de editor-mode) */
+body.editor-mode.nav-collapsed #boardContainer { height: 100vh; }
+
+/* ▼ flotante para restaurar (solo visible con el nav escondido) */
+.nav-restore-btn {
+  display: none;
+  position: fixed; top: 6px; right: 8px; z-index: 90;
+  width: 28px; height: 28px;
+  align-items: center; justify-content: center;
+  border: 1px solid var(--border-strong); border-radius: 6px;
+  background: var(--surface); color: var(--text);
+  cursor: pointer; opacity: .65;
+  transition: opacity .1s, border-color .1s, color .1s;
+}
+.nav-restore-btn:hover { opacity: 1; border-color: var(--accent); color: var(--accent); }
+body.nav-collapsed .nav-restore-btn { display: inline-flex; }
+
+/* ⛶ fullscreen activo */
+#fullscreen-btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+
+/* ===== flechita bajo la carta: ocultar/desplegar hijos ===== */
+.btn-kids {
+  position: absolute;
+  bottom: -11px; left: 50%; transform: translateX(-50%);
+  z-index: 3;
+  min-width: 22px; height: 18px;
+  padding: 0 6px;
+  border: 1px solid var(--border-strong); border-radius: 9px;
+  background: var(--surface2); color: var(--text-muted);
+  font: 700 10px/1 system-ui, sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .1s, border-color .1s, color .1s;
+}
+.btn-kids:hover { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+/* con hijos ocultos queda marcado (mostrás cuántos hay abajo) */
+.btn-kids.kids-hidden { border-color: var(--accent); color: var(--accent); }
+
+/* ===== LOD estilo Obsidian: muy alejado, las cartas muestran solo el título =====
+   #board.zoom-far lo pone applyZoom() cuando zoom < 0.6. El contenido y el header
+   salen del layout/paint (display:none) y el título crece con contra-zoom
+   (font / var(--zoom), con tope) para seguir legible de lejos. */
+#board.zoom-far .box-body,
+#board.zoom-far .box-header { display: none; }
+#board.zoom-far .box-title {
+  flex: 1;
+  max-height: none;
+  display: flex; align-items: center; justify-content: center;
+  border-bottom: none;
+  overflow: hidden;
+  font-size: min(calc(15px / var(--zoom, 1)), 56px);
+  line-height: 1.15;
+  padding: 4px 8px;
+}
+/* la flechita de hijos también se agranda para poder tocarla de lejos */
+#board.zoom-far .btn-kids {
+  font-size: min(calc(10px / var(--zoom, 1)), 30px);
+  height: auto; min-width: 0;
+  padding: .12em .55em;
+  border-radius: 999px;
+  bottom: -.75em;
+}
 
 /* ===================== Editor maximizado (vista documento / hojas A4) ===================== */
 .editor-max-overlay {
@@ -4003,7 +4587,7 @@ body.view-home #tree-aside { display: none; }
   border: 1px solid var(--border-strong);
   border-radius: 8px;
   padding: 5px;
-  box-shadow: 0 8px 24px rgba(0,0,0,.35);
+  box-shadow: var(--shadow-pop);
   display: flex; flex-direction: column; gap: 1px;
   min-width: 180px;
 }
@@ -4018,6 +4602,55 @@ body.view-home #tree-aside { display: none; }
 .rich-ctx-menu button:hover { background: var(--accent-dim); color: var(--accent); }
 .rich-ctx-sep {
   height: 1px; background: var(--border-strong); margin: 3px 0;
+}
+
+/* ===== links entre nodos (href="#node:ID") ===== */
+.rich-editor a[href^="#node:"] {
+  color: var(--accent);
+  background: var(--accent-dim);
+  border-radius: 5px;
+  padding: 1px 6px;
+  text-decoration: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+.rich-editor a[href^="#node:"]:hover { text-decoration: underline; }
+
+/* picker "Link a nodo" */
+.nodelink-menu {
+  position: fixed; z-index: 9999;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 6px;
+  box-shadow: var(--shadow-pop);
+  display: flex; flex-direction: column; gap: 5px;
+  width: 260px;
+}
+.nodelink-search {
+  height: 28px; padding: 0 8px;
+  border: 1px solid var(--border-strong); border-radius: 6px;
+  background: var(--surface2); color: var(--text);
+  font: 13px/1 system-ui, sans-serif; outline: none;
+}
+.nodelink-search:focus { border-color: var(--accent); }
+.nodelink-list {
+  max-height: 220px; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 1px;
+}
+.nodelink-item {
+  width: 100%; text-align: left;
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 6px 8px; border: none; border-radius: 5px;
+  background: transparent; color: var(--text);
+  font: 13px/1.2 system-ui, sans-serif; cursor: pointer;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.nodelink-item:hover { background: var(--accent-dim); color: var(--accent); }
+.nodelink-item-id { color: var(--text-muted); font-size: 11px; flex-shrink: 0; }
+.nodelink-empty {
+  padding: 8px; color: var(--text-muted);
+  font: 12px/1.2 system-ui, sans-serif; text-align: center;
 }
 
 /* Selects in toolbar (heading + font) */
@@ -4425,6 +5058,25 @@ body.rich-resizing * { cursor: inherit !important; user-select: none; }
   gap: 8px;
 }
 .act-toolbar-controls.hidden { display: none; }
+
+/* Options de organigrama (mismo patrón que los controles de activities/free) */
+.org-toolbar-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.org-toolbar-controls.hidden { display: none; }
+.org-compact-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 600 12px/1 system-ui, sans-serif;
+  color: var(--text);
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+}
+.org-compact-label input[type="checkbox"] { accent-color: var(--accent); cursor: pointer; }
 .act-unit-select {
   background: var(--surface);
   color: var(--text);
