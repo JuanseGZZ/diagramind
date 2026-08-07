@@ -15,16 +15,25 @@
       <label for="nav-open" class="nav-toggle" aria-label="Open menu" title="Menu"></label>
 
       <ul class="nav-list">
-        <!-- Ubicación de trabajo: carpeta activa + proyecto activo, agrupados en una
-             sola casilla (folder / file-in-folder) y separados del resto del navbar -->
+        <!-- Ubicación de trabajo: carpeta activa / proyecto activo, agrupados en una
+             sola casilla y separados del resto del navbar. Patrón GitHub
+             ("owner / repo ⌄"): el NOMBRE navega y la FLECHITA despliega el
+             selector; la barra cruzada "/" muestra que el proyecto vive en esa
+             carpeta -->
         <li class="nav-item nav-location">
           <details id="folder-menu" class="nav-folders">
-            <summary id="folder-current">Folder</summary>
+            <summary id="folder-current">
+              <button type="button" class="loc-name" id="folder-nav">Folder</button>
+              <span class="loc-caret" title="Switch folder" aria-hidden="true"></span>
+            </summary>
             <ul class="menu" id="folder-list"></ul>
           </details>
-          <span class="nav-loc-sep" aria-hidden="true"></span>
+          <span class="nav-loc-sep" aria-hidden="true">/</span>
           <details id="tree-menu" class="nav-trees">
-            <summary id="tree-current">Tree</summary>
+            <summary id="tree-current">
+              <button type="button" class="loc-name" id="tree-nav">Tree</button>
+              <span class="loc-caret" title="Switch project" aria-hidden="true"></span>
+            </summary>
             <ul class="menu" id="tree-list"></ul>
           </details>
         </li>
@@ -128,7 +137,8 @@
           <button id="profile-btn" class="nav-pill" title="Account"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>Account</button>
         </li>
         <li>
-          <button id="ia-btn" class="nav-pill" title="AI &amp; connectors"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5 15.4 17.5M15.4 6.5 8.6 10.5"/></svg>IA · Connectors</button>
+          <button id="chat-btn" class="nav-pill" title="Chat with the AI"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>AI</button>
+          <button id="ia-btn" class="nav-pill" title="Settings, connectors and appearance"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5 15.4 17.5M15.4 6.5 8.6 10.5"/></svg>Settings</button>
         </li>
       </ul>
       <button id="nav-collapse-btn" class="nav-collapse-btn" title="Hide top bar" aria-label="Hide top bar"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg></button>
@@ -151,12 +161,13 @@
 
   <aside id="ia-aside" class="side-panel side-panel-right">
     <div class="side-panel-header">
-      <span class="side-panel-title">IA</span>
+      <span class="side-panel-title">Settings</span>
       <button class="side-panel-close" data-close="ia-aside" title="Close">✕</button>
     </div>
     <div class="side-panel-body">
-      <button class="side-panel-btn side-panel-btn-primary" id="ia-open-chat">Open chat</button>
-      <button class="side-panel-btn" id="ia-download-local">Download local</button>
+      <section class="side-panel-group">
+        <p class="side-panel-group-title">Software connectors</p>
+        <button class="side-panel-btn" id="ia-download-local">Download local</button>
       <div class="ia-download hidden" id="ia-download-options">
 
         <div class="ia-dl-group">
@@ -246,7 +257,11 @@
         </a>
       </div>
 
-      <button class="side-panel-btn" id="ia-manage-apis">Add API</button>
+      </section>
+
+      <section class="side-panel-group">
+        <p class="side-panel-group-title">Connections</p>
+        <button class="side-panel-btn" id="ia-manage-apis">Add API</button>
       <div class="ia-apis hidden" id="ia-apis-panel">
         <ul class="ia-apis-list" id="ia-apis-list"></ul>
         <form class="ia-apis-form" id="ia-apis-form">
@@ -274,10 +289,20 @@
         </form>
       </div>
 
+      </section>
+
+      <section class="side-panel-group">
+        <p class="side-panel-group-title">Appearance</p>
+        <div class="side-panel-row">
+          <span class="side-panel-row-label">Theme</span>
+          <button id="theme-toggle" title="Toggle theme">☀</button>
+        </div>
+      </section>
     </div>
 
     <!-- footer pinneado al fondo: conectar local + estado de conexión, con línea separadora -->
     <div class="side-panel-footer">
+      <p class="side-panel-group-title">Local connection</p>
       <button class="side-panel-btn" id="ia-connect-local">Connect local</button>
       <div class="ia-status" id="ia-status" data-state="disconnected">
         <span class="ia-status-dot"></span>
@@ -304,10 +329,6 @@
         <ul id="profile-account-clouds"></ul>
         <button class="side-panel-btn" id="profile-account-buy" disabled title="Coming soon">Buy storage</button>
         <button class="side-panel-btn" id="profile-account-logout">Log out</button>
-      </div>
-      <div class="side-panel-row">
-        <span class="side-panel-row-label">Theme</span>
-        <button id="theme-toggle" title="Toggle theme">☀</button>
       </div>
     </div>
   </aside>
@@ -342,7 +363,10 @@
     <div class="ia-chat-backend-bar">
       <div class="ia-chat-pop ia-chat-pop-block" id="ia-chat-backend">
         <button class="ia-chat-backend-btn" id="ia-chat-backend-btn">
-          <span class="ia-chat-backend-label" id="ia-chat-backend-label">Local · Claude Code</span>
+          <span class="ia-chat-backend-id">
+            <span class="ia-chat-backend-avatar" id="ia-chat-backend-avatar" aria-hidden="true">L</span>
+            <span class="ia-chat-backend-label" id="ia-chat-backend-label">Local · Claude Code</span>
+          </span>
           <svg class="ia-chat-caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
         </button>
         <ul class="ia-chat-menu hidden" id="ia-chat-backend-menu"></ul>
@@ -375,6 +399,10 @@
       <div class="ia-chat-input-wrap">
         <textarea id="ia-chat-input" class="ia-chat-input" rows="1"
           placeholder="Type a message…" aria-label="Message for the AI"></textarea>
+        <button class="ia-chat-send" id="ia-chat-send" title="Send (Enter)" aria-label="Send">
+          <svg class="ia-chat-send-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          <svg class="ia-chat-stop-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2"/></svg>
+        </button>
       </div>
       <div class="ia-chat-controls">
         <!-- adjuntar archivos (selección múltiple, cualquier tipo) -->
@@ -423,10 +451,8 @@
             </button>
             <ul class="ia-chat-menu hidden" id="ia-chat-effort-menu"></ul>
           </div>
-          <button class="ia-chat-send" id="ia-chat-send" title="Send (Enter)" aria-label="Send">
-            <svg class="ia-chat-send-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-            <svg class="ia-chat-stop-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2"/></svg>
-          </button>
+          <!-- contador de caracteres del borrador (se enciende al acercarse al límite) -->
+          <span class="ia-chat-count" id="ia-chat-count" aria-hidden="true"></span>
         </div>
       </div>
     </div>
@@ -446,6 +472,12 @@
     <button id="versiones-btn" class="toolbar-btn" title="Tree version history"><svg class="toolbar-btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Versions</button>
     <button id="orch-runs-btn" class="toolbar-btn hidden" title="Run history of this orchestrator"><svg class="toolbar-btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg>Runs</button>
     <button id="orch-keys-btn" class="toolbar-btn hidden" title="API keys of this orchestrator (stored in its connector, never in the diagram)"><svg class="toolbar-btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.59 17.41A2 2 0 0 0 2 18.83V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 1 1-1v-1a1 1 0 0 1 1-1h.17a2 2 0 0 0 1.42-.59l.81-.81a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/></svg>Keys</button>
+    <!-- presets de empresa/sector: el trigger es un .toolbar-btn como sus vecinos y
+         las filas del menú las arma el JS desde orchPresets.js -->
+    <details id="orch-preset-menu" class="toolbar-menu hidden">
+      <summary class="toolbar-btn" title="Insert a ready-made company or sector"><svg class="toolbar-btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"/><path d="M6 21V6a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v15"/><path d="M14 10h4a1 1 0 0 1 1 1v10"/><path d="M9 9h2M9 13h2M9 17h2"/></svg>Insert preset</summary>
+      <ul id="orch-preset-list" class="menu orch-preset-list"></ul>
+    </details>
 
     <div id="act-toolbar-controls" class="hidden act-toolbar-controls">
       <span class="tcg-label">Time unit</span>
@@ -481,7 +513,7 @@
     </div>
 
     <div id="free-toolbar-controls" class="hidden free-toolbar-controls">
-      <button id="freeAddNodeBtn" class="toolbar-btn">+ Add node ▾</button>
+      <button id="freeAddNodeBtn" class="toolbar-btn toolbar-btn--menu"><svg class="toolbar-btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add node</button>
       <button id="shapesBtn" class="toolbar-btn"><svg class="toolbar-btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.3 10a.7.7 0 0 1-.6-1l4.7-8a.7.7 0 0 1 1.2 0l4.7 8a.7.7 0 0 1-.6 1z"/><rect x="3" y="14" width="7" height="7" rx="1"/><circle cx="17.5" cy="17.5" r="3.5"/></svg>Shapes</button>
 
       <div class="toolbar-sep"></div>
@@ -828,8 +860,47 @@
         <span>Back</span>
       </button>
       <span class="editor-max-title" id="editor-max-title"></span>
+      <div class="editor-max-actions">
+        <!-- Save con indicador de cambios (bolita): aplica a las dos sesiones —
+             nodo (guarda el nodo sin cerrar) y docs (reescribe el .docx) -->
+        <button id="editor-max-save" class="modal-mode-btn" title="Save (Ctrl+S)"><svg class="modal-mode-ico" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 2.5h9L13.5 4.5v9a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1v-10a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M5 2.5V6h5V2.5M4.5 14.5V10h7v4.5" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg> Save<span id="editor-max-dirty" class="max-dirty hidden"></span></button>
+        <div class="max-menu-wrap">
+          <button id="editor-max-view" class="modal-mode-btn" title="View options"><svg class="modal-mode-ico" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 8s2.6-4.5 7-4.5S15 8 15 8s-2.6 4.5-7 4.5S1 8 1 8z" stroke="currentColor" stroke-width="1.1"/><circle cx="8" cy="8" r="1.9" stroke="currentColor" stroke-width="1.1"/></svg> View</button>
+          <div id="editor-max-view-menu" class="max-menu hidden">
+            <button id="view-vruler-item" class="max-menu-item"><span id="view-vruler-tick" class="max-menu-tick"></span> Rulers</button>
+          </div>
+        </div>
+        <div class="max-menu-wrap">
+          <button id="editor-max-config" class="modal-mode-btn" title="Document settings"><svg class="modal-mode-ico" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="8" r="2.2" stroke="currentColor" stroke-width="1.2"/><path d="M8 1.8v2M8 12.2v2M1.8 8h2M12.2 8h2M3.6 3.6l1.4 1.4M11 11l1.4 1.4M12.4 3.6L11 5M5 11l-1.4 1.4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg> Config</button>
+          <div id="editor-max-config-menu" class="max-menu hidden">
+            <button id="config-margins-item" class="max-menu-item">Margins</button>
+          </div>
+        </div>
+        <button id="editor-max-read" class="modal-mode-btn" title="Read this document aloud"><svg class="modal-mode-ico" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 6v4h2.6L8.5 13V3L5.1 6H2.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M10.8 5.6a3.4 3.4 0 010 4.8M12.6 3.8a6 6 0 010 8.4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg> <span id="editor-max-read-label">Read</span></button>
+      </div>
     </div>
+    <!-- regla horizontal (cm reales, estilo Word); expandirEditor la mueve
+         entre la toolbar y la hoja, y la devuelve acá al volver -->
+    <div id="editor-max-ruler" class="editor-max-ruler" aria-hidden="true"></div>
+    <!-- regla vertical (toggle en View, default oculta); fija, sigue la hoja visible -->
+    <div id="editor-max-vruler" class="editor-max-vruler hidden" aria-hidden="true"></div>
     <div class="editor-max-host" id="editor-max-host"></div>
+    <!-- modal de sangrías (Config → Margins): página ficticia + dos reglas -->
+    <div id="doc-config-overlay" class="modal-overlay doc-config-overlay hidden">
+      <div class="modal doc-config-modal">
+        <h3 class="doc-config-title">Margins</h3>
+        <div class="doc-config-grid">
+          <div class="doc-config-corner"></div>
+          <div id="doc-config-hruler" class="doc-config-hruler"></div>
+          <div id="doc-config-vruler" class="doc-config-vruler"></div>
+          <div class="doc-config-pagewrap"><div id="doc-config-page" class="doc-config-page"></div></div>
+        </div>
+        <div class="modal-actions">
+          <button id="doc-config-reset">Reset</button>
+          <button id="doc-config-done">Done</button>
+        </div>
+      </div>
+    </div>
   </div>
   <div id="color-modal-overlay" class="modal-overlay hidden">
     <div class="modal">
