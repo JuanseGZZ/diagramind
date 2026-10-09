@@ -7145,6 +7145,24 @@ body:has(.modal-overlay:not(.hidden)) #webhub-cursors { display: none !important
 }
 .side-panel .voice-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
 
+/* modal de la carta: UN solo marco. La caja vieja .modal-editor-wrap (más abajo en la
+   hoja) trae su propio borde y radio de 9px, y Design le puso OTRO borde al editor de
+   adentro: quedaban dos marcos que no coincidían con el encabezado «CONTENIDO» (se veía
+   cortado en los costados y en la unión). El marco va en la caja —así abraza también la
+   barra de formato en modo edición— y el editor queda sin borde. */
+.modal.modal-rich .modal-editor-wrap {
+  border: 1px solid var(--border);
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  background: var(--bg);
+  overflow: hidden;
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.modal.modal-rich .modal-editor-wrap .rich-editor,
+.modal.modal-rich .modal-editor-wrap .rich-editor:focus-within {
+  border: 0; border-radius: 0; box-shadow: none; background: transparent;
+}
+.modal.modal-rich .modal-editor-wrap:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 1300px) {
   .nav-toggle {
