@@ -2846,29 +2846,58 @@ body.full-board .backend-gate { margin-left: 0; }
   padding: 0;
 }
 
-/* botones de esquina del nodo (aparecen al hover) */
-.free-node-del, .free-node-opts {
+/* Barra de acciones del nodo, estilo Obsidian (2026-10-09): flota ARRIBA del nodo con
+   borrar · color · encuadrar · editar. Aparece con el hover o con el nodo
+   seleccionado. Va a 8px del borde: dentro del margen invisible de hover del nodo
+   (`.free-node::before`, 16px), así el mouse llega a la barra sin que se esconda. */
+.free-node-bar {
   position: absolute;
-  top: 4px;
-  width: 20px; height: 20px;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%);
+  display: flex; gap: 2px;
+  padding: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md, 8px);
+  box-shadow: var(--shadow-pop);
+  opacity: 0; visibility: hidden;
+  transition: opacity .12s, visibility .12s;
+  z-index: 5;
+  white-space: nowrap;
+}
+.free-node:hover > .free-node-bar,
+.free-node.selected > .free-node-bar { opacity: 1; visibility: visible; }
+/* el nodo activo va arriba de sus vecinos, si no la barra queda tapada por el de al
+   lado. Los grupos no: tienen que seguir detrás de lo que agrupan. */
+.free-node:not(.type-grupo):hover,
+.free-node:not(.type-grupo).selected { z-index: 2; }
+/* muy alejado o en el preview del historial, no estorba */
+.zoom-far .free-node-bar,
+.ver-preview-board .free-node-bar { display: none; }
+.free-node-bar-btn {
+  width: 30px; height: 30px;
   display: inline-flex; align-items: center; justify-content: center;
   border: none; background: transparent;
   color: var(--text-muted);
-  border-radius: 5px;
+  border-radius: var(--radius-sm, 6px);
   cursor: pointer;
-  font-size: 13px; line-height: 1;
-  opacity: 0;
-  transition: opacity .1s, background .1s, color .1s;
-  z-index: 5;
+  transition: background .1s, color .1s;
 }
-.free-node:hover .free-node-del,
-.free-node:hover .free-node-opts { opacity: 1; }
-.free-node-opts { left: 4px; }
-.free-node-del  { right: 4px; }
-.free-node-opts:hover { background: var(--accent-dim); color: var(--accent); }
-.free-node-del:hover  { background: var(--danger-dim); color: var(--danger); }
+.free-node-bar-btn:hover { background: var(--surface2); color: var(--text); }
+.free-node-bar-btn.free-node-del:hover { background: var(--danger-dim); color: var(--danger); }
 
-/* menú de opciones del nodo (⋯) y selector de tipo del "Add node" */
+/* Options → «Default node» */
+.toolbar-default-type { display: inline-flex; align-items: center; gap: 6px; }
+.toolbar-select {
+  height: 32px; padding: 0 6px;
+  border: 1px solid var(--border-strong); border-radius: 6px;
+  background: var(--bg); color: var(--text);
+  font: 400 12px/1 'Inter', system-ui, sans-serif; outline: none;
+}
+.toolbar-select:focus { border-color: var(--accent); }
+
+/* selector de tipo del "Add node" (y de cualquier .free-menu) */
 .free-menu {
   position: fixed;
   /* el ancho lo manda el contenido, NO el hueco disponible: al ser un fixed con

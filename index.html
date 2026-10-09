@@ -21,7 +21,7 @@
   <!-- ?v= rompe el cache del borde cuando cambia el CSS. El nginx de infra/web ya
        manda no-cache, pero una copia vieja YA cacheada sobrevive hasta su TTL: subir
        este número la invalida al instante (index.html se sirve siempre fresco). -->
-  <link rel="stylesheet" href="app/bolzaDeEstilos/styles.css?v=73">
+  <link rel="stylesheet" href="app/bolzaDeEstilos/styles.css?v=74">
 </head>
 
 <body>
@@ -619,6 +619,14 @@
       <div id="free-options-panel" class="free-options-panel free-options-panel--collapsed">
         <div class="toolbar-sep"></div>
 
+        <!-- tipo de nodo que crea el doble click en el canvas vacío (lo llena el JS) -->
+        <label class="toolbar-default-type" title="Node created with a double click on the empty canvas">
+          <span class="tcg-label">Default node</span>
+          <select id="free-default-type" class="toolbar-select"></select>
+        </label>
+
+        <div class="toolbar-sep"></div>
+
         <!-- color por defecto de nodos -->
         <div class="toolbar-color-group" title="Default node color">
           <span class="tcg-label">Node</span>
@@ -818,10 +826,6 @@
     </div>
   </div>
 
-  <div id="free-node-menu" class="free-menu hidden">
-    <button data-fact="edit">Edit</button>
-    <button data-fact="color">Color</button>
-  </div>
 
   <div id="act-arrow-modal-overlay" class="modal-overlay hidden">
     <div class="modal modal-narrow">
@@ -1703,7 +1707,7 @@
   <!-- ?v= igual que en el CSS: mientras el zone setting "Browser Cache TTL" de
        Cloudflare pise el no-cache del origen, subir este número es lo único que
        invalida el bundle YA cacheado en los navegadores. -->
-  <script type="module" src="./dist/bundle.js?v=73"></script>
+  <script type="module" src="./dist/bundle.js?v=74"></script>
   <!-- el aviso de estadísticas: solo en diagraminder.com, y el beacon solo si se acepta -->
   <script src="/legal/consent.js?v=2" defer></script>
 </body>
