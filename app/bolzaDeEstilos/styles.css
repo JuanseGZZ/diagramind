@@ -7163,6 +7163,15 @@ body:has(.modal-overlay:not(.hidden)) #webhub-cursors { display: none !important
 }
 .modal.modal-rich .modal-editor-wrap:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
 
+/* el editor de texto (modal de la carta y donde se use) scrollea con la barra NATIVA,
+   que en Chrome/Safari pinta un riel blanco sobre el fondo oscuro. Misma barra fina que
+   los paneles: riel transparente, pulgar con los tokens del tema (anda en los dos). */
+.rich-editor { scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
+.rich-editor::-webkit-scrollbar { width: 10px; height: 10px; }
+.rich-editor::-webkit-scrollbar-track { background: transparent; }
+.rich-editor::-webkit-scrollbar-thumb { background: var(--border-strong); border: 3px solid var(--bg); border-radius: 99px; }
+.rich-editor::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 1300px) {
   .nav-toggle {
