@@ -2847,43 +2847,41 @@ body.full-board .backend-gate { margin-left: 0; }
 }
 
 /* Barra de acciones del nodo, estilo Obsidian (2026-10-09): flota ARRIBA del nodo con
-   borrar · color · encuadrar · editar. Aparece con el hover o con el nodo
-   seleccionado. Va a 8px del borde: dentro del margen invisible de hover del nodo
-   (`.free-node::before`, 16px), así el mouse llega a la barra sin que se esconda. */
+   borrar · color · encuadrar · editar. Aparece con el nodo SELECCIONADO (uno solo, la
+   clase `fc-one-selected` del board), no con el hover: es el foco, como en Obsidian.
+   Discreta: el fondo del canvas, borde fino, sin sombra fuerte y pegada al nodo. */
 .free-node-bar {
   position: absolute;
   left: 50%;
-  bottom: calc(100% + 8px);
+  bottom: calc(100% + 10px);   /* el contorno de la selección sobresale ~6px */
   transform: translateX(-50%);
-  display: flex; gap: 2px;
-  padding: 4px;
-  background: var(--surface);
+  display: flex; gap: 0;
+  padding: 2px;
+  background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md, 8px);
-  box-shadow: var(--shadow-pop);
+  border-radius: var(--radius-sm, 6px);
   opacity: 0; visibility: hidden;
-  transition: opacity .12s, visibility .12s;
+  transition: opacity .1s, visibility .1s;
   z-index: 5;
   white-space: nowrap;
 }
-.free-node:hover > .free-node-bar,
-.free-node.selected > .free-node-bar { opacity: 1; visibility: visible; }
-/* el nodo activo va arriba de sus vecinos, si no la barra queda tapada por el de al
-   lado. Los grupos no: tienen que seguir detrás de lo que agrupan. */
-.free-node:not(.type-grupo):hover,
+.fc-one-selected .free-node.selected > .free-node-bar { opacity: 1; visibility: visible; }
+/* el nodo seleccionado va arriba de sus vecinos, si no la barra queda tapada por el de
+   al lado. Los grupos no: tienen que seguir detrás de lo que agrupan. */
 .free-node:not(.type-grupo).selected { z-index: 2; }
 /* muy alejado o en el preview del historial, no estorba */
 .zoom-far .free-node-bar,
 .ver-preview-board .free-node-bar { display: none; }
 .free-node-bar-btn {
-  width: 30px; height: 30px;
+  width: 26px; height: 26px;
   display: inline-flex; align-items: center; justify-content: center;
   border: none; background: transparent;
   color: var(--text-muted);
-  border-radius: var(--radius-sm, 6px);
+  border-radius: 4px;
   cursor: pointer;
   transition: background .1s, color .1s;
 }
+.free-node-bar-btn svg { width: 15px; height: 15px; }
 .free-node-bar-btn:hover { background: var(--surface2); color: var(--text); }
 .free-node-bar-btn.free-node-del:hover { background: var(--danger-dim); color: var(--danger); }
 
