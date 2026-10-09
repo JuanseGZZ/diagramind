@@ -2,7 +2,26 @@
   <meta charset="utf-8" />
   <title>DiagraMinder</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="bolzaDeEstilos/styles.css">
+  <!-- La app no tenía favicon (pestaña en blanco). Es el mismo logo de la marca:
+       fuente única en brand/logo.svg, de donde salen también los PNG. -->
+  <link rel="icon" href="/brand/logo.svg" type="image/svg+xml">
+  <!-- Descripción y Open Graph. NO son decorativos: la verificación de marca de
+       Google rebotó con "en la página principal no se explica el propósito de la
+       app" — el pitch está en el <body>, pero sin <meta description> el chequeo
+       automático no encuentra de qué se trata. Texto en inglés, igual que el hero
+       (es el idioma nativo de la UI; el español entra por t()). -->
+  <meta name="description" content="DiagraMinder builds tree diagrams, flows, object models and AI agent teams on a single local-first canvas. Versioned, reversible and private.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="DiagraMinder">
+  <meta property="og:title" content="DiagraMinder — Diagrams that do the work">
+  <meta property="og:description" content="Build trees, flows, object models — and AI agent teams — on one local-first canvas. Versioned, reversible, private.">
+  <meta property="og:url" content="https://diagraminder.com/">
+  <meta property="og:image" content="https://diagraminder.com/brand/logo-512.png">
+  <meta name="twitter:card" content="summary">
+  <!-- ?v= rompe el cache del borde cuando cambia el CSS. El nginx de infra/web ya
+       manda no-cache, pero una copia vieja YA cacheada sobrevive hasta su TTL: subir
+       este número la invalida al instante (index.html se sirve siempre fresco). -->
+  <link rel="stylesheet" href="app/bolzaDeEstilos/styles.css?v=72">
 </head>
 
 <body>
@@ -15,27 +34,14 @@
       <label for="nav-open" class="nav-toggle" aria-label="Open menu" title="Menu"></label>
 
       <ul class="nav-list">
-        <!-- Ubicación de trabajo: carpeta activa / proyecto activo, agrupados en una
-             sola casilla y separados del resto del navbar. Patrón GitHub
-             ("owner / repo ⌄"): el NOMBRE navega y la FLECHITA despliega el
-             selector; la barra cruzada "/" muestra que el proyecto vive en esa
-             carpeta -->
-        <li class="nav-item nav-location">
-          <details id="folder-menu" class="nav-folders">
-            <summary id="folder-current">
-              <button type="button" class="loc-name" id="folder-nav">Folder</button>
-              <span class="loc-caret" title="Switch folder" aria-hidden="true"></span>
-            </summary>
-            <ul class="menu" id="folder-list"></ul>
-          </details>
-          <span class="nav-loc-sep" aria-hidden="true">/</span>
-          <details id="tree-menu" class="nav-trees">
-            <summary id="tree-current">
-              <button type="button" class="loc-name" id="tree-nav">Tree</button>
-              <span class="loc-caret" title="Switch project" aria-hidden="true"></span>
-            </summary>
-            <ul class="menu" id="tree-list"></ul>
-          </details>
+        <!-- Ubicación de trabajo: UN solo botón que abre el aside IZQUIERDO de
+             proyectos (#projects-aside, dos columnas: carpetas | archivos). Antes
+             acá vivían dos <details> (carpeta activa / proyecto activo) — se
+             reemplazaron porque el select anidado no daba para GESTIONAR
+             (crear/renombrar/borrar) sin que el menú se cerrara encima. -->
+        <li class="nav-item nav-projects">
+          <button type="button" class="nav-projects-btn" id="projects-btn"
+                  title="Projects" aria-controls="projects-aside" aria-expanded="false">Projects</button>
         </li>
         <li class="nav-loc-bar" aria-hidden="true"></li>
 
@@ -43,15 +49,25 @@
           <button class="nav-home-btn" id="mode-home-btn" data-act="mode-home">Home</button>
         </li>
 
-        <li class="nav-item">
-          <details>
+        <li class="nav-item nav-project">
+          <details id="file-menu">
             <summary>File</summary>
             <ul class="menu">
               <li><button data-act="new" id="new-diagram">New</button></li>
               <li><button data-act="open" id="open-diagram">Open…</button></li>
               <li><button data-act="export-dmer" id="export-dmer">Save</button></li>
-              <li class="sep"></li>
-              <li><button data-act="import-soft" id="import-soft">Import Soft</button></li>
+              <!-- Solo visible si el documento abierto vive en una nube DiagraMinder
+                   y sos su dueño (lo decide connectors.js). -->
+              <!-- OCULTOS, no eliminados (2026-09-14): "Import Soft" espera la decisión
+                   de si se queda o no. Se esconde junto con SU separador — si no, el
+                   grupo entre los dos `sep` queda vacío fuera de un organigrama (donde
+                   "To canvas" tampoco se ve) y se leen dos líneas seguidas.
+                   Volver a mostrarlo = sacarle la clase `hidden` a estos dos <li>. -->
+              <li class="sep hidden" id="import-soft-sep"></li>
+              <li class="hidden" id="import-soft-li"><button data-act="import-soft" id="import-soft">Import Soft</button></li>
+              <!-- Solo en un organigrama (lo decide updateToolbarForType): crea una copia
+                   del árbol como lienzo libre. Antes vivía en el menú Move. -->
+              <li class="hidden" id="to-freestyle-li"><button data-act="to-freestyle" id="to-freestyle">To canvas</button></li>
               <li class="sep"></li>
               <li><button data-act="export-obsidian" id="export-obsidian">Export to Obsidian</button></li>
               <li><button data-act="export-png" id="export-png">Export PNG</button></li>
@@ -61,7 +77,7 @@
           </details>
         </li>
 
-        <li class="nav-item">
+        <li class="nav-item nav-project">
           <details>
             <summary>Edit</summary>
             <ul class="menu">
@@ -71,7 +87,7 @@
           </details>
         </li>
 
-        <li class="nav-item">
+        <li class="nav-item nav-project">
           <details>
             <summary>View</summary>
             <ul class="menu">
@@ -84,37 +100,22 @@
           </details>
         </li>
 
-        <li class="nav-item">
-          <details>
-            <summary>Move</summary>
-            <ul class="menu">
-              <li class="menu-label">Carts</li>
-              <li><button data-act="layout-ltr">Left to right</button></li>
-              <li><button data-act="layout-organigram">Organigram</button></li>
-              <li class="sep"></li>
-              <li class="menu-label">Custom types</li>
-              <li><button data-act="layout-freestyle" disabled>Freestyle</button></li>
-              <li><button data-act="layout-treeQuestionary" disabled>Questionnaire</button></li>
-              <li><button data-act="layout-activities" disabled>Activities</button></li>
-              <li><button data-act="layout-object" disabled>Object</button></li>
-              <li><button data-act="layout-editor" disabled>Editor</button></li>
-              <li><button data-act="layout-orchestrator" disabled>IA Orchestrator</button></li>
-              <li><button data-act="layout-documents" disabled>Documents</button></li>
-            </ul>
-          </details>
-        </li>
 
-        <li class="nav-item">
-          <details>
+
+        <li class="nav-spacer" aria-hidden="true"></li>
+
+        <!-- OCULTO, no eliminado (2026-09-14): el menú Skills espera la decisión de si
+             se queda o no. Volver a mostrarlo = sacarle la clase `hidden` a este <li>.
+             El paso del tutorial que lo señalaba se sacó a propósito (doc 33): si vuelve
+             el menú, el paso NO vuelve solo. -->
+        <li class="nav-item hidden" id="skills-menu-li">
+          <details id="skills-menu">
             <summary>Skills</summary>
             <ul class="menu">
               <li><button data-act="download-soft-skill" id="download-soft-skill">Download Soft Skill</button></li>
             </ul>
           </details>
         </li>
-
-        <li class="nav-spacer" aria-hidden="true"></li>
-
         <li class="nav-item nav-lang">
           <select id="lang-select" class="nav-lang-select" aria-label="Language" title="Language">
             <option value="en">English</option>
@@ -123,20 +124,27 @@
         </li>
 
         <li class="nav-item">
-          <details>
+          <details id="help-menu">
             <summary>Help</summary>
             <ul class="menu">
+              <!-- se esconde en celular: ahí no corre ningún tutorial (doc 33) -->
+              <li class="help-tutorial-li"><button data-act="tutorial" id="help-tutorial">Tutorial</button></li>
               <li><button data-act="shortcuts" disabled>Shortcuts</button></li>
-              <li><button data-act="docs" disabled>Documentation</button></li>
+              <li><a class="menu-link" data-act="docs" href="/docs" target="_blank" rel="noopener">Documentation</a></li>
               <li><button data-act="whatsnew" disabled>What's new</button></li>
             </ul>
           </details>
         </li>
 
-        <li class="nav-item profile">
-          <button id="profile-btn" class="nav-pill" title="Account"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>Account</button>
-        </li>
-        <li>
+        <li class="nav-actions">
+          <!-- Aviso de que el túnel está ABIERTO. Vive en la barra para que se vea
+               desde cualquier modo, sin abrir nada: mientras esté, tu máquina es
+               alcanzable desde afuera y eso no puede estar escondido en un panel.
+               Arranca oculto; lo prende tunnelAviso.js. -->
+          <button id="tunnel-badge" class="tunnel-badge hidden" type="button"
+                  title="The public tunnel is open — click for details">
+            <span class="tunnel-badge-dot" aria-hidden="true"></span><span>Tunnel</span>
+          </button>
           <button id="chat-btn" class="nav-pill" title="Chat with the AI"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>AI</button>
           <button id="ia-btn" class="nav-pill" title="Settings, connectors and appearance"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5 15.4 17.5M15.4 6.5 8.6 10.5"/></svg>Settings</button>
         </li>
@@ -159,6 +167,40 @@
     <div id="aside-resizer" class="aside-resizer" title="Drag to resize width"></div>
   </aside>
 
+  <!-- ===== PROYECTOS (aside IZQUIERDO) =====
+       Reemplaza a los dos selects del navbar. Dos columnas: CARPETAS y FILES (lo
+       que antes se llamaba "proyectos"). Elegir una carpeta NO abre nada: solo la
+       marca y repuebla la columna de files. Abrir un file sí cambia el diagrama.
+       Los ids #folder-list / #tree-list se conservan a propósito: los handlers y
+       el repintado (refreshFolderMenu / refreshTreeMenu) siguen apuntando ahí. -->
+  <aside id="projects-aside" class="side-panel side-panel-left">
+    <div class="side-panel-header">
+      <span class="side-panel-title">Projects</span>
+      <button class="side-panel-close" data-close="projects-aside" title="Close">✕</button>
+    </div>
+    <div class="projects-cols">
+      <section class="projects-col" id="projects-col-folders">
+        <p class="projects-col-title">Folders</p>
+        <ul class="menu projects-list" id="folder-list"></ul>
+        <div class="projects-col-foot">
+          <button type="button" class="projects-foot-btn folder-add">＋ Add folder</button>
+          <button type="button" class="projects-foot-btn folder-reveal">Open root folder</button>
+        </div>
+      </section>
+      <section class="projects-col" id="projects-col-files">
+        <p class="projects-col-title">Files</p>
+        <ul class="menu projects-list" id="tree-list"></ul>
+        <div class="projects-col-foot">
+          <div class="projects-add-wrap" id="file-add-wrap">
+            <!-- el desplegable de tipos se puebla en refreshTreeMenu() -->
+            <ul class="projects-add-menu hidden" id="file-add-types"></ul>
+            <button type="button" class="projects-foot-btn projects-add-btn" id="file-add-btn">＋ Add file</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </aside>
+
   <aside id="ia-aside" class="side-panel side-panel-right">
     <div class="side-panel-header">
       <span class="side-panel-title">Settings</span>
@@ -166,20 +208,34 @@
     </div>
     <div class="side-panel-body">
       <section class="side-panel-group">
-        <p class="side-panel-group-title">Software connectors</p>
-        <button class="side-panel-btn" id="ia-download-local">Download local</button>
-      <div class="ia-download hidden" id="ia-download-options">
+        <p class="side-panel-group-title">Backend</p>
+        <button class="side-panel-btn dm-web-only" id="ia-download-local">Download backend</button>
+      <div class="ia-download hidden dm-web-only" id="ia-download-options">
 
         <div class="ia-dl-group">
-          <p class="ia-dl-title">Executable <span class="ia-dl-badge">recommended</span></p>
-          <p class="ia-download-hint">Ready to use: double-click and go. No installation required.</p>
-          <a class="ia-download-link" id="ia-bin-win" href="https://github.com/JuanseGZZ/diagramind-local/releases/latest/download/DiagraMind-Local-win.exe" download>
+          <p class="ia-dl-title">The whole app <span class="ia-dl-badge">recommended</span></p>
+          <p class="ia-download-hint">DiagraMinder and its backend in a single file: open it and it works, fully offline. This is the one you want.</p>
+          <a class="ia-download-link" id="ia-app-win" href="https://github.com/JuanseGZZ/diagraminder-app/releases/latest/download/DiagraMinder-win.exe" download>
             ⬇ Windows<span class="ia-download-tag">64-bit</span>
           </a>
-          <a class="ia-download-link" id="ia-bin-mac" href="https://github.com/JuanseGZZ/diagramind-local/releases/latest/download/DiagraMind-Local-mac" download>
+          <a class="ia-download-link" id="ia-app-mac" href="https://github.com/JuanseGZZ/diagraminder-app/releases/latest/download/DiagraMinder-mac.zip" download>
+            ⬇ macOS<span class="ia-download-tag">.app</span>
+          </a>
+          <a class="ia-download-link" id="ia-app-linux" href="https://github.com/JuanseGZZ/diagraminder-app/releases/latest/download/DiagraMinder-linux" download>
+            ⬇ Linux<span class="ia-download-tag">64-bit</span>
+          </a>
+        </div>
+
+        <div class="ia-dl-group">
+          <p class="ia-dl-title">Backend only</p>
+          <p class="ia-download-hint">Just the backend, to use with this website instead of the packaged app.</p>
+          <a class="ia-download-link" id="ia-bin-win" href="https://github.com/JuanseGZZ/diagraminder-backend/releases/latest/download/DiagraMinder-Backend-win.exe" download>
+            ⬇ Windows<span class="ia-download-tag">64-bit</span>
+          </a>
+          <a class="ia-download-link" id="ia-bin-mac" href="https://github.com/JuanseGZZ/diagraminder-backend/releases/latest/download/DiagraMinder-Backend-mac" download>
             ⬇ macOS<span class="ia-download-tag">Apple Silicon</span>
           </a>
-          <a class="ia-download-link" id="ia-bin-linux" href="https://github.com/JuanseGZZ/diagramind-local/releases/latest/download/DiagraMind-Local-linux" download>
+          <a class="ia-download-link" id="ia-bin-linux" href="https://github.com/JuanseGZZ/diagraminder-backend/releases/latest/download/DiagraMinder-Backend-linux" download>
             ⬇ Linux<span class="ia-download-tag">64-bit</span>
           </a>
         </div>
@@ -187,13 +243,13 @@
         <div class="ia-dl-group">
           <p class="ia-dl-title">Installer</p>
           <p class="ia-download-hint">Installs the executable and sets it to start automatically on boot.</p>
-          <a class="ia-download-link" id="ia-installer-win" href="https://github.com/JuanseGZZ/diagramind-local/releases/latest/download/Instalar-DiagraMind-win.bat" download>
+          <a class="ia-download-link" id="ia-installer-win" href="https://github.com/JuanseGZZ/diagraminder-backend/releases/latest/download/Instalar-DiagraMinder-Backend-win.bat" download>
             ⬇ Windows<span class="ia-download-tag"></span>
           </a>
-          <a class="ia-download-link" id="ia-installer-mac" href="https://github.com/JuanseGZZ/diagramind-local/releases/latest/download/Instalar-DiagraMind-mac.command" download>
+          <a class="ia-download-link" id="ia-installer-mac" href="https://github.com/JuanseGZZ/diagraminder-backend/releases/latest/download/Instalar-DiagraMinder-Backend-mac.command" download>
             ⬇ macOS<span class="ia-download-tag"></span>
           </a>
-          <a class="ia-download-link" id="ia-installer-linux" href="https://github.com/JuanseGZZ/diagramind-local/releases/latest/download/Instalar-DiagraMind-linux.sh" download>
+          <a class="ia-download-link" id="ia-installer-linux" href="https://github.com/JuanseGZZ/diagraminder-backend/releases/latest/download/Instalar-DiagraMinder-Backend-linux.sh" download>
             ⬇ Linux<span class="ia-download-tag"></span>
           </a>
         </div>
@@ -201,61 +257,16 @@
         <div class="ia-dl-group">
           <p class="ia-dl-title">Python Script</p>
           <p class="ia-download-hint">Lightweight, but requires Python 3 installed.</p>
-          <a class="ia-download-link" id="ia-download-zip" href="https://github.com/JuanseGZZ/diagramind-local/releases/latest/download/diagramind-local.zip" download>
+          <a class="ia-download-link" id="ia-download-zip" href="https://github.com/JuanseGZZ/diagraminder-backend/releases/latest/download/diagraminder-backend.zip" download>
             ⬇ Download .zip<span class="ia-download-tag">requires Python</span>
           </a>
         </div>
 
-        <a class="ia-dl-repo" href="https://github.com/JuanseGZZ/diagramind-local" target="_blank" rel="noopener">
+        <a class="ia-dl-repo" href="https://github.com/JuanseGZZ/diagraminder-backend" target="_blank" rel="noopener">
           ↗ View the code on GitHub
         </a>
       </div>
 
-      <button class="side-panel-btn" id="ia-download-external">Download external</button>
-      <div class="ia-download hidden" id="ia-download-external-options">
-
-        <p class="ia-download-hint">The external connector is a multi-user server: the shared source of truth for a team's projects (auth, per-folder permissions, git versioning, admin dashboard, MCP URLs for the AI). For a personal setup run it on your machine; for production put it behind nginx/Docker.</p>
-
-        <div class="ia-dl-group">
-          <p class="ia-dl-title">Executable <span class="ia-dl-badge">recommended</span></p>
-          <p class="ia-download-hint">Ready to use: double-click and go. No installation required. Needs <b>git</b> installed for versioning.</p>
-          <a class="ia-download-link" id="ia-ext-bin-win" data-asset="DiagraMind-Connector-win.exe" href="https://github.com/JuanseGZZ/diagramind-local/releases" download>
-            ⬇ Windows<span class="ia-download-tag">64-bit</span>
-          </a>
-          <a class="ia-download-link" id="ia-ext-bin-mac" data-asset="DiagraMind-Connector-mac" href="https://github.com/JuanseGZZ/diagramind-local/releases" download>
-            ⬇ macOS<span class="ia-download-tag">Apple Silicon</span>
-          </a>
-          <a class="ia-download-link" id="ia-ext-bin-linux" data-asset="DiagraMind-Connector-linux" href="https://github.com/JuanseGZZ/diagramind-local/releases" download>
-            ⬇ Linux<span class="ia-download-tag">64-bit</span>
-          </a>
-        </div>
-
-        <div class="ia-dl-group">
-          <p class="ia-dl-title">Installer</p>
-          <p class="ia-download-hint">Installs the executable and sets it to start automatically on boot.</p>
-          <a class="ia-download-link" id="ia-ext-installer-win" data-asset="Instalar-DiagraMind-Connector-win.bat" href="https://github.com/JuanseGZZ/diagramind-local/releases" download>
-            ⬇ Windows<span class="ia-download-tag"></span>
-          </a>
-          <a class="ia-download-link" id="ia-ext-installer-mac" data-asset="Instalar-DiagraMind-Connector-mac.command" href="https://github.com/JuanseGZZ/diagramind-local/releases" download>
-            ⬇ macOS<span class="ia-download-tag"></span>
-          </a>
-          <a class="ia-download-link" id="ia-ext-installer-linux" data-asset="Instalar-DiagraMind-Connector-linux.sh" href="https://github.com/JuanseGZZ/diagramind-local/releases" download>
-            ⬇ Linux<span class="ia-download-tag"></span>
-          </a>
-        </div>
-
-        <div class="ia-dl-group">
-          <p class="ia-dl-title">Python Script</p>
-          <p class="ia-download-hint">Lightweight, but requires Python 3 installed.</p>
-          <a class="ia-download-link" id="ia-ext-zip" data-asset="diagramind-connector.zip" href="https://github.com/JuanseGZZ/diagramind-local/releases" download>
-            ⬇ Download .zip<span class="ia-download-tag">requires Python</span>
-          </a>
-        </div>
-
-        <a class="ia-dl-repo" href="https://github.com/JuanseGZZ/diagramind-local/tree/main/external-backend" target="_blank" rel="noopener">
-          ↗ View the code on GitHub
-        </a>
-      </div>
 
       </section>
 
@@ -279,16 +290,66 @@
         </form>
       </div>
 
-      <button class="side-panel-btn" id="ia-add-connector">Add external connector</button>
-      <div class="ia-apis hidden" id="ia-connectors-panel">
-        <ul class="ia-apis-list" id="ia-connectors-list"></ul>
-        <form class="ia-apis-form" id="ia-connectors-form">
-          <input class="ia-apis-input" id="ia-connector-name" type="text" placeholder="Name (e.g. Office server)" required />
-          <input class="ia-apis-input" id="ia-connector-url" type="text" placeholder="URL (e.g. http://192.168.1.20:8770)" required />
-          <button class="ia-apis-add" type="submit">Add connector</button>
-        </form>
+      <!-- Dónde guarda TODO el backend local (su raíz en disco). Solo tiene
+           sentido con el backend conectado: sin él no hay nada que mover. -->
+      <div class="side-panel-row" id="local-root-row">
+        <span class="side-panel-row-label">Storage folder</span>
+        <span class="side-panel-row-value" id="local-root-path">—</span>
       </div>
+      <button class="side-panel-btn" id="local-root-change">Change storage folder</button>
 
+      </section>
+
+      <section class="side-panel-group">
+        <p class="side-panel-group-title">Voice</p>
+        <div class="side-panel-row">
+          <span class="side-panel-row-label">Speech engine</span>
+          <select class="voice-select" id="voice-engine">
+            <option value="auto">Automatic</option>
+            <option value="webspeech">Browser (free)</option>
+            <option value="cloud">Cloud (API key)</option>
+          </select>
+        </div>
+        <div class="side-panel-row voice-cloud-only hidden">
+          <span class="side-panel-row-label">Transcription key</span>
+          <select class="voice-select" id="voice-api"></select>
+        </div>
+        <div class="side-panel-row voice-cloud-only hidden">
+          <span class="side-panel-row-label">Transcription model</span>
+          <input class="voice-input" id="voice-model" type="text" placeholder="Provider default" autocomplete="off" />
+        </div>
+        <div class="side-panel-row">
+          <span class="side-panel-row-label">Language</span>
+          <select class="voice-select" id="voice-lang">
+            <option value="auto">Same as the app</option>
+            <option value="es-ES">Spanish (Spain)</option>
+            <option value="es-419">Spanish (Latin America)</option>
+            <option value="en-US">English (US)</option>
+            <option value="en-GB">English (UK)</option>
+            <option value="pt-BR">Portuguese (Brazil)</option>
+            <option value="fr-FR">French</option>
+            <option value="it-IT">Italian</option>
+            <option value="de-DE">German</option>
+          </select>
+        </div>
+        <div class="side-panel-row">
+          <span class="side-panel-row-label">Pause that ends a sentence</span>
+          <select class="voice-select" id="voice-silence">
+            <option value="600">Short (0.6s)</option>
+            <option value="900">Normal (0.9s)</option>
+            <option value="1400">Long (1.4s)</option>
+            <option value="2000">Very long (2s)</option>
+          </select>
+        </div>
+        <label class="side-panel-check">
+          <input type="checkbox" id="voice-commands" />
+          <span>Punctuation commands while dictating ("period", "comma", "new line")</span>
+        </label>
+        <label class="side-panel-check">
+          <input type="checkbox" id="voice-bargein" />
+          <span>Talking over the AI interrupts it during a call</span>
+        </label>
+        <p class="voice-hint" id="voice-hint"></p>
       </section>
 
       <section class="side-panel-group">
@@ -302,8 +363,11 @@
 
     <!-- footer pinneado al fondo: conectar local + estado de conexión, con línea separadora -->
     <div class="side-panel-footer">
-      <p class="side-panel-group-title">Local connection</p>
-      <button class="side-panel-btn" id="ia-connect-local">Connect local</button>
+      <p class="side-panel-group-title">Backend connection</p>
+      <button class="side-panel-btn dm-web-only" id="ia-connect-local">Connect backend</button>
+      <!-- Solo en desktop: es la info de ESTE programa (puerto, carpetas, token, CLIs).
+           En la web no hay programa del que hablar. -->
+      <button class="side-panel-btn dm-desktop-only" id="ia-local-panel">This program</button>
       <div class="ia-status" id="ia-status" data-state="disconnected">
         <span class="ia-status-dot"></span>
         <span class="ia-status-text">Disconnected</span>
@@ -311,37 +375,16 @@
     </div>
   </aside>
 
-  <aside id="profile-aside" class="side-panel side-panel-right">
-    <div class="side-panel-header">
-      <span class="side-panel-title">Profile</span>
-      <button class="side-panel-close" data-close="profile-aside" title="Close">✕</button>
-    </div>
-    <div class="side-panel-body">
-      <!-- Cuenta DiagraMinder (nube, doc 26 §5): los botones abren el MODAL de cuenta
-           (#account-overlay); con sesión se muestra el bloque de cuenta. -->
-      <button class="side-panel-btn" id="profile-login">Log in</button>
-      <button class="side-panel-btn" id="profile-register">Sign up</button>
-      <div class="hidden" id="profile-account-in">
-        <div class="side-panel-row">
-          <span class="side-panel-row-label" id="profile-account-email"></span>
-        </div>
-        <div class="side-panel-row"><span class="side-panel-row-label">Your clouds</span></div>
-        <ul id="profile-account-clouds"></ul>
-        <button class="side-panel-btn" id="profile-account-buy" disabled title="Coming soon">Buy storage</button>
-        <button class="side-panel-btn" id="profile-account-logout">Log out</button>
-      </div>
-    </div>
-  </aside>
 
   <!-- ===== CHAT IA ===== -->
   <section id="ia-chat" class="ia-chat" aria-hidden="true">
     <div class="ia-chat-resizer" id="ia-chat-resizer" title="Drag to resize width"></div>
 
     <header class="ia-chat-header">
-      <div class="ia-chat-project ia-chat-pop" id="ia-chat-project" title="Project the chat works on">
+      <div class="ia-chat-project ia-chat-pop" id="ia-chat-project" title="File the chat works on">
         <button class="ia-chat-project-btn" id="ia-chat-project-btn">
           <span class="ia-chat-project-dot"></span>
-          <span class="ia-chat-project-name" id="ia-chat-project-name">No project</span>
+          <span class="ia-chat-project-name" id="ia-chat-project-name">No file</span>
           <svg class="ia-chat-caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
         </button>
         <ul class="ia-chat-menu hidden" id="ia-chat-project-menu"></ul>
@@ -364,8 +407,11 @@
       <div class="ia-chat-pop ia-chat-pop-block" id="ia-chat-backend">
         <button class="ia-chat-backend-btn" id="ia-chat-backend-btn">
           <span class="ia-chat-backend-id">
-            <span class="ia-chat-backend-avatar" id="ia-chat-backend-avatar" aria-hidden="true">L</span>
-            <span class="ia-chat-backend-label" id="ia-chat-backend-label">Local · Claude Code</span>
+            <!-- vacíos a propósito: los llena syncControls() de iaChat.js. Con texto
+                 adentro el i18n los fotografía y al cambiar de idioma los pisaría con
+                 el literal de arranque (misma trampa que el pill de la cuenta, §27). -->
+            <span class="ia-chat-backend-avatar" id="ia-chat-backend-avatar" aria-hidden="true"></span>
+            <span class="ia-chat-backend-label" id="ia-chat-backend-label"></span>
           </span>
           <svg class="ia-chat-caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
         </button>
@@ -384,7 +430,22 @@
       <ul class="ia-chat-sessions-list" id="ia-chat-sessions-list"></ul>
     </aside>
 
-    <div class="ia-chat-messages" id="ia-chat-messages"></div>
+    <div class="ia-chat-messages" id="ia-chat-messages">
+      <!-- Velo de BLOQUEO: sin backend local ni API key el chat no puede hacer nada, así
+           que se apaga y explica qué falta. Los textos van acá (no armados por JS) para
+           que los traduzca el snapshot del i18n. Lo muestra/esconde syncLock(). -->
+      <div class="ia-chat-lock hidden" id="ia-chat-lock">
+        <div class="ia-chat-lock-box">
+          <svg class="ia-chat-lock-ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+          <p class="ia-chat-lock-title">The chat is off</p>
+          <p class="ia-chat-lock-sub">It needs an AI to talk to: connect the backend, or add an API key.</p>
+          <div class="ia-chat-lock-actions">
+            <button class="ia-chat-lock-btn is-primary" id="ia-chat-lock-connect" type="button">Connect backend</button>
+            <button class="ia-chat-lock-btn" id="ia-chat-lock-api" type="button">Add API key</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <div class="ia-chat-activity hidden" id="ia-chat-activity" aria-live="polite">
       <span class="ia-chat-activity-spin" aria-hidden="true"></span>
@@ -410,24 +471,48 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.44 11.05l-8.49 8.49a5 5 0 0 1-7.07-7.07l8.49-8.49a3 3 0 0 1 4.24 4.24l-8.49 8.49a1 1 0 0 1-1.41-1.41l7.78-7.78"/></svg>
         </button>
         <input type="file" id="ia-chat-file-input" multiple hidden aria-hidden="true" />
+        <!-- dictado: escribir el mensaje hablando (app/voice/dictation.js) -->
+        <button class="ia-chat-attach-btn ia-chat-mic-btn" id="ia-chat-mic" title="Dictate the message" aria-label="Dictate the message" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+        </button>
+        <!-- modo llamada: conversar hablando (app/voice/callMode.js) -->
+        <button class="ia-chat-attach-btn ia-chat-call-btn" id="ia-chat-call" title="Voice call with the AI" aria-label="Voice call with the AI">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 3.5l2.2 4-1.8 1.8a12 12 0 0 0 5.7 5.7l1.8-1.8 4 2.2v3.3a2 2 0 0 1-2.2 2A17 17 0 0 1 3.3 5.7 2 2 0 0 1 5.3 3.5z"/></svg>
+        </button>
+        <!-- comandos "/" (se abre también tipeando "/" al principio del mensaje) -->
+        <div class="ia-chat-pop ia-chat-pop-up" id="ia-chat-slash">
+          <button class="ia-chat-attach-btn ia-chat-slash-btn" id="ia-chat-slash-btn" title="Commands" aria-label="Commands">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4L9 20" stroke-width="2.6"/></svg>
+          </button>
+          <div class="ia-chat-menu ia-chat-menu-slash hidden" id="ia-chat-slash-menu"></div>
+        </div>
         <!-- modo (popup tipo VSCode) -->
         <div class="ia-chat-pop ia-chat-pop-up" id="ia-chat-mode">
           <button class="ia-chat-ctl-btn" id="ia-chat-mode-btn">
-            <span class="ia-chat-ctl-label" id="ia-chat-mode-label">Edit automatically</span>
+            <span class="ia-chat-ctl-label" id="ia-chat-mode-label">Auto accept</span>
             <svg class="ia-chat-caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
           </button>
           <div class="ia-chat-menu ia-chat-menu-modes hidden" id="ia-chat-mode-menu">
+            <!-- La CLAVE `auto-edit` se queda (está guardada en las sesiones de la gente);
+                 lo que cambió es lo que hace: aprueba TODO, no solo las ediciones. -->
+            <button class="ia-chat-mode-opt" data-mode="ask">
+              <span class="ia-chat-mode-opt-text">
+                <span class="ia-chat-mode-opt-title">Ask before</span>
+                <span class="ia-chat-mode-opt-desc">Asks you before each edit or command</span>
+              </span>
+              <svg class="ia-chat-check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>
+            </button>
             <button class="ia-chat-mode-opt" data-mode="auto-edit">
               <span class="ia-chat-mode-opt-text">
-                <span class="ia-chat-mode-opt-title">Edit automatically</span>
-                <span class="ia-chat-mode-opt-desc">Edits the selected text or file</span>
+                <span class="ia-chat-mode-opt-title">Auto accept</span>
+                <span class="ia-chat-mode-opt-desc">Approves everything on its own; you see each step</span>
               </span>
               <svg class="ia-chat-check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>
             </button>
             <button class="ia-chat-mode-opt" data-mode="plan">
               <span class="ia-chat-mode-opt-text">
-                <span class="ia-chat-mode-opt-title">Plan mode</span>
-                <span class="ia-chat-mode-opt-desc">Explores and proposes a plan before editing</span>
+                <span class="ia-chat-mode-opt-title">Plan</span>
+                <span class="ia-chat-mode-opt-desc">Proposes a plan; if you approve it, does it all without asking</span>
               </span>
               <svg class="ia-chat-check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>
             </button>
@@ -469,7 +554,7 @@
   <div id="toolbar" class="toolbar">
     <button id="agregarPrincipalBtn">Add to root</button>
     <div class="toolbar-sep"></div>
-    <button id="versiones-btn" class="toolbar-btn" title="Tree version history"><svg class="toolbar-btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Versions</button>
+    <button id="versiones-btn" class="toolbar-btn" title="Change history"><svg class="toolbar-btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>History</button>
     <button id="orch-runs-btn" class="toolbar-btn hidden" title="Run history of this orchestrator"><svg class="toolbar-btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg>Runs</button>
     <button id="orch-keys-btn" class="toolbar-btn hidden" title="API keys of this orchestrator (stored in its connector, never in the diagram)"><svg class="toolbar-btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.59 17.41A2 2 0 0 0 2 18.83V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 1 1-1v-1a1 1 0 0 1 1-1h.17a2 2 0 0 0 1.42-.59l.81-.81a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/></svg>Keys</button>
     <!-- presets de empresa/sector: el trigger es un .toolbar-btn como sus vecinos y
@@ -478,6 +563,16 @@
       <summary class="toolbar-btn" title="Insert a ready-made company or sector"><svg class="toolbar-btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"/><path d="M6 21V6a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v15"/><path d="M14 10h4a1 1 0 0 1 1 1v10"/><path d="M9 9h2M9 13h2M9 17h2"/></svg>Insert preset</summary>
       <ul id="orch-preset-list" class="menu orch-preset-list"></ul>
     </details>
+
+    <!-- controles del modo OBJECT: el entorno activo (variables {{}} del fetch) y el
+         import de un JSON. Se muestran/esconden en updateToolbarForType(). -->
+    <div id="obj-toolbar-controls" class="hidden obj-toolbar-controls">
+      <div class="toolbar-sep"></div>
+      <select id="obj-env-select" class="act-unit-select" title="Environment used by the fetches"></select>
+      <button id="obj-env-btn" class="toolbar-btn" title="Environments and variables ({{name}})"><svg class="toolbar-btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>Env…</button>
+      <div class="toolbar-sep"></div>
+      <button id="obj-import-btn" class="toolbar-btn" title="Build the diagram from a JSON body you already have"><svg class="toolbar-btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M8 11l4 4 4-4"/><path d="M4 17v2a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-2"/></svg>Import JSON</button>
+    </div>
 
     <div id="act-toolbar-controls" class="hidden act-toolbar-controls">
       <span class="tcg-label">Time unit</span>
@@ -515,6 +610,7 @@
     <div id="free-toolbar-controls" class="hidden free-toolbar-controls">
       <button id="freeAddNodeBtn" class="toolbar-btn toolbar-btn--menu"><svg class="toolbar-btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add node</button>
       <button id="shapesBtn" class="toolbar-btn"><svg class="toolbar-btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.3 10a.7.7 0 0 1-.6-1l4.7-8a.7.7 0 0 1 1.2 0l4.7 8a.7.7 0 0 1-.6 1z"/><rect x="3" y="14" width="7" height="7" rx="1"/><circle cx="17.5" cy="17.5" r="3.5"/></svg>Shapes</button>
+      <button id="free-arrange-btn" class="toolbar-btn" title="Arrange the nodes automatically, with as few crossing arrows as possible. Only the selected ones if you selected two or more. Ctrl+Z undoes it."><svg class="toolbar-btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="6" height="5" rx="1"/><rect x="15" y="4" width="6" height="5" rx="1"/><rect x="15" y="15" width="6" height="5" rx="1"/><path d="M9 6.5h6M18 9v6"/></svg>Arrange</button>
 
       <div class="toolbar-sep"></div>
 
@@ -566,34 +662,13 @@
 
   <!-- Cuenta DiagraMinder (nube, doc 26 §5): modal de login/registro. Lo abren los
        botones del panel Perfil; la lógica vive en connectors.js + account.js. -->
-  <div id="account-overlay" class="modal-overlay hidden">
-    <div class="modal modal-narrow">
-      <p class="modal-hint" id="account-title">Log in to DiagraMinder</p>
-      <p class="modal-hint-sub">Your cloud connectors will appear automatically.</p>
-      <form id="account-form">
-        <div class="modal-field">
-          <label for="account-email">Email</label>
-          <input class="account-input" id="account-email" type="email" autocomplete="username" required />
-        </div>
-        <div class="modal-field">
-          <label for="account-pass">Password</label>
-          <input class="account-input" id="account-pass" type="password" autocomplete="current-password" minlength="6" required />
-        </div>
-        <div class="modal-field hidden" id="account-url-field">
-          <label for="account-url">Server URL</label>
-          <input class="account-input" id="account-url" type="text" placeholder="(automatic)" autocomplete="off" />
-        </div>
-        <div class="account-captcha hidden" id="account-captcha"></div>
-        <p class="account-error hidden" id="account-error"></p>
-        <div class="modal-actions">
-          <button type="button" id="account-advanced" title="Server URL">⚙</button>
-          <button type="button" id="account-cancel">Cancel</button>
-          <button type="submit" id="account-submit">Log in</button>
-        </div>
-        <p class="account-switch"><a href="#" id="account-switch">Don't have an account? Sign up</a></p>
-      </form>
-    </div>
-  </div>
+
+  <!-- Credenciales MCP de una nube de la cuenta (doc 26 §5): el token viaja EN LA URL,
+       así que se copia una sola cosa y se pega en Claude/ChatGPT como conector remoto. -->
+
+  <!-- Compartir UN documento de la nube con otra cuenta DiagraMinder (doc 26 §5).
+       El permiso vive en el conector como ACL de proyecto: el invitado ve ESE
+       documento y ninguno de los otros de la misma carpeta. -->
 
   <div id="media-picker-overlay" class="modal-overlay hidden">
     <div class="modal modal-narrow">
@@ -645,7 +720,7 @@
 
   <div id="versiones-overlay" class="modal-overlay hidden">
     <div class="modal modal-wide">
-      <p class="modal-hint">Project versions</p>
+      <p class="modal-hint">Change history</p>
       <div id="versiones-body" class="versiones-body"></div>
       <div class="modal-actions">
         <button id="versiones-cerrar">Close</button>
@@ -656,7 +731,7 @@
   <div id="mirror-conflict-overlay" class="modal-overlay hidden">
     <div class="modal modal-wide">
       <p class="modal-hint">The connector mirror differs from this web app</p>
-      <p class="modal-hint-sub">The connector has these folders and projects. Which one do you keep?</p>
+      <p class="modal-hint-sub">The connector has these folders and files. Which one do you keep?</p>
       <div id="mirror-conflict-body" class="mirror-conflict-body"></div>
       <div class="modal-actions">
         <button id="mirror-keep-mirror">Keep the mirror</button>
@@ -665,25 +740,18 @@
     </div>
   </div>
 
+  <!-- ===== NUEVO PROYECTO (preset) =====
+       Un PROYECTO es una carpeta con varios files. Este modal elige QUÉ clase de
+       proyecto es y arma la carpeta con los files que esa clase necesita, ya
+       nombrados. La lista de presets y sus files viven en app/projectPresets.js —
+       acá no hay ninguna: la vista previa se puebla desde ahí. -->
+
   <div id="folder-modal-overlay" class="modal-overlay hidden">
     <div class="modal modal-narrow">
       <p class="modal-hint">New folder</p>
       <div class="modal-field">
         <input id="folder-name-input" type="text" placeholder="Folder name" />
       </div>
-      <div class="modal-field">
-        <label class="modal-label">Hosting</label>
-        <select id="folder-hosting-select" class="ia-apis-input">
-          <option value="local">Local (this PC)</option>
-          <option value="nube-propia">Own cloud</option>
-          <option value="nube-diagramind">DiagraMinder Cloud</option>
-        </select>
-      </div>
-      <div class="modal-field hidden" id="folder-connector-field">
-        <label class="modal-label">Connector</label>
-        <select id="folder-connector-select" class="ia-apis-input"></select>
-      </div>
-      <p class="modal-hint-sub" id="folder-modal-note"></p>
       <div class="modal-actions">
         <button id="folder-create-confirm">Create</button>
         <button id="folder-create-cancel">Cancel</button>
@@ -832,6 +900,40 @@
     <div class="cart-peek-body rich-editor rich-read"></div>
   </div>
 
+  <!-- MODO LLAMADA: conversar con la IA hablando. El markup vive acá (y no lo
+       arma el JS) para que el snapshot de i18n pueda traducirlo, como el velo del
+       chat. Lo maneja app/voice/callMode.js.
+       NO es un modal: es una barra flotante (+ un panel que se abre y se cierra),
+       así la llamada sigue mientras usás la app y mirás lo que va haciendo la IA. -->
+  <div id="voice-call" class="voice-call hidden" data-state="listening" aria-label="Voice call with the AI">
+
+    <div class="voice-call-panel hidden" id="voice-call-panel">
+      <div class="voice-call-head">
+        <span class="voice-call-title">Voice call</span>
+        <span class="voice-call-engine" id="voice-call-engine"></span>
+      </div>
+
+      <div class="voice-orb" id="voice-orb" aria-hidden="true">
+        <span class="voice-orb-ring"></span>
+        <span class="voice-orb-ring voice-orb-ring2"></span>
+        <span class="voice-orb-core"></span>
+      </div>
+
+      <p class="voice-call-live" id="voice-call-live"></p>
+      <div class="voice-call-log" id="voice-call-log" aria-live="polite"></div>
+      <p class="voice-call-hint">Talk normally: when you stop, what you said is sent. Talk over the AI to cut it off — it gets told exactly where you interrupted it. The call keeps going while you use the app.</p>
+    </div>
+
+    <div class="voice-call-bar">
+      <span class="voice-call-dot" id="voice-call-dot" aria-hidden="true"></span>
+      <span class="voice-call-status" id="voice-call-status" aria-live="polite">Listening…</span>
+      <button class="voice-call-btn" id="voice-call-mute" type="button" title="Mute your microphone (the call keeps going)">Mic off</button>
+      <button class="voice-call-btn" id="voice-call-skip" type="button" title="Stop the AI from talking" disabled>Skip</button>
+      <button class="voice-call-btn voice-call-icon" id="voice-call-toggle" type="button" title="Show the conversation" aria-expanded="false">⌃</button>
+      <button class="voice-call-btn is-hang" id="voice-call-hang" type="button">End call</button>
+    </div>
+  </div>
+
   <!-- barra del reproductor TTS: sigue sonando aunque cierres el modal -->
   <div id="tts-bar" class="tts-bar hidden">
     <svg class="tts-bar-ico" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 6v4h2.6L8.5 13V3L5.1 6H2.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M10.8 5.6a3.4 3.4 0 010 4.8M12.6 3.8a6 6 0 010 8.4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
@@ -951,207 +1053,616 @@
     </div>
   </div>
 
-<div id="home-screen" style="position:fixed;inset:56px 0 0 0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,'Segoe UI',sans-serif;overflow-y:auto;overflow-x:hidden">
+<div id="home-screen" style="position:fixed;inset:56px 0 0 0;overflow-y:auto;overflow-x:hidden">
 
-  <div style="position:absolute;inset:0;background-image:radial-gradient(var(--border-strong) 1px, transparent 1px);background-size:22px 22px;pointer-events:none;opacity:.55"></div>
-  <div style="position:absolute;top:-10%;left:50%;transform:translateX(-50%);width:1100px;height:640px;background:radial-gradient(ellipse at center, var(--accent-dim), transparent 70%);pointer-events:none;filter:blur(2px)"></div>
+  <!-- ===== HERO: qué es, cómo se ve, y una acción. El demo ES el producto. ===== -->
+  <section class="home-hero">
+    <div class="home-hero-bg" aria-hidden="true"></div>
 
-  <section style="position:relative;min-height:calc(100vh - 56px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;padding:32px 20px;box-sizing:border-box">
-
-    <svg class="dm-anim" width="100%" height="100%" viewBox="0 0 1200 640" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:.65">
-      <line x1="150" y1="120" x2="410" y2="230" stroke="var(--border-strong)" stroke-width="1.4" stroke-dasharray="320" stroke-dashoffset="320" style="animation:dm-draw 1.6s ease-out .1s forwards"></line>
-      <line x1="410" y1="230" x2="740" y2="150" stroke="var(--border-strong)" stroke-width="1.4" stroke-dasharray="380" stroke-dashoffset="380" style="animation:dm-draw 1.6s ease-out .35s forwards"></line>
-      <line x1="740" y1="150" x2="1040" y2="270" stroke="var(--border-strong)" stroke-width="1.4" stroke-dasharray="340" stroke-dashoffset="340" style="animation:dm-draw 1.6s ease-out .6s forwards"></line>
-      <line x1="410" y1="230" x2="290" y2="470" stroke="var(--border-strong)" stroke-width="1.4" stroke-dasharray="280" stroke-dashoffset="280" style="animation:dm-draw 1.6s ease-out .45s forwards"></line>
-      <line x1="740" y1="150" x2="860" y2="470" stroke="var(--border-strong)" stroke-width="1.4" stroke-dasharray="340" stroke-dashoffset="340" style="animation:dm-draw 1.6s ease-out .8s forwards"></line>
-      <line x1="290" y1="470" x2="560" y2="540" stroke="var(--border-strong)" stroke-width="1.4" stroke-dasharray="300" stroke-dashoffset="300" style="animation:dm-draw 1.6s ease-out .95s forwards"></line>
-      <line x1="860" y1="470" x2="560" y2="540" stroke="var(--border-strong)" stroke-width="1.4" stroke-dasharray="300" stroke-dashoffset="300" style="animation:dm-draw 1.6s ease-out 1.1s forwards"></line>
-
-      <g style="animation:dm-float 8s ease-in-out infinite">
-        <circle cx="150" cy="120" r="6" fill="var(--accent)"></circle>
-        <circle cx="150" cy="120" r="12" fill="none" stroke="var(--accent-dim)" stroke-width="6"></circle>
-      </g>
-      <g style="animation:dm-float2 9s ease-in-out infinite .2s">
-        <circle cx="410" cy="230" r="9" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"></circle>
-      </g>
-      <g style="animation:dm-float3 10s ease-in-out infinite .4s">
-        <circle cx="740" cy="150" r="7" fill="var(--surface)" stroke="var(--border-strong)" stroke-width="2"></circle>
-      </g>
-      <g style="animation:dm-float 9.5s ease-in-out infinite .3s">
-        <circle cx="1040" cy="270" r="6" fill="var(--surface)" stroke="var(--border-strong)" stroke-width="2"></circle>
-      </g>
-      <g style="animation:dm-float2 8.5s ease-in-out infinite .5s">
-        <circle cx="290" cy="470" r="6" fill="var(--surface)" stroke="var(--border-strong)" stroke-width="2"></circle>
-      </g>
-      <g style="animation:dm-float3 7.5s ease-in-out infinite .1s">
-        <circle cx="860" cy="470" r="6" fill="var(--surface)" stroke="var(--border-strong)" stroke-width="2"></circle>
-      </g>
-      <g style="animation:dm-float 9s ease-in-out infinite .6s">
-        <rect x="548" y="528" width="24" height="24" rx="5" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"></rect>
-      </g>
-
-      <circle r="3.5" fill="var(--accent)" style="offset-path:path('M150,120 L410,230 L740,150 L1040,270');animation:dm-token 7s linear infinite 1.2s"></circle>
-      <circle r="3.5" fill="var(--accent)" style="offset-path:path('M290,470 L560,540 L860,470');animation:dm-token2 6s linear infinite 2.4s"></circle>
-    </svg>
-
-    <div class="dm-in" style="position:relative;display:flex;flex-direction:column;align-items:center;gap:24px;max-width:780px;text-align:center;animation:dm-fadeup .7s ease-out both">
-      <h1 style="margin:0;font-size:clamp(36px,6vw,64px);font-weight:680;letter-spacing:-.035em;line-height:1.04">
-        Diagrams that<br><span style="color:var(--accent)">do the work.</span>
+    <div class="home-hero-copy">
+      <p class="home-eyebrow">
+        <span class="home-eyebrow-dot" aria-hidden="true"></span>
+        <span>Shared memory for you and your coding agent</span>
+      </p>
+      <!-- Slogans que van pasando: SOLO CSS. Están todos en el DOM, apilados en la misma
+           celda de una grilla — así el traductor (que fotografía el texto estático) los
+           traduce, el alto lo fija el más largo (no salta el layout) y no hay JS en el
+           arranque. Cambiar la cantidad = tocar --n y los delays en styles.css. -->
+      <h1 class="home-h1 home-slogans">
+        <span class="home-slogan">The context of your project, in a canvas you and your agent edit at the same time.</span>
+        <span class="home-slogan">Delegating shouldn't mean losing control.</span>
+        <span class="home-slogan">Plan, organize, manage: DiagraMinder.</span>
+        <span class="home-slogan">Directives made visual, organizational memory, up-to-date status.</span>
+        <span class="home-slogan">Always know where you stand and where to go next.</span>
       </h1>
-      <p style="margin:0;font-size:clamp(15px,1.6vw,18.5px);color:var(--text-muted);max-width:520px;line-height:1.6">Build trees, flows, object models — and AI agent teams — on one local-first canvas. Versioned, reversible, private.</p>
+      <div class="home-slogan-dots" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+      <p class="home-lede">Claude Code reads your diagrams before it touches the repo, and writes back what it learned and what is left. You watch the canvas change while it works.</p>
 
-      <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:8px">
-        <button id="home-new" class="dm-btn-primary">New diagram</button>
-        <button id="home-open" class="dm-btn-secondary">Open…</button>
+      <div class="home-actions">
+        <!-- Web: descargar es LA acción. Un solo bloque relleno, tres destinos. -->
+        <div class="home-dl dm-web-only" role="group" aria-label="Download the app">
+          <span class="home-dl-label">Download the app</span>
+          <a class="home-dl-os" href="https://github.com/JuanseGZZ/diagraminder-app/releases/latest/download/DiagraMinder-win.exe" rel="noopener">Windows</a>
+          <a class="home-dl-os" href="https://github.com/JuanseGZZ/diagraminder-app/releases/latest/download/DiagraMinder-mac.zip" rel="noopener">macOS</a>
+          <a class="home-dl-os" href="https://github.com/JuanseGZZ/diagraminder-app/releases/latest/download/DiagraMinder-linux" rel="noopener">Linux</a>
+        </div>
+
+        <div class="home-actions-row">
+          <!-- Mismo botón en los dos lados: en web es secundario ("probalo acá"), en desktop es el primario. -->
+          <button id="home-new" class="home-btn home-btn-new" type="button"><span class="dm-web-only">Try it in the browser</span><span class="home-desk-inline">New diagram</span></button>
+          <button id="home-open" class="home-btn home-btn-ghost" type="button">Open…</button>
+          <button id="home-setup-go" class="home-jump" type="button"><span class="dm-web-only">Connect Claude in five steps</span><span class="home-desk-inline">Connect Claude — three steps left</span><span class="home-jump-arrow" aria-hidden="true">↓</span></button>
+        </div>
+
+        <p class="home-actions-meta dm-web-only">Windows, macOS and Linux. No account. Runs on your machine.</p>
+      </div>
+    </div>
+
+    <!-- El loop: una sesión del agente a la izquierda, el canvas a la derecha, en sincronía.
+         Todo el texto es estático (el traductor recorre los nodos); la animación es solo CSS. -->
+    <div class="home-demo" aria-label="Claude Code writing on a DiagraMinder canvas">
+      <div class="home-demo-bar">
+        <span class="home-demo-title">checkout-service</span>
+        <span class="home-demo-live"><span class="home-live-dot" aria-hidden="true"></span><span>Claude is editing</span></span>
+      </div>
+
+      <div class="home-demo-body">
+        <div class="home-term" aria-hidden="true">
+          <div class="home-term-head">claude</div>
+          <div class="home-tl home-tl-user">
+            <span class="home-tl-caret">&gt;</span>
+            <span>Add rate limiting to the upload endpoint. Read the diagrams first.</span>
+          </div>
+          <div class="home-tl home-a1">
+            <span class="home-tl-bullet"></span>
+            <span class="home-tl-call"><span class="home-tl-tool">read_diagram</span> <span class="home-tl-arg">Organigram</span></span>
+          </div>
+          <div class="home-tl home-tl-out home-a1">14 nodes · 3 decisions</div>
+          <div class="home-tl home-a1">
+            <span class="home-tl-bullet home-tl-bullet-dim"></span>
+            <span>Read <span class="home-tl-arg">src/api/upload.ts</span></span>
+          </div>
+          <div class="home-tl home-a2">
+            <span class="home-tl-bullet"></span>
+            <span class="home-tl-call"><span class="home-tl-tool">memory_add</span> <span class="home-tl-arg">Canvas</span></span>
+          </div>
+          <div class="home-tl home-tl-out home-a2">"Uploads go straight to S3 through presigned URLs."</div>
+          <div class="home-tl home-a3">
+            <span class="home-tl-bullet"></span>
+            <span class="home-tl-call"><span class="home-tl-tool">write_diagram</span> <span class="home-tl-arg">Activities</span></span>
+          </div>
+          <div class="home-tl home-tl-out home-a3">+2 tasks · 1 done</div>
+          <div class="home-tl home-tl-done home-a4">
+            <span class="home-tl-check">✓</span>
+            <span>Rate limit goes on issuing URLs, not on the upload.</span>
+          </div>
+          <div class="home-tl home-tl-cursor"><span class="home-cursor"></span></div>
+        </div>
+
+        <div class="home-cv" aria-hidden="true">
+          <div class="home-cv-head">
+            <span class="home-cv-mode">Canvas</span>
+            <span class="home-cv-path">memory</span>
+          </div>
+          <!-- Nodos y flechas en UN solo SVG con viewBox: las flechas caen siempre en el borde del nodo, a cualquier ancho. -->
+          <div class="home-cv-board">
+            <svg class="home-sv" viewBox="0 0 400 380" preserveAspectRatio="xMidYMid meet">
+              <defs>
+                <marker id="home-mk-d" class="home-mk" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z"></path></marker>
+                <marker id="home-mk-da" class="home-mk home-mk-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z"></path></marker>
+              </defs>
+
+              <path class="home-sv-edge" d="M180 49 L218 49" marker-end="url(#home-mk-d)"></path>
+              <path class="home-sv-edge" d="M100 74 L100 126" marker-end="url(#home-mk-d)"></path>
+
+              <g class="home-sv-node">
+                <rect x="20" y="24" width="160" height="50" rx="9"></rect>
+                <text class="home-sv-t" x="34" y="45">Upload endpoint</text>
+                <text class="home-sv-s" x="34" y="62">src/api/upload.ts</text>
+              </g>
+              <g class="home-sv-node">
+                <rect x="220" y="24" width="160" height="50" rx="9"></rect>
+                <text class="home-sv-t" x="234" y="45">Rate limits</text>
+                <text class="home-sv-s" x="234" y="62">Per API key</text>
+              </g>
+              <g class="home-sv-node">
+                <rect x="20" y="128" width="160" height="50" rx="9"></rect>
+                <text class="home-sv-t" x="34" y="149">Auth middleware</text>
+                <text class="home-sv-s" x="34" y="166">Checks the key</text>
+              </g>
+
+              <g class="home-a2">
+                <path class="home-sv-edge home-sv-edge-new home-e2" d="M180 62 C 202 62, 198 147, 218 147" pathLength="1" marker-end="url(#home-mk-da)"></path>
+                <g class="home-sv-node home-sv-node-new">
+                  <rect x="220" y="112" width="160" height="70" rx="9"></rect>
+                  <text class="home-sv-tag" x="234" y="131">CLAUDE · JUST NOW</text>
+                  <text class="home-sv-t" x="234" y="151">Uploads skip the API</text>
+                  <text class="home-sv-s" x="234" y="169">S3 presigned URLs</text>
+                </g>
+              </g>
+
+              <g class="home-a3">
+                <path class="home-sv-edge home-sv-edge-new home-e3" d="M300 182 L300 230" pathLength="1" marker-end="url(#home-mk-da)"></path>
+                <g class="home-sv-node home-sv-node-new">
+                  <rect x="120" y="232" width="260" height="98" rx="9"></rect>
+                  <text class="home-sv-tag" x="134" y="252">WHAT IS LEFT</text>
+                  <rect class="home-sv-box home-sv-box-done" x="134" y="265" width="10" height="10" rx="3"></rect>
+                  <text class="home-sv-task home-sv-task-done" x="152" y="274">Read the upload flow</text>
+                  <rect class="home-sv-box home-sv-box-next" x="134" y="285" width="10" height="10" rx="3"></rect>
+                  <text class="home-sv-task home-sv-task-next" x="152" y="294">Rate-limit URL issuing</text>
+                  <rect class="home-sv-box" x="134" y="305" width="10" height="10" rx="3"></rect>
+                  <text class="home-sv-task" x="152" y="314">Test the 429 path</text>
+                </g>
+              </g>
+
+              <g class="home-a4 home-sv-foot">
+                <rect x="20" y="342" width="186" height="26" rx="7"></rect>
+                <text class="home-sv-foot-t" x="32" y="359">2 changes by Claude</text>
+                <rect class="home-sv-undo" x="152" y="347" width="46" height="16" rx="4"></rect>
+                <text class="home-sv-undo-t" x="175" y="359" text-anchor="middle">Undo</text>
+              </g>
+            </svg>
+          </div>
+        </div>
       </div>
     </div>
   </section>
 
-  <section style="position:relative;padding:70px 24px 36px;max-width:1160px;margin:0 auto">
-    <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:26px;gap:16px;flex-wrap:wrap">
-      <h2 style="margin:0;font-size:13px;font-weight:650;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)">Eight modes, one canvas</h2>
-      <span style="font-size:13px;color:var(--text-muted)">Switch modes without leaving the board</span>
+  <!-- ===== POR QUÉ: lo que hoy duele, en tres líneas ===== -->
+  <section class="home-why">
+    <div class="home-why-item">
+      <span class="home-why-k">01</span>
+      <h3 class="home-why-t">It remembers between sessions</h3>
+      <p class="home-why-d">What the agent learned is written to a diagram, not lost in a scrollback. The next session starts by reading it.</p>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px">
-
-      <div class="dm-card">
-        <div style="width:38px;height:38px;border-radius:9px;background:var(--accent-dim);display:flex;align-items:center;justify-content:center">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><circle cx="6" cy="6" r="2.5"></circle><circle cx="18" cy="6" r="2.5"></circle><circle cx="12" cy="18" r="2.5"></circle><path d="M12 15.5V12H6V8.5M12 12h6V8.5"></path></svg>
-        </div>
-        <div style="font-size:15.5px;font-weight:650">Cart</div>
-        <div style="font-size:13.5px;color:var(--text-muted);line-height:1.55">Hierarchical card trees — left-to-right or org-chart layout.</div>
-      </div>
-
-      <div class="dm-card">
-        <div style="width:38px;height:38px;border-radius:9px;background:var(--accent-dim);display:flex;align-items:center;justify-content:center">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="5" height="5" rx="1"></rect><circle cx="18" cy="7" r="2.5"></circle><path d="M9 16l4-3 6 2"></path><path d="M4 19h4"></path></svg>
-        </div>
-        <div style="font-size:15.5px;font-weight:650">Freestyle</div>
-        <div style="font-size:13.5px;color:var(--text-muted);line-height:1.55">Free canvas — loose nodes, arrows and shapes, no structure imposed.</div>
-      </div>
-
-      <div class="dm-card">
-        <div style="width:38px;height:38px;border-radius:9px;background:var(--accent-dim);display:flex;align-items:center;justify-content:center">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><path d="M5 6l1.5 1.5L9 5"></path><path d="M12 6h7"></path><path d="M5 12l1.5 1.5L9 11"></path><path d="M12 12h7"></path><path d="M5 18l1.5 1.5L9 17"></path><path d="M12 18h7"></path></svg>
-        </div>
-        <div style="font-size:15.5px;font-weight:650">Questionnaire</div>
-        <div style="font-size:13.5px;color:var(--text-muted);line-height:1.55">Study questionnaires on the canvas — Q&amp;A, multiple-choice, tests.</div>
-      </div>
-
-      <div class="dm-card">
-        <div style="width:38px;height:38px;border-radius:9px;background:var(--accent-dim);display:flex;align-items:center;justify-content:center">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="9" height="3" rx="1"></rect><rect x="3" y="11" width="14" height="3" rx="1"></rect><rect x="3" y="17" width="6" height="3" rx="1"></rect></svg>
-        </div>
-        <div style="font-size:15.5px;font-weight:650">Activities</div>
-        <div style="font-size:13.5px;color:var(--text-muted);line-height:1.55">Activities &amp; precedences, with an arrows view and a Gantt view.</div>
-      </div>
-
-      <div class="dm-card">
-        <div style="width:38px;height:38px;border-radius:9px;background:var(--accent-dim);display:flex;align-items:center;justify-content:center">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"></path><path d="M12 3v9M12 12l8-4.5M12 12l-8-4.5"></path></svg>
-        </div>
-        <div style="font-size:15.5px;font-weight:650">Object</div>
-        <div style="font-size:13.5px;color:var(--text-muted);line-height:1.55">Dynamic classes &amp; objects — build graphs, generate JSON / API calls.</div>
-      </div>
-
-      <div class="dm-card">
-        <div style="width:38px;height:38px;border-radius:9px;background:var(--accent-dim);display:flex;align-items:center;justify-content:center">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><path d="M8 6L3 12l5 6"></path><path d="M16 6l5 6-5 6"></path></svg>
-        </div>
-        <div style="font-size:15.5px;font-weight:650">Editor</div>
-        <div style="font-size:13.5px;color:var(--text-muted);line-height:1.55">Open a real folder and edit files, VS Code-style — for you and the AI.</div>
-      </div>
-
-      <div class="dm-card">
-        <div style="width:38px;height:38px;border-radius:9px;background:var(--accent-dim);display:flex;align-items:center;justify-content:center">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><path d="M13 3H7a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V9z"></path><path d="M13 3v6h5"></path><path d="M9 14h6M9 17h4"></path></svg>
-        </div>
-        <div style="font-size:15.5px;font-weight:650">Documents</div>
-        <div style="font-size:13.5px;color:var(--text-muted);line-height:1.55">A library for your PDFs, images, audio &amp; text — read them in dark mode, Acrobat-style tools coming.</div>
-      </div>
-
-      <div class="dm-card dm-card-flagship">
-        <div style="width:38px;height:38px;border-radius:9px;background:var(--accent-dim);display:flex;align-items:center;justify-content:center">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><circle cx="5" cy="6" r="2.5"></circle><circle cx="19" cy="6" r="2.5"></circle><circle cx="12" cy="18" r="2.5"></circle><path d="M7 7l10 -1M7 8l4.5 8.5M17 8l-4.5 8.5"></path></svg>
-        </div>
-        <div style="font-size:15.5px;font-weight:650;display:flex;align-items:center;gap:8px">IA Orchestrator<span style="font-size:10px;font-weight:700;letter-spacing:.04em;color:var(--accent);background:var(--accent-dim);padding:2px 7px;border-radius:100px">FLAGSHIP</span></div>
-        <div style="font-size:13.5px;color:var(--text-muted);line-height:1.55">A visual AI company — agents, resources, tasks and departments.</div>
-      </div>
-
+    <div class="home-why-item">
+      <span class="home-why-k">02</span>
+      <h3 class="home-why-t">You see what it is doing</h3>
+      <p class="home-why-d">Every note and task it writes lands on the canvas as it happens. A graph you read at a glance, not a log you parse.</p>
+    </div>
+    <div class="home-why-item">
+      <span class="home-why-k">03</span>
+      <h3 class="home-why-t">You decide what it may touch</h3>
+      <p class="home-why-d">Diagrams only, files inside one folder, or commands too. The program enforces it, not the window.</p>
     </div>
   </section>
 
-  <section style="position:relative;margin:36px auto;max-width:1160px;padding:0 24px">
-    <div style="position:relative;background:var(--surface2);border:1px solid var(--border);border-radius:18px;padding:44px;display:flex;flex-wrap:wrap;gap:36px;align-items:center;overflow:hidden">
-      <div style="position:absolute;top:-40%;right:-10%;width:420px;height:420px;background:radial-gradient(circle, var(--accent-dim), transparent 70%);pointer-events:none"></div>
+  <!-- ===== LOS MODOS: cinco formas del contexto, cada una con su render ===== -->
+  <section class="home-sec home-modes-sec">
+    <header class="home-sec-top">
+      <p class="home-eyebrow-plain">Five modes</p>
+      <h2 class="home-h2x">Five shapes of your project's context</h2>
+      <p class="home-intro">Not five diagram types: five ways a project remembers. You and Claude read and write all of them.</p>
+    </header>
 
-      <svg class="dm-anim" width="300" height="150" viewBox="0 0 280 140" style="flex:0 0 auto;position:relative">
-        <line x1="30" y1="70" x2="140" y2="30" stroke="var(--border-strong)" stroke-width="1.4"></line>
-        <line x1="140" y1="30" x2="140" y2="110" stroke="var(--border-strong)" stroke-width="1.4"></line>
-        <line x1="140" y1="110" x2="250" y2="70" stroke="var(--border-strong)" stroke-width="1.4"></line>
-        <circle cx="30" cy="70" r="8" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"></circle>
-        <circle cx="140" cy="30" r="8" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"></circle>
-        <circle cx="140" cy="110" r="8" fill="var(--surface)" stroke="var(--border-strong)" stroke-width="2"></circle>
-        <rect x="232" y="58" width="24" height="24" rx="5" fill="var(--surface)" stroke="var(--border-strong)" stroke-width="2"></rect>
-        <circle r="4" fill="var(--accent)" style="offset-path:path('M30,70 L140,30 L140,110 L250,70');animation:dm-token 5s linear infinite"></circle>
-      </svg>
-      <div style="flex:1 1 320px;display:flex;flex-direction:column;gap:16px;position:relative">
-        <h3 style="margin:0;font-size:24px;font-weight:680;letter-spacing:-.015em">Not just a diagram — a company of AI agents.</h3>
-        <ul style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:9px;font-size:14.5px;color:var(--text-muted)">
-          <li style="display:flex;gap:9px;align-items:baseline"><span style="color:var(--accent);font-weight:700">—</span>Delegates &amp; runs in parallel</li>
-          <li style="display:flex;gap:9px;align-items:baseline"><span style="color:var(--accent);font-weight:700">—</span>Uses your projects as tools</li>
-          <li style="display:flex;gap:9px;align-items:baseline"><span style="color:var(--accent);font-weight:700">—</span>Watch it live, undo anything</li>
-        </ul>
+    <div class="home-bento">
+
+      <article class="home-mode home-mode-lg">
+        <div class="home-prev home-prev-canvas" aria-hidden="true">
+          <svg class="home-prev-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <path d="M22 30 L46 48 L74 26 M46 48 L36 76 M46 48 L72 72 M74 26 L72 72"></path>
+          </svg>
+          <span class="home-pn home-pc1">Retry policy</span>
+          <span class="home-pn home-pc2 home-pn-accent">Why we dropped Redis</span>
+          <span class="home-pn home-pc3">Webhook order</span>
+          <span class="home-pn home-pc4">Flaky test: auth</span>
+          <span class="home-pn home-pc5">Stripe idempotency</span>
+        </div>
+        <div class="home-mode-txt">
+          <div class="home-mode-head"><h3 class="home-mode-n">Canvas</h3><span class="home-mode-r">Associative memory</span></div>
+          <p class="home-mode-d">Everything learned along the way, linked to what it relates to. Neither of you has to remember it.</p>
+        </div>
+      </article>
+
+      <article class="home-mode home-mode-lg home-mode-flag">
+        <div class="home-prev" aria-hidden="true">
+          <svg class="home-sv" viewBox="0 0 560 250" preserveAspectRatio="xMidYMid meet">
+            <defs>
+              <marker id="home-mk-o" class="home-mk" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z"></path></marker>
+              <marker id="home-mk-oa" class="home-mk home-mk-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z"></path></marker>
+            </defs>
+
+            <rect class="home-o-dept" x="150" y="134" width="390" height="104" rx="12"></rect>
+            <text class="home-o-dept-t" x="166" y="154">Dept · Verification</text>
+
+            <path class="home-o-edge home-o-edge-on" d="M150 70 L213 70" marker-end="url(#home-mk-oa)"></path>
+            <path class="home-o-edge" d="M262 98 C 262 132, 245 136, 245 168" marker-end="url(#home-mk-o)"></path>
+            <path class="home-o-edge" d="M318 98 C 318 132, 445 136, 445 168" marker-end="url(#home-mk-o)"></path>
+            <path class="home-o-edge" d="M315 196 L373 196" marker-end="url(#home-mk-o)"></path>
+
+            <text class="home-o-lbl" x="181" y="62" text-anchor="middle">task</text>
+            <text class="home-o-lbl" x="232" y="128" text-anchor="end">delegates</text>
+            <text class="home-o-lbl" x="392" y="124" text-anchor="middle">context</text>
+            <text class="home-o-lbl" x="344" y="188" text-anchor="middle">context</text>
+
+            <g class="home-o-card">
+              <rect x="20" y="42" width="130" height="56" rx="10"></rect>
+              <circle class="home-o-dot home-o-dot-task" cx="35" cy="59" r="3"></circle>
+              <text class="home-o-kind" x="44" y="62">TASK</text>
+              <text class="home-o-name" x="32" y="83">Change request</text>
+            </g>
+            <g class="home-o-card home-o-card-on">
+              <rect x="215" y="42" width="150" height="56" rx="10"></rect>
+              <circle class="home-o-dot home-o-dot-agent" cx="230" cy="59" r="3"></circle>
+              <text class="home-o-kind" x="239" y="62">AGENT</text>
+              <text class="home-o-state" x="353" y="62" text-anchor="end">running</text>
+              <text class="home-o-name" x="227" y="83">Dev</text>
+            </g>
+            <g class="home-o-card">
+              <rect x="175" y="168" width="140" height="56" rx="10"></rect>
+              <circle class="home-o-dot home-o-dot-agent" cx="190" cy="185" r="3"></circle>
+              <text class="home-o-kind" x="199" y="188">AGENT</text>
+              <text class="home-o-name" x="187" y="209">Tester</text>
+            </g>
+            <g class="home-o-card">
+              <rect x="375" y="168" width="140" height="56" rx="10"></rect>
+              <circle class="home-o-dot home-o-dot-data" cx="390" cy="185" r="3"></circle>
+              <text class="home-o-kind" x="399" y="188">DATA</text>
+              <text class="home-o-name" x="387" y="209">Loop rules</text>
+            </g>
+          </svg>
+        </div>
+        <div class="home-mode-txt">
+          <div class="home-mode-head"><h3 class="home-mode-n">IA Orchestrator</h3><span class="home-mode-r">The harness</span></div>
+          <p class="home-mode-d">Agents, the folders each one may touch, and what each one is allowed to run. Drawn, so you can check it.</p>
+        </div>
+      </article>
+
+      <article class="home-mode">
+        <div class="home-prev" aria-hidden="true">
+          <svg class="home-sv" viewBox="0 0 360 160" preserveAspectRatio="xMidYMid meet">
+            <path class="home-sv-edge" d="M180 50 L180 75 M75 75 L285 75 M75 75 L75 100 M180 75 L180 100 M285 75 L285 100"></path>
+            <g class="home-sv-node home-sv-node-root">
+              <rect x="110" y="22" width="140" height="28" rx="7"></rect>
+              <text class="home-sv-mono" x="180" y="40" text-anchor="middle">checkout-service</text>
+            </g>
+            <g class="home-sv-node">
+              <rect x="40" y="100" width="70" height="28" rx="7"></rect>
+              <text class="home-sv-mono" x="75" y="118" text-anchor="middle">api</text>
+            </g>
+            <g class="home-sv-node">
+              <rect x="140" y="100" width="80" height="28" rx="7"></rect>
+              <text class="home-sv-mono" x="180" y="118" text-anchor="middle">workers</text>
+            </g>
+            <g class="home-sv-node">
+              <rect x="250" y="100" width="70" height="28" rx="7"></rect>
+              <text class="home-sv-mono" x="285" y="118" text-anchor="middle">billing</text>
+            </g>
+          </svg>
+        </div>
+        <div class="home-mode-txt">
+          <div class="home-mode-head"><h3 class="home-mode-n">Organigram</h3><span class="home-mode-r">Documentation</span></div>
+          <p class="home-mode-d">The map of what exists and why it was decided that way.</p>
+        </div>
+      </article>
+
+      <article class="home-mode">
+        <div class="home-prev" aria-hidden="true">
+          <svg class="home-sv" viewBox="0 0 400 160" preserveAspectRatio="xMidYMid meet">
+            <defs>
+              <marker id="home-mk-act" class="home-mk home-mk-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z"></path></marker>
+            </defs>
+            <path class="home-a-edge" d="M64 80 L90 80" marker-end="url(#home-mk-act)"></path>
+            <path class="home-a-edge" d="M170 80 C 186 80, 184 47, 198 47" marker-end="url(#home-mk-act)"></path>
+            <path class="home-a-edge" d="M170 80 C 186 80, 184 113, 198 113" marker-end="url(#home-mk-act)"></path>
+            <path class="home-a-edge" d="M278 47 C 294 47, 292 80, 306 80" marker-end="url(#home-mk-act)"></path>
+            <path class="home-a-edge" d="M278 113 C 294 113, 292 80, 306 80" marker-end="url(#home-mk-act)"></path>
+            <g class="home-a-start">
+              <rect x="12" y="66" width="52" height="28" rx="14"></rect>
+              <text x="38" y="84" text-anchor="middle">Start</text>
+            </g>
+            <g class="home-a-node home-a-done">
+              <rect x="92" y="62" width="78" height="36" rx="10"></rect>
+              <text x="131" y="84" text-anchor="middle">Schema</text>
+            </g>
+            <g class="home-a-node home-a-now">
+              <rect x="200" y="29" width="78" height="36" rx="10"></rect>
+              <text x="239" y="51" text-anchor="middle">API</text>
+            </g>
+            <g class="home-a-node">
+              <rect x="200" y="95" width="78" height="36" rx="10"></rect>
+              <text x="239" y="117" text-anchor="middle">UI</text>
+            </g>
+            <g class="home-a-node">
+              <rect x="308" y="62" width="80" height="36" rx="10"></rect>
+              <text x="348" y="84" text-anchor="middle">Release</text>
+            </g>
+          </svg>
+        </div>
+        <div class="home-mode-txt">
+          <div class="home-mode-head"><h3 class="home-mode-n">Activities</h3><span class="home-mode-r">What is left</span></div>
+          <p class="home-mode-d">What is left, in order, with what depends on what.</p>
+        </div>
+      </article>
+
+      <article class="home-mode">
+        <div class="home-prev home-prev-obj" aria-hidden="true">
+          <span class="home-obj">
+            <span class="home-obj-h">User</span>
+            <span class="home-obj-f">id: uuid</span>
+            <span class="home-obj-f">email: string</span>
+          </span>
+          <span class="home-obj">
+            <span class="home-obj-h">Order</span>
+            <span class="home-obj-f">userId: uuid</span>
+            <span class="home-obj-f">total: int</span>
+          </span>
+          <span class="home-obj-req"><span class="home-obj-verb">POST</span><span>/orders</span><span class="home-obj-code">201</span></span>
+        </div>
+        <div class="home-mode-txt">
+          <div class="home-mode-head"><h3 class="home-mode-n">Object</h3><span class="home-mode-r">Model and tests</span></div>
+          <p class="home-mode-d">The data model as classes and objects. The same graph fires the HTTP requests that test it.</p>
+        </div>
+      </article>
+
+    </div>
+    <p class="home-fine">There are two more — a study questionnaire and a document library. They are in there; they are just not the point.</p>
+  </section>
+
+  <!-- ===== ONBOARDING: pasos cortos, el detalle se pliega. Radios + CSS, sin JS. ===== -->
+  <section id="home-setup" class="home-sec home-setup-sec">
+    <header class="home-sec-top">
+      <p class="home-eyebrow-plain">Get it running</p>
+      <h2 class="home-h2x">From zero to Claude writing on your canvas</h2>
+      <p class="home-intro dm-web-only">This page already works in your browser. For Claude to read and write your diagrams, something has to run on your machine. Pick one.</p>
+      <p class="home-intro dm-desktop-only">You are already in the app. What is left is telling Claude where to find it.</p>
+    </header>
+
+    <div class="home-routes dm-web-only">
+      <input type="radio" name="home-path" id="home-path-app" class="home-route-radio" checked hidden>
+      <input type="radio" name="home-path" id="home-path-web" class="home-route-radio" hidden>
+
+      <div class="home-route-tabs">
+        <label for="home-path-app" class="home-route-tab">
+          <span class="home-route-name"><span>Desktop app</span><span class="home-tag home-tag-accent">Recommended</span></span>
+          <span class="home-route-desc">One file: the app and its backend together. Works offline.</span>
+        </label>
+        <label for="home-path-web" class="home-route-tab">
+          <span class="home-route-name"><span>This website + backend</span></span>
+          <span class="home-route-desc">Keep using this page, with the backend running next to it.</span>
+        </label>
+      </div>
+
+      <!-- Camino A -->
+      <ol class="home-flow home-flow-app">
+        <li class="home-fs">
+          <span class="home-fs-n">1</span>
+          <div class="home-fs-main">
+            <h3 class="home-fs-t">Download it</h3>
+            <p class="home-fs-s">One file. The app and its backend, together.</p>
+            <details class="home-more">
+              <summary>Details</summary>
+              <p>Rather run it from source with Python? <a href="https://github.com/JuanseGZZ/diagraminder-app" target="_blank" rel="noopener">The repo</a> explains how.</p>
+            </details>
+          </div>
+          <div class="home-fs-act">
+            <div class="home-os">
+              <a class="home-os-a" href="https://github.com/JuanseGZZ/diagraminder-app/releases/latest/download/DiagraMinder-win.exe" rel="noopener">Windows</a>
+              <a class="home-os-a" href="https://github.com/JuanseGZZ/diagraminder-app/releases/latest/download/DiagraMinder-mac.zip" rel="noopener">macOS</a>
+              <a class="home-os-a" href="https://github.com/JuanseGZZ/diagraminder-app/releases/latest/download/DiagraMinder-linux" rel="noopener">Linux</a>
+            </div>
+          </div>
+        </li>
+        <li class="home-fs">
+          <span class="home-fs-n">2</span>
+          <div class="home-fs-main">
+            <h3 class="home-fs-t">Open it</h3>
+            <p class="home-fs-s">Its own window. It tells you when there is a new version.</p>
+            <details class="home-more">
+              <summary>Details</summary>
+              <p><b>Windows:</b> double-click it.</p>
+              <p><b>macOS:</b> unzip it and move the app to Applications. It is not signed yet, so the first time macOS warns you: right-click it → Open, or System Settings → Privacy &amp; Security → Open Anyway.</p>
+              <p><b>Linux:</b> <code>chmod +x DiagraMinder-linux &amp;&amp; ./DiagraMinder-linux</code></p>
+              <p>Your projects live outside the program, so updating never touches them.</p>
+            </details>
+          </div>
+          <div class="home-fs-act"><code class="home-chip">./DiagraMinder-linux</code></div>
+        </li>
+        <li class="home-fs">
+          <span class="home-fs-n">3</span>
+          <div class="home-fs-main">
+            <h3 class="home-fs-t">Connect Claude Code</h3>
+            <p class="home-fs-s">Paste the <code>.mcp.json</code> at your project root, then run <code>/mcp</code>.</p>
+            <details class="home-more">
+              <summary>Details</summary>
+              <p>In the app: <b>Settings → This program</b>. Copy the <code>.mcp.json</code> it shows — address and password already filled in — and paste it at the root of your project.</p>
+              <p>In Claude Code, run <code>/mcp</code>: it should show <code>diagraminder</code> connected. Ask it to read your diagrams before it touches the code.</p>
+            </details>
+          </div>
+          <div class="home-fs-act"><code class="home-chip">/mcp</code></div>
+        </li>
+        <li class="home-fs">
+          <span class="home-fs-n">4</span>
+          <div class="home-fs-main">
+            <h3 class="home-fs-t">Decide what it may do</h3>
+            <p class="home-fs-s">Enforced by the program, not the window.</p>
+            <details class="home-more">
+              <summary>Details</summary>
+              <p>Same screen, <b>What the MCP can do</b>: diagrams only (the default), diagrams + files inside one folder you pick, or also commands.</p>
+            </details>
+          </div>
+          <div class="home-fs-act">
+            <div class="home-levels">
+              <span class="home-level home-level-on">Diagrams only</span>
+              <span class="home-level">+ Files in one folder</span>
+              <span class="home-level">+ Commands</span>
+            </div>
+          </div>
+        </li>
+        <li class="home-fs home-fs-opt">
+          <span class="home-fs-n">5</span>
+          <div class="home-fs-main">
+            <h3 class="home-fs-t"><span>Claude web, too</span><span class="home-tag">Optional</span></h3>
+            <p class="home-fs-s">One switch opens a Cloudflare tunnel to the app.</p>
+            <details class="home-more">
+              <summary>Details</summary>
+              <p><b>Reach it from Claude web</b> opens a Cloudflare tunnel (it needs <code>cloudflared</code>; the app tells you how to install it). Add the address it gives you as a custom connector in Claude web: it asks for the password once. The tunnel dies when you turn it off or close the app.</p>
+            </details>
+          </div>
+          <div class="home-fs-act"><code class="home-chip">cloudflared</code></div>
+        </li>
+      </ol>
+
+      <!-- Camino B -->
+      <ol class="home-flow home-flow-web">
+        <li class="home-fs">
+          <span class="home-fs-n">1</span>
+          <div class="home-fs-main">
+            <h3 class="home-fs-t">Run the backend</h3>
+            <p class="home-fs-s">A download, or one Python command. No dependencies.</p>
+            <details class="home-more">
+              <summary>Details</summary>
+              <p>From source: clone <a href="https://github.com/JuanseGZZ/diagraminder-backend" target="_blank" rel="noopener">the repo</a> and run <code>python3 backend/server.py</code>. The code is open: read it before you run it.</p>
+            </details>
+          </div>
+          <div class="home-fs-act">
+            <div class="home-os">
+              <a class="home-os-a" href="https://github.com/JuanseGZZ/diagraminder-backend/releases/latest/download/DiagraMinder-Backend-win.exe" rel="noopener">Windows</a>
+              <a class="home-os-a" href="https://github.com/JuanseGZZ/diagraminder-backend/releases/latest/download/DiagraMinder-Backend-mac" rel="noopener">macOS</a>
+              <a class="home-os-a" href="https://github.com/JuanseGZZ/diagraminder-backend/releases/latest/download/DiagraMinder-Backend-linux" rel="noopener">Linux</a>
+            </div>
+          </div>
+        </li>
+        <li class="home-fs">
+          <span class="home-fs-n">2</span>
+          <div class="home-fs-main">
+            <h3 class="home-fs-t">Connect this page</h3>
+            <p class="home-fs-s">Settings → Connect backend, with the password it printed.</p>
+            <details class="home-more">
+              <summary>Details</summary>
+              <p>Here: <b>Settings → Connect backend</b>. The first time it asks for a password: the backend prints it when it starts, and keeps it in <code>token.txt</code> inside its data folder.</p>
+            </details>
+          </div>
+          <div class="home-fs-act"><code class="home-chip">token.txt</code></div>
+        </li>
+        <li class="home-fs">
+          <span class="home-fs-n">3</span>
+          <div class="home-fs-main">
+            <h3 class="home-fs-t">Use the chat</h3>
+            <p class="home-fs-s">Pick Local · Claude Code, or any agent CLI you have installed.</p>
+            <details class="home-more">
+              <summary>Details</summary>
+              <p>Open the chat and pick <b>Local · Claude Code</b> — or any agent CLI you already have installed. It runs on your own subscription, and it can read and edit the project you choose.</p>
+            </details>
+          </div>
+          <div class="home-fs-act"><span class="home-chip home-chip-ui">Local · Claude Code</span></div>
+        </li>
+        <li class="home-fs">
+          <span class="home-fs-n">4</span>
+          <div class="home-fs-main">
+            <h3 class="home-fs-t">Connect Claude Code</h3>
+            <p class="home-fs-s">The backend panel has the <code>.mcp.json</code> and the MCP permissions.</p>
+            <details class="home-more">
+              <summary>Details</summary>
+              <p>The backend's panel (<code>http://127.0.0.1:8765/panel</code>) shows the <code>.mcp.json</code> under <b>MCP</b>. Paste it at the root of your project and run <code>/mcp</code> in Claude Code. The same panel sets what the MCP may do.</p>
+            </details>
+          </div>
+          <div class="home-fs-act"><code class="home-chip">127.0.0.1:8765/panel</code></div>
+        </li>
+        <li class="home-fs home-fs-opt">
+          <span class="home-fs-n">5</span>
+          <div class="home-fs-main">
+            <h3 class="home-fs-t"><span>Claude web, too</span><span class="home-tag">Optional</span></h3>
+            <p class="home-fs-s">The same panel opens a Cloudflare tunnel.</p>
+            <details class="home-more">
+              <summary>Details</summary>
+              <p>From the same panel, the Cloudflare tunnel gives you an address to add as a custom connector in Claude web. It needs <code>cloudflared</code> and asks for the password once.</p>
+            </details>
+          </div>
+          <div class="home-fs-act"><code class="home-chip">cloudflared</code></div>
+        </li>
+      </ol>
+    </div>
+
+    <!-- Desktop: solo lo que falta. El wrapper lleva dm-desktop-only (que fuerza display:block) y la lista adentro conserva su layout. -->
+    <div class="dm-desktop-only">
+      <ol class="home-flow home-flow-desk">
+        <li class="home-fs">
+          <span class="home-fs-n">1</span>
+          <div class="home-fs-main">
+            <h3 class="home-fs-t">Connect Claude Code</h3>
+            <p class="home-fs-s">Paste the <code>.mcp.json</code> at your project root, then run <code>/mcp</code>.</p>
+            <details class="home-more">
+              <summary>Details</summary>
+              <p><b>Settings → This program</b>. Copy the <code>.mcp.json</code> it shows — address and password already filled in — and paste it at the root of your project.</p>
+              <p>In Claude Code, run <code>/mcp</code>: it should show <code>diagraminder</code> connected. Ask it to read your diagrams before it touches the code.</p>
+            </details>
+          </div>
+          <div class="home-fs-act"><code class="home-chip">/mcp</code></div>
+        </li>
+        <li class="home-fs">
+          <span class="home-fs-n">2</span>
+          <div class="home-fs-main">
+            <h3 class="home-fs-t">Decide what it may do</h3>
+            <p class="home-fs-s">Enforced by the program, not the window.</p>
+            <details class="home-more">
+              <summary>Details</summary>
+              <p>Same screen, <b>What the MCP can do</b>: diagrams only (the default), diagrams + files inside one folder you pick, or also commands.</p>
+            </details>
+          </div>
+          <div class="home-fs-act">
+            <div class="home-levels">
+              <span class="home-level home-level-on">Diagrams only</span>
+              <span class="home-level">+ Files in one folder</span>
+              <span class="home-level">+ Commands</span>
+            </div>
+          </div>
+        </li>
+        <li class="home-fs home-fs-opt">
+          <span class="home-fs-n">3</span>
+          <div class="home-fs-main">
+            <h3 class="home-fs-t"><span>Claude web, too</span><span class="home-tag">Optional</span></h3>
+            <p class="home-fs-s">One switch opens a Cloudflare tunnel to the app.</p>
+            <details class="home-more">
+              <summary>Details</summary>
+              <p><b>Reach it from Claude web</b> opens a Cloudflare tunnel (it needs <code>cloudflared</code>; the app tells you how to install it). Add the address it gives you as a custom connector in Claude web: it asks for the password once. The tunnel dies when you turn it off or close the app.</p>
+            </details>
+          </div>
+          <div class="home-fs-act"><code class="home-chip">cloudflared</code></div>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ===== CONFIANZA: sección propia, no una tira gris ===== -->
+  <section class="home-sec home-trust-sec">
+    <div class="home-trust">
+      <div class="home-trust-lead">
+        <p class="home-eyebrow-plain">Runs on your machine</p>
+        <h2 class="home-h2x">It all runs on your machine.</h2>
+        <p class="home-intro">The app and its backend run locally. The Claude web tunnel only exists while you keep it on. The backend's code is public, so you can read it first.</p>
+        <a class="home-link" href="https://github.com/JuanseGZZ/diagraminder-backend" target="_blank" rel="noopener">Read the backend source</a>
+      </div>
+      <div class="home-trust-grid">
+        <div class="home-trust-item">
+          <h3 class="home-trust-t">Your files, on your disk</h3>
+          <p class="home-trust-d">Projects are plain files in folders you choose. Updating the app never touches them.</p>
+        </div>
+        <div class="home-trust-item">
+          <h3 class="home-trust-t">No account, ever</h3>
+          <p class="home-trust-d">Nothing to sign up for, nothing to sign in to.</p>
+        </div>
+        <div class="home-trust-item">
+          <h3 class="home-trust-t">Your own AI keys, or none</h3>
+          <p class="home-trust-d">Use your own subscription or keys. The canvas works without any AI at all.</p>
+        </div>
+        <div class="home-trust-item">
+          <h3 class="home-trust-t">Every change reversible</h3>
+          <p class="home-trust-d">Yours or the agent's: anything written to a diagram can be undone.</p>
+        </div>
       </div>
     </div>
   </section>
 
-  <section style="position:relative;padding:36px 24px 8px;max-width:1160px;margin:0 auto">
-    <div style="display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;margin-bottom:28px">
-      <span style="font-size:12px;font-weight:650;letter-spacing:.08em;color:var(--accent)">YOUR COMPUTE · YOUR KEYS · YOUR CLOUD</span>
-      <h2 style="margin:0;font-size:clamp(22px,3vw,30px);font-weight:680;letter-spacing:-.02em">Runs on your terms — no surprise AI bills.</h2>
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px">
-      <div class="dm-card">
-        <div style="width:38px;height:38px;border-radius:9px;background:var(--accent-dim);display:flex;align-items:center;justify-content:center">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><rect x="6" y="6" width="12" height="12" rx="2"></rect><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"></path></svg>
-        </div>
-        <div style="font-size:15.5px;font-weight:650">Local AI, zero API bills</div>
-        <div style="font-size:13.5px;color:var(--text-muted);line-height:1.55">Point agents at the AI already on your machine — local CLIs like Claude Code. No tokens metered, no per-call cost.</div>
-      </div>
-      <div class="dm-card">
-        <div style="width:38px;height:38px;border-radius:9px;background:var(--accent-dim);display:flex;align-items:center;justify-content:center">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><circle cx="8" cy="15" r="4"></circle><path d="M11 12l9-9M17 4l3 3M14 7l2.5 2.5"></path></svg>
-        </div>
-        <div style="font-size:15.5px;font-weight:650">Or bring your own API</div>
-        <div style="font-size:13.5px;color:var(--text-muted);line-height:1.55">Prefer frontier models? Drop in your Anthropic / OpenAI / other keys. Mix per agent — a cheap model to coordinate, a strong one for the hard parts.</div>
-      </div>
-      <div class="dm-card">
-        <div style="width:38px;height:38px;border-radius:9px;background:var(--accent-dim);display:flex;align-items:center;justify-content:center">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><circle cx="6" cy="6" r="2.5"></circle><circle cx="18" cy="6" r="2.5"></circle><circle cx="12" cy="18" r="2.5"></circle><path d="M8 7.5L11 16.5M16 7.5L13 16.5"></path></svg>
-        </div>
-        <div style="font-size:15.5px;font-weight:650">Your own cloud + MCP</div>
-        <div style="font-size:13.5px;color:var(--text-muted);line-height:1.55">Run it server-side on your self-hosted connectors. Keys stay in the connector, never the browser. Agents reach out through MCP and custom APIs.</div>
-      </div>
-    </div>
-    <p style="text-align:center;margin:26px 0 0;font-size:13.5px;color:var(--text-muted)">Local-first. Private by default. Your keys never leave your machine.</p>
-  </section>
-
-  <section style="position:relative;padding:22px 24px 44px;max-width:1160px;margin:0 auto">
-    <div style="display:flex;flex-wrap:wrap;gap:28px;justify-content:center;padding:20px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);font-size:13px;color:var(--text-muted)">
-      <span style="display:flex;align-items:center;gap:7px"><span style="width:5px;height:5px;border-radius:50%;background:var(--accent);display:inline-block"></span>Local-first &amp; private</span>
-      <span style="display:flex;align-items:center;gap:7px"><span style="width:5px;height:5px;border-radius:50%;background:var(--accent);display:inline-block"></span>Your own cloud + MCP</span>
-      <span style="display:flex;align-items:center;gap:7px"><span style="width:5px;height:5px;border-radius:50%;background:var(--accent);display:inline-block"></span>Full version history</span>
-      <span style="display:flex;align-items:center;gap:7px"><span style="width:5px;height:5px;border-radius:50%;background:var(--accent);display:inline-block"></span>Reversible AI</span>
-    </div>
-  </section>
-
-  <footer style="position:relative;display:flex;align-items:center;justify-content:center;padding:26px;color:var(--text-muted);font-size:12px">
-    <span>Diagra<span style="color:var(--accent)">Minder</span></span>
+  <footer class="home-foot">
+    <span class="home-foot-brand">DiagraMinder</span>
+    <span class="home-foot-links">
+      <a href="https://github.com/JuanseGZZ/diagraminder-app/releases/latest" target="_blank" rel="noopener">Releases</a>
+      <a href="https://github.com/JuanseGZZ/diagraminder-backend" target="_blank" rel="noopener">Backend on GitHub</a>
+    </span>
   </footer>
 
 </div>
-
   <div id="boardContainer">
     <div id="board"></div>
   </div>
@@ -1168,7 +1679,7 @@
       <!-- grupo expandible: acercar / ajustar / alejar -->
       <div id="zoom-group" class="zoom-group">
         <button id="fab-zoom-in"  class="zoom-btn" title="Zoom in" aria-label="Zoom in"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
-        <button id="fab-fit"      class="zoom-btn" title="Reset zoom" aria-label="Reset zoom"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg></button>
+        <button id="fab-fit"      class="zoom-btn" title="Reset zoom" aria-label="Reset zoom"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/></svg></button>
         <button id="fab-zoom-out" class="zoom-btn" title="Zoom out" aria-label="Zoom out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/></svg></button>
       </div>
 
@@ -1177,12 +1688,23 @@
     </div>
 
     <!-- ⛶ pantalla completa (canvas completo) -->
-    <button id="fullscreen-btn" class="zoom-btn zoom-btn-solo" title="Full screen" aria-label="Full screen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/></svg></button>
+    <button id="fullscreen-btn" class="zoom-btn zoom-btn-solo" title="Full screen" aria-label="Full screen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg></button>
   </div>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://unpkg.com/html-docx-js@0.3.1/dist/html-docx.js"></script>
-  <script type="module" src="./dist/bundle.js"></script>
+  <!-- Librerías de export servidas DESDE ACÁ, no desde un CDN de terceros.
+       Antes venían de cdnjs y unpkg SIN `integrity`: cualquiera que comprometiera
+       esos CDNs ejecutaba código en el origen de la app, con acceso al localStorage
+       donde viven los tokens del conector y las API keys de IA. Los archivos de
+       `vendor/` se verificaron contra el SRI oficial de cdnjs y el tarball de npm
+       (bitácora §40). Bonus: la app ya no depende de que el CDN esté vivo. -->
+  <script src="/vendor/jszip.min.js"></script>
+  <script src="/vendor/html2canvas.min.js"></script>
+  <script src="/vendor/jspdf.umd.min.js"></script>
+  <script src="/vendor/html-docx.js"></script>
+  <!-- ?v= igual que en el CSS: mientras el zone setting "Browser Cache TTL" de
+       Cloudflare pise el no-cache del origen, subir este número es lo único que
+       invalida el bundle YA cacheado en los navegadores. -->
+  <script type="module" src="./dist/bundle.js?v=72"></script>
+  <!-- el aviso de estadísticas: solo en diagraminder.com, y el beacon solo si se acepta -->
+  <script src="/legal/consent.js?v=1" defer></script>
 </body>
 </html>

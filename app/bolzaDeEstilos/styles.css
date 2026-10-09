@@ -201,11 +201,17 @@ body {
 }
 
 /* ===== BOARD ===== */
+/* Alto del aviso de backend (backendGate.js); 0px cuando no hay aviso. Se resta en
+   TODAS las alturas de #boardContainer para que el aviso EMPUJE el board en vez de
+   taparlo. Son 5 reglas (base + toolbar/nav colapsados + editor): si se agrega otra,
+   tiene que restar esta variable también, o el board se pasa de largo y se corta. */
+:root { --backend-gate-h: 0px; }
+
 #boardContainer {
   background: var(--bg);
   width: auto;            /* con margin-left llena el espacio restante (no desborda por el aside) */
   overflow: auto;
-  height: calc(100vh - 56px - 52px); /* navbar + toolbar */
+  height: calc(100vh - 56px - 52px - var(--backend-gate-h)); /* navbar + toolbar */
   scrollbar-width: none;
 }
 #boardContainer::-webkit-scrollbar { display: none; }
@@ -302,8 +308,17 @@ body {
   flex-direction: column;
   align-items: stretch;
 
-  background: var(--box-color, var(--surface));
-  border: var(--box-b) solid var(--border-strong);
+  /* El color elegido va al BORDE, brillante, y tiñe el interior — el mismo criterio
+     que el canvas libre (bitácora §70). Antes pintaba la carta ENTERA del color
+     pleno: un bloque saturado con el texto encima, ilegible con un amarillo o un
+     verde claro. La mezcla es contra la superficie del TEMA, así vale también en
+     tema claro. Sin color elegido, `--box-color` no está y queda la superficie. */
+  background: color-mix(in srgb, var(--box-color, var(--surface)) 22%, var(--surface));
+  border: var(--box-b) solid var(--box-color, var(--border-strong));
+  /* el color se tiene que leer de lejos, pero `--box-b` lo usan también los cables
+     para saber dónde enganchan: el grosor extra va por un inset, que no mueve nada.
+     Sin color elegido la variable no existe y el anillo es transparente. */
+  box-shadow: inset 0 0 0 1px var(--box-color, transparent);
   border-radius: 14px;
   overflow: visible;
 
@@ -357,27 +372,32 @@ body {
 }
 
 /* ===== DROP ZONES ===== */
+/* Al arrastrar una carta encima de otra, la barra marca DÓNDE va a caer: a la
+   izquierda (hermana anterior), abajo (hija) o a la derecha (hermana siguiente) —
+   los mismos tres lugares que ofrecen los botones +. Antes solo se marcaba la
+   derecha, y a la izquierda de la carta no había señal de nada (bitácora §71). */
 .box.drop-child {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-dim);
 }
 
-.box.drop-sibling {
-  border-right-color: var(--accent);
-}
+.box.drop-left,
+.box.drop-right,
+.box.drop-down { border-color: var(--accent); }
 
-.box.drop-sibling::after {
+.box.drop-left::after,
+.box.drop-right::after,
+.box.drop-down::after {
   content: "";
   position: absolute;
-  right: -5px;
-  top: 10%;
-  height: 80%;
-  width: 4px;
   background: var(--accent);
   border-radius: 2px;
   box-shadow: 0 0 10px var(--accent);
   z-index: 10;
 }
+.box.drop-left::after  { left: -5px;   top: 10%;    height: 80%; width: 4px; }
+.box.drop-right::after { right: -5px;  top: 10%;    height: 80%; width: 4px; }
+.box.drop-down::after  { bottom: -5px; left: 10%;   width: 80%;  height: 4px; }
 
 /* header */
 .box-header {
@@ -424,28 +444,56 @@ body {
   border-color: var(--accent);
 }
 
-/* scrollbars finos para título y cuerpo de carta */
-.box-title,
-.box-body {
+/* ===== SCROLLBARS DENTRO DE UN NODO =====
+   La barra de scroll de una tarjeta es parte del dibujo del nodo, no del navegador:
+   con la del sistema quedaba un canal gris ancho pegado al borde (se reportó sobre una
+   tarjeta md, pero pasaba en todas). Van FINAS y con el pulgar TRANSPARENTE hasta que
+   pasás por encima del nodo —o estás editándolo—, así la tarjeta se ve limpia y el
+   scroll sigue estando cuando hace falta. El canal reserva su ancho siempre, así que
+   aparecer no corre el texto. Vale para cualquier cosa scrolleable adentro de un nodo
+   del canvas libre, de una carta del organigrama o de un nodo de actividades, incluido
+   lo que se agregue después. Bitácora §72. */
+.free-node *,
+.box *,
+.act-node * {
   scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+.free-node:hover *, .free-node:focus-within *,
+.box:hover *, .box:focus-within *,
+.act-node:hover *, .act-node:focus-within * {
   scrollbar-color: var(--border-strong) transparent;
 }
-.box-title::-webkit-scrollbar,
-.box-body::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+
+/* lo mismo para los WebKit que no toman las dos propiedades de arriba */
+.free-node ::-webkit-scrollbar,
+.box ::-webkit-scrollbar,
+.act-node ::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
 }
-.box-title::-webkit-scrollbar-track,
-.box-body::-webkit-scrollbar-track {
+.free-node ::-webkit-scrollbar-track,
+.box ::-webkit-scrollbar-track,
+.act-node ::-webkit-scrollbar-track {
   background: transparent;
 }
-.box-title::-webkit-scrollbar-thumb,
-.box-body::-webkit-scrollbar-thumb {
-  background: var(--border-strong);
+.free-node ::-webkit-scrollbar-thumb,
+.box ::-webkit-scrollbar-thumb,
+.act-node ::-webkit-scrollbar-thumb {
+  background: transparent;
   border-radius: 999px;
 }
-.box-title::-webkit-scrollbar-thumb:hover,
-.box-body::-webkit-scrollbar-thumb:hover {
+.free-node:hover ::-webkit-scrollbar-thumb,
+.free-node:focus-within ::-webkit-scrollbar-thumb,
+.box:hover ::-webkit-scrollbar-thumb,
+.box:focus-within ::-webkit-scrollbar-thumb,
+.act-node:hover ::-webkit-scrollbar-thumb,
+.act-node:focus-within ::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+}
+.free-node ::-webkit-scrollbar-thumb:hover,
+.box ::-webkit-scrollbar-thumb:hover,
+.act-node ::-webkit-scrollbar-thumb:hover {
   background: var(--accent);
 }
 
@@ -483,7 +531,9 @@ body {
   padding: 8px 10px;
   border-radius: 6px;
   border: 1px solid var(--border);
-  background: var(--surface2);
+  /* translúcido: deja pasar el tinte de la carta de color (§70) y, sin color, se ve
+     igual que siempre sobre la superficie del nodo */
+  background: color-mix(in srgb, var(--surface2) 70%, transparent);
   overflow-x: hidden;
   overflow-y: auto;
   font-size: 12px;
@@ -493,14 +543,14 @@ body {
 }
 
 /* ===== WIRES ===== */
-.edge, .bt {
+.edge {
   position: absolute;
   background: var(--wire-color);
   pointer-events: none;
   border-radius: 999px;
 }
 
-.edge::before, .bt::before {
+.edge::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -535,13 +585,6 @@ body {
   right: 0;
   height: var(--wire);
   width: calc(100% - var(--pad-x) - var(--box-w) + var(--box-b));
-}
-
-.bt {
-  left: 0;
-  right: 0;
-  top: calc(50% - var(--wire) / 2);
-  height: var(--wire);
 }
 
 /* ===== ORGANIGRAM MODE ===== */
@@ -672,6 +715,9 @@ body {
 #board.organigram-mode .select-add.down {
   left: calc(50% - var(--btn) / 2);
 }
+#board.organigram-mode .select-add.left {
+  left: calc(50% - var(--box-w) / 2 - var(--btn) - var(--btn-gap) - var(--box-b));
+}
 #board.organigram-mode .select-add.right {
   left: calc(50% + var(--box-w) / 2 + var(--btn-gap) + var(--box-b));
 }
@@ -683,11 +729,17 @@ body {
 .select-add { width: var(--btn); height: var(--btn); }
 .select-add .menu-trigger { width: 100%; height: 100%; padding: 0; font-size: 13px; font-weight: 700; }
 
+/* Los + de los COSTADOS (meter un hermano a la izquierda o a la derecha de ESTA carta)
+   van A LOS LADOS, a media altura. En el organigrama los cables entre hermanos son la
+   T-bar del TOP de la celda (ver los overrides de .edge.left/.right más abajo), así que
+   los costados a media altura están libres. Bitácora §70. */
+.select-add.left,
 .select-add.right {
   position: absolute;
   top: calc(50% - var(--btn) / 2);
-  left: calc(var(--pad-x) + var(--box-w) + var(--btn-gap) + var(--box-b));
 }
+.select-add.left  { left: calc(var(--pad-x) - var(--btn) - var(--btn-gap) - var(--box-b)); }
+.select-add.right { left: calc(var(--pad-x) + var(--box-w) + var(--btn-gap) + var(--box-b)); }
 
 .select-add.down {
   position: absolute;
@@ -871,7 +923,7 @@ body {
 .toolbar-btn--menu.is-open::after { transform: rotate(-135deg) translate(1px, 1px); opacity: .9; }
 /* el .toolbar tiene overflow-x:auto (scrollea en pantallas angostas) y eso RECORTA
    cualquier hijo absoluto: el desplegable se veía cortado a la altura de la banda.
-   Mismo remedio que los menús de las cartas (renderLeftToRigth): al abrirse el <ul>
+   Mismo remedio que los menús de las cartas (renderOrganigram): al abrirse el <ul>
    se muda al <body> y se ancla fixed bajo el trigger. OJO: por eso el tamaño va en
    .orch-preset-list y NO en `.toolbar-menu .menu` — abierto, el <ul> ya no es hijo
    del toolbar y ese selector deja de alcanzarlo (los hints no cortaban línea). */
@@ -1095,9 +1147,9 @@ body {
 
 .nav-item details > summary::-webkit-details-marker { display: none; }
 
-/* caret sutil en los menús desplegables (no en la casilla de ubicación ni en Home):
+/* caret sutil en los menús desplegables (Home y Projects son botones, no menús):
    señala que son menús y gira al abrir */
-.nav-item:not(.nav-location) details > summary::after {
+.nav-item details > summary::after {
   content: "";
   width: 5px; height: 5px;
   margin-left: 7px;
@@ -1107,7 +1159,7 @@ body {
   opacity: .45;
   transition: transform .15s ease, opacity .12s;
 }
-.nav-item:not(.nav-location) details[open] > summary::after {
+.nav-item details[open] > summary::after {
   transform: rotate(-135deg) translate(1px, 1px);
   opacity: .9;
 }
@@ -1127,94 +1179,38 @@ body {
 .nav-lang-select:hover { background: var(--accent-dim); color: var(--text); }
 .nav-lang-select option { color: initial; }
 
-/* ===== Casilla de ubicación: carpeta activa + proyecto activo agrupados =====
-   Comunica "estás trabajando ACÁ": una carpeta (icono folder) y adentro un
-   proyecto (icono file). Va en su propia casilla con borde, separada del resto
-   del navbar (File/Edit/…) por una barra vertical (.nav-loc-bar). */
-.nav-location {
-  display: flex;
-  align-items: stretch;
-  border: 1px dashed var(--border-strong);   /* entrecortado: "instancia en la que trabajás" */
-  border-radius: 9px;
-  background: transparent;
-  padding: 3px 5px;
-  margin-right: 2px;
-}
-/* summaries de la casilla: sobreescriben el estilo genérico .nav-item summary.
-   El summary ya no es un botón entero — es el contenedor de dos zonas de click:
-   .loc-name (navega) y .loc-caret (despliega el menú), como el switcher de repo
-   de GitHub. Por eso no lleva padding ni hover propios. */
-.nav-location summary#folder-current,
-.nav-location summary#tree-current {
-  display: inline-flex;
-  align-items: stretch;
-  color: var(--text);
-  background: transparent;
-  border: none;
-  padding: 0;
-  gap: 0;   /* la flechita va pegada a su nombre (si no, "flota" hacia la barra) */
-}
-/* zona 1: el nombre. Click básico = ir a la carpeta / abrir el proyecto */
-.nav-location .loc-name {
+/* ===== Botón "Projects" del navbar =====
+   Un único botón donde antes vivía la casilla de ubicación (dos <details>:
+   carpeta activa / proyecto activo). Conserva el borde entrecortado — comunica
+   "acá está tu trabajo" — y abre el aside izquierdo #projects-aside. */
+.nav-projects-btn {
   display: inline-flex;
   align-items: center;
-  max-width: 220px;
-  padding: 5px 8px;
-  border: none;
-  border-radius: 6px;
+  gap: 7px;
+  padding: 6px 11px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 9px;
   background: transparent;
-  color: inherit;
+  color: var(--text-muted);
   cursor: pointer;
   font: 550 13px/1.2 'Inter', system-ui, sans-serif;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  transition: background .12s, color .12s;
+  transition: background .12s, color .12s, border-color .12s;
 }
-.nav-location .loc-name:hover { background: var(--accent-dim); color: var(--accent); }
-/* carpeta sin proyectos: el nombre es un placeholder, no un destino */
-.nav-location .loc-name.is-empty { color: var(--text-muted); font-style: italic; font-weight: 500; }
-/* zona 2: la flechita. Click = desplegar el selector */
-.nav-location .loc-caret {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background .12s, color .12s;
-}
-.nav-location .loc-caret::after {
-  content: "";
-  width: 5.5px; height: 5.5px;
-  border-right: 1.7px solid currentColor;
-  border-bottom: 1.7px solid currentColor;
-  transform: rotate(45deg) translate(-1px, -1px);
-  opacity: .7;
-  transition: transform .15s ease, opacity .12s;
-}
-.nav-location .loc-caret:hover,
-.nav-location details[open] > summary .loc-caret {
+.nav-projects-btn:hover {
   background: var(--accent-dim);
+  border-color: var(--accent);
   color: var(--accent);
 }
-.nav-location details[open] > summary .loc-caret::after {
-  transform: rotate(-135deg) translate(1px, 1px);
-  opacity: .95;
+/* abierto = borde pleno: el aside es un estado, no un flyout que se va solo */
+.nav-projects-btn.is-open {
+  background: var(--accent-dim);
+  border-style: solid;
+  border-color: var(--accent);
+  color: var(--accent);
 }
-/* iconos folder/file que antepone el JS (refreshFolderMenu / refreshTreeMenu) */
-.nav-location summary .ui-ico { opacity: .9; flex: 0 0 auto; }
-
-/* barra cruzada entre carpeta y proyecto: se lee como una ruta "carpeta / proyecto",
-   así queda claro que el proyecto pertenece a esa carpeta */
-.nav-loc-sep {
-  align-self: center;
-  margin: 0 5px;
-  color: var(--text-muted);
-  font: 400 16px/1 'Inter', system-ui, sans-serif;
-  opacity: .6;
-  user-select: none;
-}
+/* el icono de carpeta lo antepone el JS (refreshFolderMenu) */
+.nav-projects-btn .ui-ico { opacity: .9; flex: 0 0 auto; }
 /* barra vertical que separa la casilla de los menús del navbar */
 .nav-loc-bar {
   align-self: center;
@@ -1271,6 +1267,20 @@ body {
   color: var(--accent);
 }
 
+/* Ítem del menú que es un LINK real (Ayuda → Documentación abre /docs en otra
+   pestaña): mismo aspecto que los botones, para que la lista se lea pareja. */
+.menu .menu-link {
+  display: block;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 5px;
+  color: var(--text);
+  text-decoration: none;
+  font: 500 13px/1.2 'Inter', system-ui, sans-serif;
+  transition: background .1s, color .1s;
+}
+.menu .menu-link:hover { background: var(--accent-dim); color: var(--accent); }
+
 .menu button:disabled {
   opacity: 0.3;
   cursor: not-allowed;
@@ -1317,7 +1327,6 @@ body {
   padding: 2px 7px; flex: 0 0 auto;
 }
 .menu .folder-add, .menu .folder-open { width: 100%; text-align: left; }
-#folder-current { white-space: nowrap; }
 
 /* conectores externos (reusa .ia-apis-*) */
 .ia-conn-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; background: var(--surface2); border: 1px solid var(--border); border-radius: 9px; position: relative; }
@@ -1415,6 +1424,7 @@ body.aside-collapsed .aside-resizer { display: none; } /* sin resize en el rail 
 /* al arrastrar: sin transición (para que siga al mouse) y sin selección de texto */
 body.aside-resizing { user-select: none; cursor: ew-resize; }
 body.aside-resizing #tree-aside,
+body.aside-resizing .backend-gate,
 body.aside-resizing #boardContainer,
 body.aside-resizing .toolbar { transition: none; }
 .aside-header {
@@ -1483,9 +1493,11 @@ body.aside-collapsed .aside-tree { display: none; }
 body.aside-collapsed .aside-header { justify-content: center; padding: 8px 0; }
 
 /* el board y el toolbar se corren según el estado del aside (a la derecha del panel) */
-#boardContainer { margin-left: var(--aside-w); transition: margin-left .15s ease; }
+#boardContainer,
+.backend-gate { margin-left: var(--aside-w); transition: margin-left .15s ease; }
 .toolbar        { margin-left: var(--aside-w); transition: margin-left .15s ease; }
-body.aside-collapsed #boardContainer { margin-left: 34px; }
+body.aside-collapsed #boardContainer,
+body.aside-collapsed .backend-gate { margin-left: 34px; }
 body.aside-collapsed .toolbar        { margin-left: 34px; }
 
 /* en Home no se muestra el explorador */
@@ -1500,12 +1512,13 @@ body.view-home .cart-peek { display: none; }
 /* modo editor (doc 27): fuera el explorador de la app y la toolbar — el editor trae
    su propio aside (activity bar estilo VSC). El board ocupa todo el ancho y también
    el alto de la toolbar. Va DESPUÉS de las reglas de aside-collapsed para ganarles. */
-body.editor-mode #tree-aside { display: none; }
-body.editor-mode .toolbar { display: none; }
-body.editor-mode #boardContainer {
+body.full-board #tree-aside { display: none; }
+body.full-board .toolbar { display: none; }
+body.full-board #boardContainer {
   margin-left: 0;
-  height: calc(100vh - 56px);   /* solo el navbar arriba (sin los 52px de toolbar) */
+  height: calc(100vh - 56px - var(--backend-gate-h));   /* solo el navbar arriba (sin los 52px de toolbar) */
 }
+body.full-board .backend-gate { margin-left: 0; }
 
 /* filas del explorador */
 .aside-row {
@@ -1581,7 +1594,7 @@ body.editor-mode #boardContainer {
 /* hover: al pasar por la hitbox se ilumina la línea (sin agrandar) */
 .free-arrow-hit:hover + .free-arrow-vis { filter: brightness(1.7); }
 /* cabeza default (las flechas con color usan su propio marker con fill) */
-.free-arrows #free-arrowhead path { fill: var(--accent); }
+.free-arrows .free-arrowhead-default path { fill: var(--accent); }
 /* label de flecha como pill HTML (legible sobre la línea) */
 .free-arrow-label {
   position: absolute;
@@ -1598,6 +1611,9 @@ body.editor-mode #boardContainer {
   user-select: none;
   box-shadow: var(--shadow-el);
 }
+/* Mientras se arrastra un extremo de la flecha, su cartel quedaría colgado en el punto
+   medio VIEJO —lejos de la flecha— y se lee como un error de dibujo. */
+.free-arrow-label.dragging { display: none; }
 
 .free-node {
   position: absolute;
@@ -1613,13 +1629,15 @@ body.editor-mode #boardContainer {
 }
 .free-node:active { cursor: grabbing; }
 
-/* Nodo con un color de fondo OSCURO (lo marca isDarkColor en freeCanvas.js): el
-   color viaja SERIALIZADO en el proyecto, así que no puede depender del tema. En
-   vez de repintar cada pieza, redefinimos los tokens de texto/borde DENTRO del
-   nodo: título, chips, roles y botones heredan solos y quedan legibles en tema
-   claro igual que en oscuro. Los presets de agente (doc 28) son todos de esta
-   familia, y también aplica a los swatches "oscuros mate" del modal de color. */
-.free-node.on-dark-bg {
+/* Nodo/carta cuyo color elegido YA ES OSCURO (lo marca isDarkColor): ahí el color se
+   usa de fondo tal cual — teñirlo contra la superficie lo borraría, y los presets de
+   agente del orquestador (doc 28) son todos oscuros a propósito. Como el color viaja
+   SERIALIZADO en el proyecto, no puede depender del tema: en vez de repintar cada
+   pieza se redefinen los tokens de texto/borde DENTRO del nodo, y título, chips, roles
+   y botones heredan solos. Bitácora §70. */
+.free-node.on-dark-bg,
+.act-node.on-dark-bg,
+.box.on-dark-bg {
   --text:           #f2f4f7;
   --text-secondary: #ccd2dd;
   --text-muted:     #a3abba;
@@ -1628,6 +1646,9 @@ body.editor-mode #boardContainer {
   --bg:             #14161b;   /* los velos color-mix(var(--bg)) oscurecen, no aclaran */
   --surface:        rgba(255, 255, 255, .07);
 }
+/* con color oscuro la carta se pinta del color pleno (el velo la dejaría sin color) */
+.box.on-dark-bg { background: var(--box-color); }
+
 /* margen invisible: el hover (y las bolitas) se activan un poco antes de entrar al nodo */
 .free-node::before { content: ""; position: absolute; inset: -16px; z-index: -1; }
 
@@ -1678,6 +1699,14 @@ body.editor-mode #boardContainer {
   cursor: inherit;
   user-select: none;
 }
+/* Nodo con color elegido (estilo Obsidian): el borde lleva el color brillante y el
+   interior queda teñido y oscuro (lo arma buildNodeEl con color-mix contra la
+   superficie del TEMA, así vale igual en claro). El borde va más grueso porque es lo
+   que hace que el color se lea de lejos; con box-sizing: border-box no corre el
+   contenido. Vale para todos los tipos menos el sector (que es translúcido a
+   propósito) y los `shape` (que pintan la forma). Bitácora §69 y §70. */
+.free-node.free-tinted { border-width: 2px; }
+
 .free-node.type-md .free-md-content:empty::before {
   content: attr(data-placeholder);
   color: var(--text-muted);
@@ -1704,6 +1733,35 @@ body.editor-mode #boardContainer {
   /* se agranda al alejar (counter-zoom), para leerlo desde lejos */
   font-size: calc(20px / var(--zoom, 1));
   color: var(--text);
+}
+/* Sin título no queda ni el hueco del padding: el sector es una caja alrededor de
+   otros nodos y esa banda les come lugar arriba. `:empty` es exacto acá — mientras se
+   edita, adentro hay un input, así que el título vuelve a mostrarse solo. */
+.free-node.type-grupo > .free-node-titulo:empty { display: none; }
+/* el cuerpo del grupo es texto rico igual que el de la tarjeta MD, pero transparente:
+   lo que pinta el fondo es el sector */
+.free-node.type-grupo .free-node-body { padding: 0; background: transparent; }
+.free-node.type-grupo .free-group-content {
+  height: 100%; overflow-y: auto;
+  padding: 0 28px 8px;          /* alineado con el título, con lugar para ⋯ / ✕ */
+  font-size: 12.5px; line-height: 1.55;
+  cursor: inherit; user-select: none;
+}
+
+/* ---- edición EN EL LUGAR (doble click en basic / md / grupo) ---- */
+/* VA DESPUÉS de los bloques de .type-md y .type-grupo a propósito: `.free-node
+   .free-md-content.free-inline-edit` empata en especificidad con
+   `.free-node.type-md .free-md-content` (tres clases cada uno), así que lo que decide
+   es el ORDEN. Sin esto, el `user-select: none` de la tarjeta gana y no podés
+   seleccionar el texto que estás editando. */
+.free-node .free-md-content.free-inline-edit {
+  user-select: text;
+  cursor: text;
+  min-height: 1.6em;                  /* un cuerpo vacío igual se puede clickear */
+  background: var(--surface);         /* opaco: sobre un sector translúcido no se leía */
+  border-radius: 8px;
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
 }
 
 /* ---- tipo CLASS: diagrama de clases (estilo draw.io) ---- */
@@ -1954,6 +2012,43 @@ body.editor-mode #boardContainer {
 
 /* confinado (decisión X): el CLI escribe SOLO por el recurso editor */
 .ag-chip.ag-conf { color: var(--success); border-color: color-mix(in srgb, var(--success) 45%, transparent); background: color-mix(in srgb, var(--success) 12%, transparent); }
+
+/* IA PENDIENTE (2026-09-02): el agente no tiene con qué correr — sin credencial de
+   API, o cabeza CLI en una carpeta externa. Antes esto solo se veía adentro del modal
+   y el nodo parecía configurado hasta que fallaba el run. El punto ámbar late despacio
+   para que se note sin gritar. */
+.ag-chip.ag-ia-pend {
+  color: var(--warning);
+  border-color: color-mix(in srgb, var(--warning) 55%, transparent);
+  background: color-mix(in srgb, var(--warning) 14%, transparent);
+}
+.ag-chip.ag-ia-pend::after {
+  content: ""; flex: 0 0 auto;
+  width: 7px; height: 7px; margin-left: 1px;
+  border-radius: 50%; background: var(--warning);
+  animation: agIaPend 1.8s ease-in-out infinite;
+}
+@keyframes agIaPend { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+
+/* El botón que lo arregla de un click: sale al pasar el mouse por el NODO, no por el
+   chip (apuntarle a un chip de 20px de alto es una prueba de puntería). Ocupa lugar
+   siempre (visibility, no display) para que el layout del nodo no salte al aparecer. */
+.ag-ia-fix {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 7px;
+  font-size: 10.5px; line-height: 1.6;
+  border: 1px solid color-mix(in srgb, var(--warning) 55%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--warning) 20%, transparent);
+  color: var(--warning);
+  cursor: pointer;
+  visibility: hidden; opacity: 0;
+  transition: opacity .12s ease;
+}
+.ag-ia-fix svg { width: 12px; height: 12px; }
+.free-node:hover .ag-ia-fix,
+.ag-ia-fix:focus-visible { visibility: visible; opacity: 1; }
+.ag-ia-fix:hover { background: color-mix(in srgb, var(--warning) 32%, transparent); }
 
 /* barra de acciones FIJA al piso del nodo (sigue el resize) */
 .ag-foot {
@@ -2485,6 +2580,119 @@ body.editor-mode #boardContainer {
 .obj-fetch-url { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 12px/1.3 ui-monospace, monospace; color: var(--text-muted); }
 .obj-fetch-resp { padding: 3px 8px; font: 700 11px/1.2 ui-monospace, monospace; color: var(--node-instance); }
 .obj-fetch-resp.obj-resp-err { color: var(--danger); }
+/* ▶ del nodo: correr el fetch/la ráfaga sin abrir el modal (+ la última respuesta) */
+.obj-run-row { display: flex; align-items: center; gap: 4px; padding: 4px 8px 6px; }
+.obj-run-row .obj-fetch-resp { padding: 0 2px; }
+.obj-run-btn {
+  flex: 0 0 auto; cursor: pointer; font: 700 11px/1 'Inter', system-ui, sans-serif;
+  color: var(--accent-text); background: var(--accent); border: 0; border-radius: 5px; padding: 4px 8px;
+}
+.obj-run-btn:hover { filter: brightness(1.1); }
+.obj-run-btn:disabled { opacity: .55; cursor: progress; }
+/* a dónde apunta DE VERDAD una URL con {{variables}} (entorno activo) */
+.obj-fetch-resolved {
+  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font: 11px/1.3 ui-monospace, monospace; color: var(--accent);
+}
+.obj-sent-url { font-family: ui-monospace, monospace; overflow-wrap: anywhere; }
+
+/* Línea viva debajo del campo URL del editor de Fetch/Ráfaga: a dónde apunta con el
+   entorno activo, o qué variable falta. Vacía = sin variables → no ocupa lugar. */
+.obj-url-preview {
+  display: flex; align-items: baseline; gap: 8px;
+  font: 11px/1.5 ui-monospace, "Cascadia Code", monospace;
+  color: var(--accent); overflow-wrap: anywhere;
+}
+.obj-url-preview:empty { display: none; }
+.obj-url-preview.is-warn { color: var(--danger); font-family: 'Inter', system-ui, sans-serif; }
+.obj-url-preview-val { flex: 1; min-width: 0; }
+/* el entorno del que sale el valor: si no, "¿de dónde salió esta URL?" */
+.obj-url-preview-env {
+  flex: 0 0 auto;
+  padding: 1px 7px; border-radius: 999px;
+  background: var(--accent-dim); color: var(--accent);
+  font: 700 9px/1.5 'Inter', system-ui, sans-serif; letter-spacing: .04em; text-transform: uppercase;
+}
+
+/* ---- toolbar del modo object: entorno activo + import ---- */
+.obj-toolbar-controls { display: flex; align-items: center; gap: 8px; }
+.obj-toolbar-controls.hidden { display: none; }
+
+/* ---- import de JSON ---- */
+/* `.qz-modal.obj-modal` (dos clases) fija 760px: para ganarle hay que igualar la
+   especificidad, no alcanza con la clase sola. */
+.qz-modal.obj-import-modal { width: min(820px, 94vw); }
+.obj-import-report {
+  margin-top: 8px; padding: 8px 10px;
+  border: 1px solid var(--border); border-radius: 9px;
+  background: var(--surface2);
+  font: 12px/1.5 'Inter', system-ui, sans-serif; color: var(--text-secondary);
+  min-height: 20px;
+}
+/* un error de sintaxis del JSON: se lee ANTES de apretar nada */
+.obj-import-report.is-error { border-color: var(--danger); color: var(--danger); font-family: ui-monospace, monospace; }
+.obj-import-counts { font-weight: 700; color: var(--text); }
+.obj-import-names { color: var(--text-muted); overflow-wrap: anywhere; }
+.obj-import-warn { margin-top: 6px; display: flex; gap: 6px; align-items: baseline; }
+.obj-warn-tag {
+  flex: 0 0 auto;
+  padding: 1px 6px; border-radius: 999px;
+  background: var(--accent-dim); color: var(--accent);
+  font: 700 9px/1.4 'Inter', system-ui, sans-serif; letter-spacing: .06em;
+}
+
+/* ---- editor de entornos ---- */
+/* La tabla SCROLLEA de costado y cada columna conserva su ancho: con `flex: 1 1 0`,
+   cada entorno nuevo repartía el mismo ancho entre más columnas y con cuatro entornos
+   cada input quedaba en ~50px — cuatro caracteres de una URL. */
+/* 900px = 184 (variable) + 56 (secreto) + TRES columnas de 172 + los gaps: tres
+   entornos entran justos, sin barra de scroll. Del cuarto en adelante, scrollea. */
+.qz-modal.obj-env-modal { width: min(900px, 94vw); }
+.obj-env-table { display: flex; flex-direction: column; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
+.obj-env-row { display: flex; gap: 8px; align-items: center; min-width: max-content; }
+.obj-env-cell { flex: 0 0 172px; display: flex; align-items: center; gap: 6px; }
+.obj-env-cell.obj-env-varname { flex: 0 0 184px; }
+.obj-env-cell.obj-env-secret { flex: 0 0 56px; justify-content: center; }
+.obj-env-head {
+  padding-bottom: 6px; border-bottom: 1px solid var(--border);
+  font: 600 10px/1.2 'Inter', system-ui, sans-serif; text-transform: uppercase;
+  letter-spacing: .06em; color: var(--text-muted);
+}
+/* El nombre del entorno NO es —ni parece— un input: es un radio con su etiqueta. Que
+   las tres cosas de la tabla (entornos, variables, valores) se vieran igual fue lo que
+   hizo ilegible la primera versión de esto en ViewPost. */
+.obj-env-name { display: flex; align-items: center; gap: 6px; cursor: pointer; min-width: 0; }
+.obj-env-nametext {
+  font: 600 12px/1.2 'Inter', system-ui, sans-serif; color: var(--text);
+  text-transform: none; letter-spacing: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.obj-env-name.is-active .obj-env-nametext { color: var(--accent); }
+.obj-env-var {
+  font: 600 12px/1.3 ui-monospace, "Cascadia Code", monospace;
+  color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  text-transform: none; letter-spacing: 0;
+}
+.obj-env-actions { display: flex; gap: 8px; margin-top: 10px; }
+.obj-env-novars { padding: 8px 0; }
+
+/* ayuda del editor (se abre sola cuando todavía no hay ningún entorno) */
+.obj-help-btn {
+  margin-left: 8px; width: 18px; height: 18px; border-radius: 50%;
+  border: 1px solid var(--border-strong); background: transparent;
+  color: var(--text-muted); cursor: pointer;
+  font: 700 11px/1 'Inter', system-ui, sans-serif;
+}
+.obj-help-btn.is-on, .obj-help-btn:hover { color: var(--accent); border-color: var(--accent); }
+.obj-help {
+  margin-bottom: 10px; padding: 10px 12px;
+  border: 1px solid var(--border); border-radius: 9px; background: var(--surface2);
+  font: 12px/1.6 'Inter', system-ui, sans-serif; color: var(--text-secondary);
+}
+.obj-help.hidden { display: none; }
+.obj-help-row { display: flex; gap: 8px; }
+.obj-help-num { flex: 0 0 auto; font-weight: 700; color: var(--accent); }
+.obj-help-secret { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); color: var(--text-muted); }
 
 /* ---- catálogo de nodos custom ---- */
 .catalog-grid {
@@ -2532,9 +2740,6 @@ body.editor-mode #boardContainer {
 .media-picker-sep { text-align: center; color: var(--text-muted); font-size: 12px; padding: 0; }
 #media-picker-file { font-size: 13px; color: var(--text); width: 100%; }
 
-.free-node.type-web .free-node-body { padding: 0; }
-.free-node-iframe { width: 100%; height: 100%; border: none; display: block; }
-.free-web-empty,
 .free-custom-empty {
   padding: 16px; text-align: center;
   color: var(--text-muted); opacity: .7;
@@ -2705,22 +2910,34 @@ body.editor-mode #boardContainer {
   opacity: .6;
 }
 
+/* Resize desde las CUATRO esquinas. El área de agarre asoma 6px fuera del nodo: así
+   las de arriba no le comen el clic al ⋯ / ✕ (que están a 4px de la esquina, con
+   z-index más alto y siguen ganando en lo que se pisan). La marquita se dibuja 3px
+   ADENTRO del nodo, donde estaba la de abajo-derecha de siempre. */
 .free-node-resize {
   position: absolute;
-  right: 0; bottom: 0;
-  width: 16px; height: 16px;
-  cursor: nwse-resize;
+  width: 18px; height: 18px;
   z-index: 3;
 }
+.free-node-resize[data-dir="nw"] { left: -6px;  top: -6px;    cursor: nwse-resize; }
+.free-node-resize[data-dir="ne"] { right: -6px; top: -6px;    cursor: nesw-resize; }
+.free-node-resize[data-dir="sw"] { left: -6px;  bottom: -6px; cursor: nesw-resize; }
+.free-node-resize[data-dir="se"] { right: -6px; bottom: -6px; cursor: nwse-resize; }
 .free-node-resize::after {
   content: "";
-  position: absolute; right: 3px; bottom: 3px;
+  position: absolute;
   width: 8px; height: 8px;
-  border-right: 2px solid var(--text-muted);
-  border-bottom: 2px solid var(--text-muted);
-  opacity: .8;
+  border: 0 solid var(--text-muted);
+  opacity: 0;                      /* cuatro marcas fijas por nodo = ruido: salen al hover */
+  transition: opacity .1s;
 }
-.free-node:hover .free-node-resize::after { opacity: 1; border-color: var(--accent); }
+.free-node-resize[data-dir="nw"]::after { left: 9px;  top: 9px;    border-left-width: 2px;  border-top-width: 2px; }
+.free-node-resize[data-dir="ne"]::after { right: 9px; top: 9px;    border-right-width: 2px; border-top-width: 2px; }
+.free-node-resize[data-dir="sw"]::after { left: 9px;  bottom: 9px; border-left-width: 2px;  border-bottom-width: 2px; }
+.free-node-resize[data-dir="se"]::after { right: 9px; bottom: 9px; border-right-width: 2px; border-bottom-width: 2px; }
+.free-node:hover .free-node-resize::after,
+.free-node.selected .free-node-resize::after { opacity: .8; }
+.free-node-resize:hover::after { opacity: 1; border-color: var(--accent); }
 
 .free-dot {
   position: absolute;
@@ -2761,10 +2978,16 @@ body.editor-mode #boardContainer {
    board (a esos anchos hay lugar de sobra; flotarlo lo solapaba — bug 2026-07-23) */
 @media (max-width: 860px) {
   /* en teléfono el aside flota sobre el board — abierto: sin margen */
-  #boardContainer, .toolbar { margin-left: 0; }
+  #boardContainer, .toolbar, .backend-gate { margin-left: 0; }
   /* colapsado: el rail tiene 34px, el toolbar/board se corren para que el botón sea visible */
   body.aside-collapsed #boardContainer,
+  body.aside-collapsed .backend-gate,
   body.aside-collapsed .toolbar { margin-left: 34px; }
+  /* …salvo en full-board (documents), donde el explorador de la app NO se ve: la regla
+     de arriba le ganaba a la de full-board (misma especificidad, va después) y dejaba
+     una franja vacía de 34px a la izquierda del visor (bug 2026-10-08). */
+  body.full-board #boardContainer,
+  body.full-board .backend-gate { margin-left: 0; }
   /* drawer POR ENCIMA del toolbar (58): abierto tapa toolbar+board de una (si
      quedaba debajo, el toolbar le pisaba el header — bug 2026-07-23). Colapsado
      es un rail de 34px y el toolbar corre a su derecha, sin pisarse. */
@@ -2876,6 +3099,44 @@ body.editor-mode #boardContainer {
 }
 .nav-pill svg { width: 15px; height: 15px; flex: 0 0 auto; }
 
+/* ===== Aviso de túnel abierto (doc 38) =====
+   Mientras esté, la máquina es alcanzable desde internet: tiene que verse desde
+   cualquier modo, sin abrir nada. Es DISCRETO a propósito —un punto que late y una
+   palabra— porque no es un error, es un estado que la persona eligió; pero el punto
+   se mueve, que es lo que hace que el ojo lo encuentre sin gritar. `.hidden` se
+   declara acá porque en styles.css no es global (regla dura). */
+.tunnel-badge {
+  height: 30px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: 4px;
+  border-radius: 9px;
+  border: 1px solid color-mix(in srgb, var(--warning) 45%, transparent);
+  background: color-mix(in srgb, var(--warning) 12%, transparent);
+  color: var(--warning);
+  font: 600 12px/1 'Inter', system-ui;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .12s, border-color .12s;
+}
+.tunnel-badge:hover { background: color-mix(in srgb, var(--warning) 22%, transparent); }
+.tunnel-badge.hidden { display: none; }
+.tunnel-badge-dot {
+  width: 7px; height: 7px; border-radius: 50%; flex: none;
+  background: currentColor;
+  animation: tunnel-late 2.4s ease-in-out infinite;
+}
+/* Latido lento: dice "esto sigue pasando" sin pedir atención todo el tiempo. */
+@keyframes tunnel-late {
+  0%, 100% { opacity: 1;   box-shadow: 0 0 0 0 color-mix(in srgb, var(--warning) 55%, transparent); }
+  50%      { opacity: .55; box-shadow: 0 0 0 4px transparent; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tunnel-badge-dot { animation: none; }
+}
+
 /* ===== Paneles laterales derechos (IA / Perfil) ===== */
 .side-panel {
   position: fixed;
@@ -2893,9 +3154,138 @@ body.editor-mode #boardContainer {
 }
 .side-panel.open { transform: translateX(0); }
 
-/* con un panel derecho abierto, ocultar los FAB de zoom para que no se
-   superpongan con el panel */
-.side-panel.open ~ #zoom-controls { display: none; }
+/* con un panel DERECHO abierto, ocultar los FAB de zoom para que no se
+   superpongan con el panel. El de Projects es izquierdo: no los tapa. */
+.side-panel-right.open ~ #zoom-controls { display: none; }
+
+/* ===== Panel lateral IZQUIERDO (Projects) =====
+   Mismo patrón que los derechos pero espejado, y más ancho porque lleva DOS
+   columnas (carpetas | files). Se superpone al explorador (#tree-aside, z 40):
+   comparten el borde izquierdo y el aside gana por z-index, igual que los
+   derechos se superponen al chat. */
+.side-panel-left {
+  right: auto;
+  left: 0;
+  width: min(460px, 92vw);
+  border-left: none;
+  border-right: 1px solid var(--border-strong);
+  transform: translateX(-100%);
+}
+
+/* las dos columnas: ocupan todo el alto que deja el header del panel */
+.projects-cols {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: stretch;
+}
+.projects-col {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+/* la de carpetas manda sobre la de files: la línea marca esa dependencia.
+   Se lleva MENOS ancho a propósito: un nombre de carpeta es corto, mientras que
+   la fila de un file trae además su tipo entre paréntesis y sus ✎/🗑. */
+#projects-col-folders {
+  flex: 0 0 44%;
+  border-right: 1px solid var(--border);
+}
+
+.projects-col-title {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 10px 12px 6px;
+  font: 600 11px/1 'Inter', system-ui, sans-serif;   /* micro del DS */
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* las listas reusan TODO el estilo de `.menu` (filas, ✎/🗑, badge de hosting,
+   menú de 3 puntitos). Acá solo se les saca lo de "desplegable flotante": pasan
+   a ser una columna en el flujo, con su propio scroll. */
+.projects-list.menu {
+  position: static;
+  z-index: auto;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 2px 6px 8px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+.projects-list.menu::-webkit-scrollbar { width: 10px; }
+.projects-list.menu::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border: 3px solid var(--surface);
+  border-radius: 99px;
+}
+.projects-list.menu::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* pie de cada columna: sus acciones de alta, pinneadas abajo de todo */
+.projects-col-foot {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border-top: 1px solid var(--border);
+}
+.projects-foot-btn {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  background: var(--surface2);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  color: var(--text);
+  font: 500 12.5px/1.3 'Inter', system-ui, sans-serif;
+  cursor: pointer;
+  text-align: left;
+  transition: background .12s, border-color .12s;
+}
+.projects-foot-btn:hover { background: var(--accent-dim); border-color: var(--accent); }
+
+/* "Add file" despliega los TIPOS hacia ARRIBA (está abajo de todo). Por click,
+   no por hover: en una columna angosta un flyout por hover se pierde al mover
+   el mouse en diagonal. */
+.projects-add-wrap { position: relative; }
+.projects-add-menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% + 6px);
+  max-height: 260px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 9px;
+  box-shadow: var(--shadow-pop);
+  z-index: 10;
+}
+/* `.hidden` NO es global en esta hoja: hay que declararla por componente */
+.projects-add-menu.hidden { display: none; }
+.projects-add-menu button {
+  width: 100%;
+  text-align: left;
+  padding: 7px 9px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  font: 500 12.5px/1.2 'Inter', system-ui, sans-serif;
+}
+.projects-add-menu button:hover { background: var(--accent-dim); color: var(--accent); }
+.projects-add-btn.is-open { background: var(--accent-dim); border-color: var(--accent); }
 
 .side-panel-header {
   display: flex;
@@ -2921,6 +3311,9 @@ body.editor-mode #boardContainer {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  /* explícito: con overflow-y:auto el eje X computa a `auto` solo, y cualquier
+     hijo que no encoja le mete una barra horizontal al panel entero. */
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -2965,6 +3358,13 @@ body.editor-mode #boardContainer {
   background: var(--surface);
 }
 .side-panel-footer .ia-status { padding: 2px 2px 0; }
+/* señal de "es acá": lo que el chat señala al mandarte a Ajustes (el footer de la
+   conexión local, el panel de APIs) parpadea un momento */
+.dm-flash { animation: dm-flash-bg 1.4s ease-out 2; }
+@keyframes dm-flash-bg {
+  0%, 100% { background: transparent; }
+  25%      { background: var(--accent-dim); }
+}
 .side-panel-btn {
   width: 100%;
   box-sizing: border-box;
@@ -2988,6 +3388,114 @@ body.editor-mode #boardContainer {
 }
 
 /* opciones de descarga del backend local (panel IA) */
+/* ===== Modo desktop (doc 37 §F13) =====
+   Cuando el backend sirve la app, los controles de "conectar" y "descargar" no
+   tienen sentido: el backend ES quien sirvió esta página. Se esconden por una clase
+   que pone `localBackend.js` al detectar el flag, no borrando el markup — en la WEB
+   estos botones siguen siendo necesarios y son el mismo HTML.
+   Ojo: `.hidden` no es global en esta hoja; esta regla tampoco, va por su clase. */
+.dm-desktop .dm-web-only { display: none !important; }
+/* Y su contrario: lo que SOLO existe cuando el backend sirvió esta página. Arranca
+   oculto y `dm-desktop` lo muestra — al revés que `.dm-web-only`, que arranca visible.
+   Así la WEB (que nunca lleva la clase) no ve nada que no le corresponda. */
+.dm-desktop-only { display: none !important; }
+.dm-desktop .dm-desktop-only { display: block !important; }
+
+/* ===== "This program": el panel del backend, dentro de la app (doc 37 §F17b) ===== */
+.lp-modal { width: 520px; max-width: 94vw; max-height: 88vh; overflow-y: auto; }
+.lp-grid { display: flex; flex-direction: column; gap: 1px; margin: 10px 0 4px;
+           background: var(--border); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.lp-row { display: flex; gap: 12px; align-items: baseline; padding: 8px 11px; background: var(--surface); }
+.lp-k { flex: 0 0 42%; color: var(--text-muted); font: 500 12px var(--font-ui); }
+.lp-v { flex: 1; min-width: 0; color: var(--text); font: 500 12.5px var(--font-ui); }
+.lp-mono { font-family: var(--font-mono, ui-monospace, monospace); font-size: 11.5px; }
+.lp-wrap { overflow-wrap: anywhere; }
+.lp-sub { margin: 14px 0 6px; }
+.lp-clis { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.lp-cli { display: flex; align-items: center; gap: 8px; padding: 6px 10px;
+          background: var(--surface2); border-radius: 8px; font: 500 12.5px var(--font-ui); }
+.lp-cli-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; background: var(--text-muted); }
+.lp-cli.is-on .lp-cli-dot { background: var(--success, #3ba55d); }
+.lp-cli-name { color: var(--text); }
+.lp-cli-ver { margin-left: auto; color: var(--text-muted); font-size: 11.5px; }
+.lp-cli.is-off .lp-cli-name { color: var(--text-muted); }
+.lp-hint { margin: 6px 0 0; color: var(--text-muted); font-size: 12px; line-height: 1.5; }
+.lp-cmd { display: block; margin-top: 6px; padding: 9px 11px; background: var(--bg);
+          border: 1px solid var(--border-strong); border-radius: 8px;
+          font: 12.5px var(--font-mono, ui-monospace, monospace); color: var(--text);
+          overflow-wrap: anywhere; }
+.lp-warn { color: var(--danger); }
+
+/* ---- el interruptor del MCP, adentro del modal «This program» (doc 37 §F19) ---- */
+.lp-switch { display: flex; align-items: center; gap: 8px; padding: 4px 0 8px; cursor: pointer; }
+.lp-switch input { width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; }
+.lp-switch span { font: 500 13px/1.4 'Inter', system-ui, sans-serif; color: var(--text); }
+.lp-lvls { display: flex; flex-direction: column; gap: 4px; }
+/* apagado, los niveles siguen VIÉNDOSE (para saber qué hay) pero no se tocan */
+.lp-lvls.is-off { opacity: .45; pointer-events: none; }
+.lp-lvl {
+  display: flex; align-items: flex-start; gap: 9px;
+  padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer;
+}
+.lp-lvl:hover { border-color: var(--border-strong); }
+.lp-lvl.is-on { border-color: var(--accent); background: var(--accent-dim); }
+.lp-lvl input { margin-top: 2px; accent-color: var(--accent); cursor: pointer; }
+.lp-lvl span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.lp-lvl b { font: 600 13px/1.35 'Inter', system-ui, sans-serif; color: var(--text); }
+.lp-lvl em {
+  font: 400 12px/1.45 'Inter', system-ui, sans-serif; font-style: normal;
+  color: var(--text-muted);
+}
+.lp-mcp-root { margin-top: 10px; }
+/* el .mcp.json listo para copiar: monoespaciado, scrolleable y sin desbordar */
+.lp-json {
+  max-height: 190px; overflow: auto; white-space: pre;
+  font: 400 11.5px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.lp-link { display: inline-block; margin-top: 6px; color: var(--accent); text-decoration: none; }
+.lp-link:hover { text-decoration: underline; }
+.lp-pick {
+  margin-top: 6px; padding: 7px 12px; border: 1px solid var(--border-strong);
+  border-radius: 8px; background: var(--surface); color: var(--text);
+  font: 500 13px/1 'Inter', system-ui, sans-serif; cursor: pointer;
+}
+.lp-pick:hover:not(:disabled) { border-color: var(--accent); }
+.lp-pick:disabled { opacity: .45; cursor: default; }
+.lp-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ---- instalar un CLI desde el modal ---- */
+.lp-cli-get {
+  margin-left: 8px; padding: 3px 10px; border: 1px solid var(--accent);
+  border-radius: 6px; background: transparent; color: var(--accent);
+  font: 600 11.5px/1.5 'Inter', system-ui, sans-serif; cursor: pointer; flex: none;
+}
+.lp-cli-get:hover:not(:disabled) { background: var(--accent-dim); }
+.lp-cli-get:disabled { opacity: .5; cursor: default; }
+.lp-cli-cmd {
+  margin-left: 8px; padding: 2px 7px; border-radius: 5px; background: var(--bg);
+  border: 1px solid var(--border); color: var(--text-muted); flex: none;
+  font: 400 11px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
+  max-width: 190px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.lp-cli.is-working { opacity: .7; }
+.lp-cli-log {
+  max-height: 150px; overflow: auto; margin: 6px 0 0; padding: 8px 10px;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+  font: 400 11px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--text-muted); white-space: pre-wrap;
+}
+
+/* ---- la ruedita: abrir el túnel tarda hasta 25s ---- */
+.lp-spin {
+  width: 13px; height: 13px; flex: none; margin-left: 2px;
+  border: 2px solid var(--border-strong); border-top-color: var(--accent);
+  border-radius: 50%; animation: lp-gira .7s linear infinite;
+}
+@keyframes lp-gira { to { transform: rotate(360deg); } }
+.lp-switch.is-working { opacity: .8; }
+.lp-btns .lp-pick { flex: 1 1 auto; }
+#lp-overlay.hidden { display: none; }
+
 .ia-download {
   display: flex;
   flex-direction: column;
@@ -3118,10 +3626,38 @@ body.editor-mode #boardContainer {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 10px;
   padding: 6px 2px;
 }
-.side-panel-row-label { font: 500 13px/1.4 'Inter', system-ui, sans-serif; color: var(--text-muted); }
+.side-panel-row-label {
+  font: 500 13px/1.4 'Inter', system-ui, sans-serif;
+  color: var(--text-muted);
+  flex: 0 0 auto;
+}
 .side-panel-row #theme-toggle { margin-left: 0; }
+
+/* El VALOR de una fila (una ruta de disco, que puede ser larguísima). Si no se
+   acota, el flex item no encoge —min-width:auto por default— y estira el panel:
+   como .side-panel-body tiene overflow-y:auto, el eje X computa a `auto` y
+   aparece una barra horizontal en TODO el panel de Ajustes. La barra va acá
+   adentro, en el valor, que es lo único que de verdad no entra. */
+.side-panel-row-value {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: right;
+  white-space: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  font: 400 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--text);
+  overscroll-behavior-x: contain;
+}
+.side-panel-row-value::-webkit-scrollbar { height: 6px; }
+.side-panel-row-value::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 99px;
+}
+.side-panel-row-value::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
 /* gestor de APIs (panel IA → "Agregar API") */
 .ia-apis {
@@ -3357,6 +3893,36 @@ body.editor-mode #boardContainer {
 }
 .ia-chat-menu-item:hover { background: var(--accent-dim); }
 .ia-chat-menu-item.is-active { background: var(--accent-dim); color: var(--accent); }
+/* botón "/" del composer: hereda la forma del clip de adjuntos (.ia-chat-attach-btn)
+   para que la barra se lea pareja; acá solo va lo propio del icono */
+.ia-chat-slash-btn svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+/* mientras su menú está abierto, el botón queda marcado (si no, el foco lo deja azul
+   sin decir por qué) */
+.ia-chat-slash-btn.is-open { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+.ia-chat-slash-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+/* El menú de comandos se ancla al COMPOSER, no al botón: colgado del botón (que vive
+   a la izquierda) se salía del panel, que es angosto. Por eso `#ia-chat-slash` deja de
+   ser el contenedor posicionado y el menú se estira de borde a borde. */
+#ia-chat-slash { position: static; }
+.ia-chat-menu-slash { left: 0; right: 0; min-width: 0; }
+.ia-chat-menu-section {
+  margin: 2px 4px 6px;
+  font: 600 10px/1 'Inter', system-ui;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--text-muted);
+}
+.ia-chat-slash-name { font: 600 13px/1.3 'Inter', system-ui; color: var(--accent); }
+
+/* "Connect backend" / "Add API key": acciones, no backends más de la lista */
+.ia-chat-menu-action { justify-content: flex-start; color: var(--accent); }
+.ia-chat-menu-action:not(:first-child) {
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+/* el separador marca dónde EMPIEZAN las acciones: entre dos acciones sobra */
+.ia-chat-menu-action + .ia-chat-menu-action { margin-top: 0; padding-top: 8px; border-top: 0; }
 .ia-chat-menu-item.is-empty { color: var(--text-muted); cursor: default; }
 .ia-chat-menu-item.is-empty:hover { background: none; }
 .ia-chat-menu-item-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -3409,12 +3975,56 @@ body.editor-mode #boardContainer {
 /* ---- mensajes ---- */
 .ia-chat-messages {
   flex: 1;
+  position: relative;          /* ancla del velo de bloqueo */
   overflow-y: auto;
   padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
+/* ---- velo de BLOQUEO (sin backend local ni API key) ---- */
+/* `.hidden` no es global: hay que declararlo por componente */
+.ia-chat-lock.hidden { display: none; }
+.ia-chat-lock {
+  position: absolute;
+  inset: 0;
+  z-index: 4;                 /* debajo del menú de backend (9), que sigue usable */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  /* deja entrever lo que hay detrás: se lee como "apagado", no como otra pantalla */
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  backdrop-filter: blur(2px);
+}
+.ia-chat-lock-box {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  max-width: 300px; text-align: center;
+}
+.ia-chat-lock-ico {
+  width: 30px; height: 30px;
+  fill: none; stroke: var(--text-muted); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round;
+}
+.ia-chat-lock-title { margin: 0; font: 600 15px/1.3 'Inter', system-ui; color: var(--text); }
+.ia-chat-lock-sub { margin: 0; font: 500 13px/1.45 'Inter', system-ui; color: var(--text-muted); }
+.ia-chat-lock-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 4px; }
+.ia-chat-lock-btn {
+  padding: 8px 14px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font: 500 13px/1 'Inter', system-ui;
+  cursor: pointer;
+}
+.ia-chat-lock-btn:hover { border-color: var(--accent); color: var(--text); background: var(--accent-dim); }
+.ia-chat-lock-btn.is-primary { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); font-weight: 600; }
+
+/* con el chat bloqueado el composer se ve apagado y no recibe clics; la barra de
+   backend NO se toca (es donde se destraba) */
+#ia-chat.is-locked .ia-chat-messages { overflow: hidden; }
+#ia-chat.is-locked .ia-chat-composer { opacity: .45; pointer-events: none; filter: grayscale(.6); }
+
 /* ---- estado vacío: marca + copy + arranques sugeridos ---- */
 .ia-chat-empty {
   margin: auto;
@@ -3487,6 +4097,117 @@ body.editor-mode #boardContainer {
   border: 1px solid var(--border);
   color: var(--text);
   border-bottom-left-radius: 5px;
+}
+
+/* Pedido de permiso del backend local (Claude Code headless, bitácora §66): la
+   tarjeta con Permitir / Rechazar que reemplaza al prompt que no existe en el chat. */
+.ia-chat-msg-perm {
+  align-self: flex-start;
+  background: var(--surface2);
+  border: 1px solid var(--accent);
+  color: var(--text);
+  border-bottom-left-radius: 5px;
+  white-space: normal;
+}
+.ia-chat-perm-title { font-weight: 650; margin-bottom: 2px; }
+.ia-chat-perm-tool { font: 600 12px/1.4 'Inter', system-ui, sans-serif; color: var(--accent); }
+.ia-chat-perm-detail {
+  margin: 6px 0 0;
+  padding: 6px 8px;
+  max-height: 120px;
+  overflow: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: 400 12px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.ia-chat-perm-actions { display: flex; gap: 8px; margin-top: 9px; }
+.ia-chat-perm-btn {
+  flex: 1;
+  padding: 6px 10px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font: 600 12.5px/1 'Inter', system-ui, sans-serif;
+  cursor: pointer;
+}
+.ia-chat-perm-btn:hover { border-color: var(--accent); }
+.ia-chat-perm-btn:disabled { opacity: .5; cursor: default; }
+.ia-chat-perm-btn.is-allow { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+.ia-chat-perm-state { margin-top: 8px; font: 600 12px/1 'Inter', system-ui, sans-serif; color: var(--text-muted); }
+/* el modo Plan: la tarjeta trae el PLAN (markdown) en vez de una tool y un comando */
+.ia-chat-msg-plan { max-width: 100%; }
+.ia-chat-plan-body {
+  margin-top: 6px;
+  padding: 8px 12px;
+  max-height: 340px;
+  overflow: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.ia-chat-plan-body > :first-child { margin-top: 0; }
+.ia-chat-plan-body > :last-child { margin-bottom: 0; }
+.ia-chat-plan-body h1, .ia-chat-plan-body h2, .ia-chat-plan-body h3 { font-size: 13.5px; margin: 10px 0 4px; }
+
+/* PASOS del turno (bitácora §68): qué está haciendo la IA ahora mismo. Un turno puede
+   correr minutos de tools sin escribir una línea, y con solo el cartelito de actividad
+   eso se ve igual que un cuelgue — el usuario reportó "Sigue trabajando… 279s" sin
+   saber si se había bugeado. Cada tool deja su paso, con el comando o el archivo. */
+.ia-chat-steps {
+  align-self: flex-start;
+  max-width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 7px 9px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.ia-chat-step {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  font: 400 11.5px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--text-muted);
+}
+.ia-chat-step::before {
+  content: "▸";
+  flex: none;
+  width: 10px;
+  text-align: center;
+  color: var(--accent);
+}
+.ia-chat-step.is-run::before { animation: ia-step-late 1.1s ease-in-out infinite; }
+.ia-chat-step.is-ok::before  { content: "✓"; color: var(--success); animation: none; }
+.ia-chat-step.is-bad::before { content: "✗"; color: var(--danger); animation: none; }
+/* aprobado SOLO (Auto accept, o el plan ya aprobado): no se preguntó, pero se ve */
+.ia-chat-step.is-auto::before { content: "✓"; color: var(--accent); animation: none; }
+.ia-chat-step-auto {
+  flex: none;
+  margin-left: auto;
+  padding-left: 8px;
+  font: 600 10.5px/1.55 'Inter', system-ui, sans-serif;
+  color: var(--accent);
+}
+@keyframes ia-step-late { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+.ia-chat-step-tool { flex: none; font-weight: 650; color: var(--text); }
+.ia-chat-step-det {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ia-chat-step.is-run::before { animation: none; }
 }
 
 /* ---- Markdown renderizado dentro de las respuestas de la IA ---- */
@@ -3635,10 +4356,14 @@ body.editor-mode #boardContainer {
   outline: none;
   max-height: 160px;
 }
-.ia-chat-controls { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; row-gap: 8px; }
-.ia-chat-controls-right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
-/* en ancho chico el botón de modo (texto largo) puede encogerse con elipsis */
-#ia-chat-mode { min-width: 0; flex: 0 1 auto; }
+/* el gap bajó a 6px al sumarse el botón "/": con 8px el pill de modo perdía su texto
+   por elipsis en el ancho por defecto del panel */
+.ia-chat-controls { display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap; row-gap: 8px; position: relative; }
+.ia-chat-controls-right { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+/* En ancho chico el botón de modo (texto largo) se ENCOGE con elipsis. La base tiene
+   que ser chica: con `flex-wrap` activo el navegador rompe línea ANTES de encoger, así
+   que un basis grande mandaba los controles a dos filas al sumarse el botón "/". */
+#ia-chat-mode { min-width: 0; flex: 1 1 90px; }
 #ia-chat-mode .ia-chat-ctl-btn { max-width: 100%; }
 #ia-chat-mode .ia-chat-ctl-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
@@ -4237,7 +4962,7 @@ body.toolbar-collapsed #zoom-hammer { display: flex; }
 
 /* ===== toolbar guardado: se oculta y el board ocupa su lugar ===== */
 body.toolbar-collapsed .toolbar { display: none; }
-body.toolbar-collapsed #boardContainer { height: calc(100vh - 56px); }
+body.toolbar-collapsed #boardContainer { height: calc(100vh - 56px - var(--backend-gate-h)); }
 
 /* botón "guardar" (colapsar) el toolbar: fijo a la derecha, no scrollea con el contenido */
 .toolbar-store-btn {
@@ -4269,41 +4994,23 @@ body.toolbar-collapsed #boardContainer { height: calc(100vh - 56px); }
 
 .modal-overlay.hidden { display: none; }
 
-/* ===== Cuenta DiagraMinder (modal + panel Perfil, doc 26 §5) ===== */
-#account-form { display: flex; flex-direction: column; gap: 14px; }
-.account-input {
-  background: var(--surface2);
-  border: 1px solid var(--border-strong);
-  border-radius: 9px;
-  color: var(--text);
-  font: 500 14px/1.2 'Inter', system-ui, sans-serif;
-  padding: 9px 12px;
-  outline: none;
-  width: 100%;
-  transition: border-color .12s;
-}
-.account-input:focus { border-color: var(--accent); }
-#account-url-field.hidden { display: none; }
-.account-error { margin: 0; color: var(--danger); font: 500 12px/1.4 'Inter', system-ui, sans-serif; }
-.account-error.hidden { display: none; }
-.account-captcha { display: flex; justify-content: center; min-height: 65px; }
-.account-captcha.hidden { display: none; }
-.account-switch { margin: 0; text-align: center; font: 500 12px/1.4 'Inter', system-ui, sans-serif; }
-.account-switch a { color: var(--accent); text-decoration: none; }
-.account-switch a:hover { text-decoration: underline; }
-#profile-account-in.hidden { display: none; }
-#profile-login.hidden, #profile-register.hidden { display: none; }
-#profile-account-email { overflow-wrap: anywhere; }
-#profile-account-clouds { list-style: none; margin: 0 0 6px; padding: 0; }
-.profile-cloud {
-  display: flex; align-items: center; gap: 8px;
-  padding: 6px 4px;
-  font: 500 13px/1.3 'Inter', system-ui, sans-serif;
-  color: var(--text);
-}
-.profile-cloud-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
-.profile-cloud.muted-cloud { color: var(--text-muted); }
-#profile-account-buy[disabled] { opacity: .5; cursor: default; }
+
+/* ===== Items del menú File que se muestran según el tipo activo =====
+   `.hidden` NO es global en esta hoja: cada pieza declara la suya, así que estas
+   reglas son lo ÚNICO que esconde estos items (lo verifican e2e-projects-aside y
+   e2e-organigram-only). Vivían pegadas al bloque de cuenta y se fueron con él por
+   error en F7 — quedan acá, con sus dueños. */
+#to-freestyle-li.hidden { display: none; }
+#import-soft-li.hidden,
+#import-soft-sep.hidden { display: none; }
+.nav-item#skills-menu-li.hidden { display: none; }
+
+/* La barra de colaboración del web-hub estorba arriba de un modal o del modo
+   pantalla completa del cuestionario. */
+body:has(.qz-fs) #webhub-collab,
+body:has(.modal-overlay:not(.hidden)) #webhub-collab,
+body:has(.qz-fs) #webhub-cursors,
+body:has(.modal-overlay:not(.hidden)) #webhub-cursors { display: none !important; }
 
 .modal.modal-narrow { width: 340px; }
 .modal.modal-wide {
@@ -4313,104 +5020,90 @@ body.toolbar-collapsed #boardContainer { height: calc(100vh - 56px); }
   max-height: 95vh;
   overflow: hidden;   /* el scroll vive en .versiones-body, no en el modal */
 }
+/* ===== Historial de cambios (versioning/versionsUI.js) =====
+   Dos columnas: la línea de versiones (izq) y la versión elegida (der). El modal no
+   scrollea: scrollean la lista y el panel de la derecha, cada uno por su cuenta. */
 .versiones-body {
   flex: 1;
   min-height: 0;        /* permite encoger dentro del modal de alto fijo */
-  overflow: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+  display: grid;
+  grid-template-columns: minmax(220px, 300px) 1fr;
+  gap: 16px;
   text-align: left;
 }
+.ver-side, .ver-main { min-height: 0; display: flex; flex-direction: column; gap: 10px; }
+.ver-main { overflow-y: auto; }
+.ver-side-help { margin: 0; font-size: 12px; line-height: 1.45; color: var(--text-muted); }
+.ver-empty { margin: 0; padding: 16px 4px; font-size: 12px; color: var(--text-muted); }
 
-/* scrollbar fino y discreto en el modal de versiones (igual que cartas/diff) */
-.versiones-body,
-.ver-diff-pre,
-.ver-bar {
-  scrollbar-width: thin;
-  scrollbar-color: var(--border-strong) transparent;
+/* la línea: un riel vertical con un punto por versión, la más nueva arriba */
+.ver-list {
+  flex: 1; min-height: 0; overflow-y: auto;
+  display: flex; flex-direction: column;
+  padding: 4px 4px 4px 0;
 }
-.versiones-body::-webkit-scrollbar,
-.ver-diff-pre::-webkit-scrollbar,
-.ver-bar::-webkit-scrollbar { width: 8px; height: 8px; }
-.versiones-body::-webkit-scrollbar-track,
-.ver-diff-pre::-webkit-scrollbar-track,
-.ver-bar::-webkit-scrollbar-track { background: transparent; }
-.versiones-body::-webkit-scrollbar-thumb,
-.ver-diff-pre::-webkit-scrollbar-thumb,
-.ver-bar::-webkit-scrollbar-thumb {
-  background: var(--border-strong);
-  border-radius: 999px;
+.ver-item {
+  position: relative;
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; padding: 8px 10px 8px 26px;
+  background: transparent; border: 1px solid transparent; border-radius: 8px;
+  color: inherit; text-align: left; cursor: pointer;
+  transition: background .12s, border-color .12s;
 }
-.versiones-body::-webkit-scrollbar-thumb:hover,
-.ver-diff-pre::-webkit-scrollbar-thumb:hover,
-.ver-bar::-webkit-scrollbar-thumb:hover { background: var(--accent); }
-
-/* secciones del modal de versiones */
-.ver-section { display: flex; flex-direction: column; gap: 6px; }
-.ver-section-head { display: flex; align-items: baseline; gap: 8px; }
-.ver-section-head strong { font-size: 13px; }
-.ver-section-sub { font-size: 11px; color: var(--text-muted); }
-
-/* barra horizontal de versiones (chips) */
-.ver-bar {
-  display: flex; gap: 8px;
-  overflow-x: auto;
-  padding: 8px;
-  background: var(--bg);
-  border: 1px solid var(--border-strong);
-  border-radius: 9px;
-  scrollbar-width: thin;
+.ver-item::before {            /* el riel que une los puntos */
+  content: ""; position: absolute; left: 12px; top: 0; bottom: 0;
+  width: 2px; background: var(--border-strong);
 }
-.ver-bar-empty { font-size: 12px; color: var(--text-muted); padding: 6px 4px; }
-
-.ver-chip {
-  flex: 0 0 auto;
-  display: flex; align-items: center; gap: 6px;
-  padding: 6px 10px;
-  background: var(--surface);
-  border: 1px solid var(--border-strong);
-  border-radius: 999px;
-  color: inherit; cursor: pointer;
-  font-size: 12px;
-  transition: border-color .12s, background .12s, opacity .12s;
+.ver-item:first-child::before { top: 50%; }
+.ver-item:last-child::before  { bottom: 50%; }
+.ver-item:only-child::before  { display: none; }
+.ver-item:hover { background: var(--surface); }
+.ver-item.is-selected { background: var(--accent-dim); border-color: var(--accent); }
+.ver-item-dot {
+  position: absolute; left: 8px; top: 50%; transform: translateY(-50%);
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--surface); border: 2px solid var(--text-muted);
 }
-.ver-chip:hover { border-color: var(--accent, var(--accent)); }
-.ver-chip.is-selected { border-color: var(--accent, var(--accent)); background: color-mix(in srgb, var(--accent, var(--accent)) 16%, transparent); }
-.ver-chip.is-head { box-shadow: 0 0 0 2px var(--accent, var(--accent)) inset; }
-.ver-chip.is-dimmed { opacity: .45; }
-.ver-chip-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); flex: 0 0 auto; }
-.ver-chip-dot.ver-author-user { background: var(--accent); }
-.ver-chip-dot.ver-author-ia   { background: var(--node-agent); }
-.ver-chip-label { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ver-chip-time { color: var(--text-muted); font-variant-numeric: tabular-nums; }
-
-/* acciones */
-.ver-actions { display: flex; align-items: center; gap: 8px; min-height: 24px; }
-.ver-actions-tag { font-size: 12px; color: var(--text-muted); }
-.ver-btn {
-  padding: 6px 12px; border-radius: 6px;
-  background: var(--surface);
-  border: 1px solid var(--border-strong);
-  color: inherit; cursor: pointer; font-size: 12px;
+.ver-item.is-head .ver-item-dot { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+.ver-item.is-undone { opacity: .5; }
+.ver-item.is-undone .ver-item-dot { border-style: dashed; }
+.ver-item-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ver-item-label { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ver-item-time { font-size: 11px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.ver-item-tag {
+  flex: 0 0 auto; font-size: 10.5px; font-weight: 600; letter-spacing: .03em;
+  padding: 2px 7px; border-radius: 999px;
+  background: var(--accent); color: #fff;
 }
-.ver-btn:hover { border-color: var(--accent, var(--accent)); }
+.ver-item-tag.is-muted { background: transparent; color: var(--text-muted); border: 1px solid var(--border-strong); }
 
-/* pestañas State / Código dentro de "Cambios" */
-.ver-tabs { display: inline-flex; gap: 2px; margin-left: 4px; background: var(--bg); border: 1px solid var(--border-strong); border-radius: 9px; padding: 2px; }
+/* la versión elegida */
+.ver-main-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.ver-main-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ver-main-info strong { font-size: 15px; }
+.ver-main-sub { font-size: 12px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.ver-main-now { font-size: 12px; color: var(--text-muted); }
+.ver-main-note { margin: 0; font-size: 12px; line-height: 1.45; color: var(--text-muted); }
+.ver-go {
+  padding: 8px 16px; border-radius: 8px;
+  background: var(--accent); border: 1px solid var(--accent); color: #fff;
+  font-weight: 600; font-size: 13px; cursor: pointer;
+}
+.ver-go:hover { filter: brightness(1.08); }
+
+/* pestañas Diagrama / Qué cambió */
+.ver-tabs { display: inline-flex; align-self: flex-start; gap: 2px; background: var(--bg); border: 1px solid var(--border-strong); border-radius: 9px; padding: 2px; }
 .ver-tab {
-  padding: 3px 12px; border-radius: 5px;
+  padding: 4px 12px; border-radius: 6px;
   background: transparent; border: 0; color: var(--text-muted);
   cursor: pointer; font-size: 12px;
 }
 .ver-tab.is-active { background: var(--surface); color: inherit; box-shadow: 0 1px 2px rgba(0,0,0,.25); }
 
-/* preview del diagrama (pestaña State) — navegable: arrastrar = mover, rueda = zoom */
+/* preview del diagrama — navegable: arrastrar = mover, rueda = zoom */
 .ver-preview {
   position: relative;
-  width: 85%;          /* 15% más angosto que el ancho del modal, centrado */
-  margin-inline: auto;
-  height: 520px;
+  flex: 1 0 320px;
   overflow: hidden;
   background: var(--bg);
   border: 1px solid var(--border-strong);
@@ -4419,12 +5112,10 @@ body.toolbar-collapsed #boardContainer { height: calc(100vh - 56px); }
   touch-action: none;
 }
 .ver-preview-board { position: absolute; top: 0; left: 0; pointer-events: none; will-change: transform; }
-.ver-preview-msg { color: var(--text-muted); font-size: 12px; padding: 16px; margin: 0; }
 
 /* diff estilo VS Code */
-.ver-diff-hint { font-size: 12px; color: var(--text-muted); margin: 0; padding: 6px 2px; }
 .ver-diff-pre {
-  margin: 0; max-height: 46vh; overflow: auto;
+  margin: 0; flex: 1 0 auto; overflow: auto;
   background: var(--bg);
   border: 1px solid var(--border-strong);
   border-radius: 9px;
@@ -4435,6 +5126,16 @@ body.toolbar-collapsed #boardContainer { height: calc(100vh - 56px); }
 .ver-diff-add { background: color-mix(in srgb, var(--success) 15%, transparent); color: var(--success); }
 .ver-diff-del { background: color-mix(in srgb, var(--danger) 15%, transparent); color: var(--danger); }
 .ver-diff-ctx { color: var(--text-muted); }
+
+/* scrollbar fino y discreto */
+.ver-list, .ver-main, .ver-diff-pre { scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
+
+/* angosto: la lista arriba (acotada), la versión abajo */
+@media (max-width: 760px) {
+  #versiones-overlay .modal-wide { width: 94vw; max-width: 94vw; }
+  .versiones-body { grid-template-columns: 1fr; grid-template-rows: minmax(0, 38%) minmax(0, 1fr); }
+  .ver-preview { flex-basis: 240px; }
+}
 .arrow-swatches { display: flex; gap: 6px; flex-wrap: wrap; }
 .arrow-swatch {
   width: 22px; height: 22px;
@@ -4499,6 +5200,10 @@ body.toolbar-collapsed #boardContainer { height: calc(100vh - 56px); }
   flex-direction: column;
   gap: 6px;
 }
+/* `.hidden` NO es global en esta hoja y `.modal-field` trae `display: flex`, así que
+   sin esto un campo marcado como oculto se sigue viendo. Pasó con el selector de
+   conector de "New project", que aparecía con la carpeta en Local. */
+.modal-field.hidden { display: none; }
 
 .modal-field label {
   font: 600 11px/1 'Inter', system-ui, sans-serif;
@@ -4571,17 +5276,18 @@ body.toolbar-collapsed #boardContainer { height: calc(100vh - 56px); }
   overflow: hidden;            /* anula el overflow-y:auto de .modal */
   gap: 14px;
 }
+
 .newtree-typefield {
   flex: 1 1 auto; min-height: 0;   /* ocupa el espacio sobrante y permite scroll interno */
   display: flex; flex-direction: column; gap: 6px;
 }
+/* #newtree-grid es el que scrollea; adentro van los grupos (Desarrollo / Estudio),
+   cada uno con su label y su propia grilla de cards. */
 .newtree-grid {
   flex: 1 1 auto; min-height: 0;
   overflow-y: auto;
-  align-content: start;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+  display: flex; flex-direction: column;
+  gap: 18px;
   padding-right: 4px;          /* aire para el scrollbar */
   scrollbar-width: thin;
   scrollbar-color: var(--border-strong) transparent;
@@ -4594,7 +5300,18 @@ body.toolbar-collapsed #boardContainer { height: calc(100vh - 56px); }
   padding-top: 14px;
   border-top: 1px solid var(--border);
 }
-@media (max-width: 720px) { .newtree-grid { grid-template-columns: repeat(2, 1fr); } }
+.newtree-group { display: flex; flex-direction: column; gap: 8px; }
+.newtree-group-label {
+  margin: 0;
+  font: 600 11px/1.2 'Inter', system-ui; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--text-muted);
+}
+.newtree-group-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+@media (max-width: 720px) { .newtree-group-grid { grid-template-columns: repeat(2, 1fr); } }
 .newtree-card {
   display: flex;
   align-items: flex-start;
@@ -4639,6 +5356,57 @@ body.toolbar-collapsed #boardContainer { height: calc(100vh - 56px); }
   background: var(--border-strong);
   color: var(--text-muted);
 }
+/* Tipos que necesitan un backend (Editor, IA Orchestrator). Misma forma que la de
+   "soon" pero en acento: no es un "todavía no", es un requisito. */
+.newtree-needs-badge {
+  font: 700 9px/1 'Inter', system-ui, sans-serif;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: 2px 5px;
+  border-radius: 999px;
+  background: var(--accent-dim);
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+/* ===== Aviso de backend faltante, arriba del board (backendGate.js) ===== */
+/* Empuja el board en vez de taparlo: en el editor, la primera fila del árbol de
+   archivos es justo lo que uno quiere ver. `.hidden` NO es global en esta hoja. */
+.backend-gate {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  /* El padding derecho deja libre la columna de #zoom-controls, que es
+     position:fixed (right:12px, ~44px de ancho) y le tapaba los botones. */
+  padding: 11px 68px 11px 16px;
+  background: var(--accent-dim);
+  border-bottom: 1px solid var(--accent);
+  color: var(--text);
+  flex-wrap: wrap;
+}
+.backend-gate.hidden { display: none; }
+.backend-gate-icon { display: flex; color: var(--accent); flex: 0 0 auto; }
+.backend-gate-icon svg { width: 20px; height: 20px; }
+.backend-gate-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.backend-gate-title { font: 650 13px/1.3 'Inter', system-ui, sans-serif; }
+.backend-gate-sub { font: 500 12px/1.4 'Inter', system-ui, sans-serif; color: var(--text-muted); }
+.backend-gate-actions { display: flex; gap: 8px; flex: 0 0 auto; }
+.backend-gate-btn {
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  color: var(--accent-text);
+  font: 600 12px/1.2 'Inter', system-ui, sans-serif;
+  padding: 7px 13px;
+  cursor: pointer;
+}
+.backend-gate-btn:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+.backend-gate-btn.is-ghost {
+  background: transparent; color: var(--accent); border-color: var(--accent);
+}
+.backend-gate-btn.is-ghost:hover { background: var(--accent-dim); }
+
+
 .newtree-create { background: var(--accent); border: none; color: var(--accent-text); }
 .newtree-create:hover:not(:disabled) { background: var(--accent-hover); }
 .newtree-create:disabled { opacity: .5; cursor: default; }
@@ -4792,14 +5560,97 @@ body.toolbar-collapsed #boardContainer { height: calc(100vh - 56px); }
   .dm-anim, .dm-anim *{animation:none !important}
   .dm-in{animation:none !important;opacity:1 !important;transform:none !important}
 }
+/* En el home los dos botones de descarga son <a> (van a GitHub, no disparan JS):
+   sin esto heredan el subrayado y el color de link y no parecen botones. */
+a.dm-btn-primary, a.dm-btn-secondary { text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
 .dm-btn-primary{appearance:none;border:1px solid var(--accent);background:var(--accent);color: var(--accent-text);font:inherit;font-weight:600;font-size:15.5px;padding:13px 24px;border-radius:9px;cursor:pointer;animation:dm-glow 3.2s ease-in-out infinite;transition:background .15s,border-color .15s}
 .dm-btn-primary:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
 .dm-btn-secondary{appearance:none;border:1px solid var(--border-strong);background:transparent;color:var(--text);font:inherit;font-weight:600;font-size:15.5px;padding:13px 24px;border-radius:9px;cursor:pointer;transition:border-color .15s}
 .dm-btn-secondary:hover{border-color:var(--accent)}
+
+/* ===== Los CTA del Home, en dos filas =====
+   Arriba los dos caminos de siempre (un file suelto / abrir algo) y abajo, MÁS ANCHO,
+   "New project". El ancho extra no es decoración: es la jerarquía — el botón más
+   ancho, abajo, se lee como la base sobre la que se apoyan los otros dos. */
+.home-cta {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: stretch;    /* el de abajo toma el ancho de la fila de arriba */
+  gap: 12px;
+  margin-top: 8px;
+}
+.home-cta-row { display: flex; gap: 12px; justify-content: center; }
+.home-cta-row > button { flex: 1 1 auto; }
+/* "un poco más ancho": se desborda 14px por lado y el margen negativo lo deja centrado.
+   Sale del flujo de anchos del contenedor, así que no estira la fila de arriba. */
+.home-cta-wide { width: calc(100% + 28px); margin-left: -14px; }
+/* En pantalla angosta el desborde se comería el aire lateral: ahí van los tres
+   apilados y a ancho completo. */
+@media (max-width: 560px) {
+  .home-cta { align-self: stretch; }
+  .home-cta-row { flex-wrap: wrap; }
+  .home-cta-row > button { flex: 1 1 100%; }
+  .home-cta-wide { width: 100%; margin-left: 0; }
+}
 .dm-card{background:var(--surface);border:1px solid var(--border);border-radius: 14px;padding:20px;display:flex;flex-direction:column;gap:12px;transition:transform .18s,border-color .18s}
 .dm-card:hover{border-color:var(--border-strong);transform:translateY(-2px)}
 .dm-card-flagship{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent-dim)}
 .dm-card-flagship:hover{border-color:var(--accent)}
+
+/* ===== Home: el onboarding (dos caminos, cada uno una tabla de pasos) =====
+   Las pestañas son dos radios escondidos + <label>: cambiar de camino no necesita JS
+   (y el ofuscador no tiene nada que romper). El panel que se ve lo decide `:checked ~`,
+   así que los radios tienen que ir ANTES que las pestañas y las dos listas. */
+.home-setup-go { appearance: none; background: none; border: 0; font: inherit; font-size: 14px; color: var(--accent); cursor: pointer; padding: 6px 10px; border-radius: 8px; }
+.home-setup-go:hover { background: var(--accent-dim); }
+.home-desktop-inline { display: none; }
+.dm-desktop .home-desktop-inline { display: inline; }
+
+.home-setup, .home-modes { position: relative; max-width: 1000px; margin: 0 auto; padding: 72px 24px 16px; box-sizing: border-box; }
+.home-modes { max-width: 1160px; padding-top: 64px; }
+.home-sec-head { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; margin-bottom: 30px; }
+.home-kicker { font-size: 12px; font-weight: 650; letter-spacing: .08em; color: var(--accent); }
+.home-h2 { margin: 0; font-size: clamp(22px, 3vw, 31px); font-weight: 680; letter-spacing: -.02em; }
+.home-sub { margin: 0; max-width: 620px; font-size: 14.5px; color: var(--text-muted); line-height: 1.6; }
+.home-note { margin: 0; font-size: 13px; color: var(--text-muted); line-height: 1.55; }
+.home-note a, .home-step-how a { color: var(--accent); }
+
+.home-path-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+.home-path-tab { display: flex; flex-direction: column; gap: 5px; padding: 16px 18px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); cursor: pointer; transition: border-color .15s, background .15s; }
+.home-path-tab:hover { border-color: var(--border-strong); }
+.home-path-name { font-size: 15.5px; font-weight: 650; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.home-path-desc { font-size: 13.5px; color: var(--text-muted); line-height: 1.5; }
+.home-badge { font-size: 11px; font-weight: 650; color: var(--accent); background: var(--accent-dim); padding: 2px 8px; border-radius: 99px; }
+#home-path-app:checked ~ .home-path-tabs label[for="home-path-app"],
+#home-path-web:checked ~ .home-path-tabs label[for="home-path-web"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent-dim); background: var(--surface2); }
+
+.home-steps { list-style: none; margin: 0; padding: 0; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); overflow: hidden; }
+.home-steps-web { display: none; }
+#home-path-web:checked ~ .home-steps-web { display: block; }
+#home-path-web:checked ~ .home-steps-app { display: none; }
+.home-step { display: grid; grid-template-columns: 40px 200px 1fr; gap: 16px; align-items: start; padding: 18px 20px; }
+.home-step + .home-step { border-top: 1px solid var(--border); }
+.home-step-n { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: var(--accent); background: var(--accent-dim); }
+.home-step-what { font-size: 15px; font-weight: 650; padding-top: 4px; }
+.home-opt { display: inline-block; margin-left: 4px; font-size: 11px; font-weight: 600; color: var(--text-muted); border: 1px solid var(--border); padding: 1px 7px; border-radius: 99px; vertical-align: 1px; }
+.home-step-how { display: flex; flex-direction: column; gap: 8px; font-size: 13.5px; line-height: 1.6; color: var(--text); padding-top: 4px; }
+.home-step-how p { margin: 0; }
+.home-step-how code, .home-note code { font: 12.5px var(--font-mono, ui-monospace, monospace); background: var(--surface2); border: 1px solid var(--border); padding: 1px 5px; border-radius: 5px; overflow-wrap: anywhere; }
+.home-os-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.home-os-btn { font-size: 14px; padding: 9px 18px; }
+
+.home-modes-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+.home-mode-icon { width: 38px; height: 38px; border-radius: 9px; background: var(--accent-dim); display: flex; align-items: center; justify-content: center; }
+.home-mode-name { font-size: 15.5px; font-weight: 650; }
+.home-mode-role { font-size: 12px; font-weight: 650; letter-spacing: .04em; text-transform: uppercase; color: var(--accent); margin-top: -6px; }
+.home-mode-desc { font-size: 13.5px; color: var(--text-muted); line-height: 1.55; }
+.home-modes-foot { text-align: center; margin-top: 18px; }
+
+@media (max-width: 720px) {
+  .home-path-tabs { grid-template-columns: 1fr; }
+  .home-step { grid-template-columns: 32px 1fr; gap: 6px 12px; padding: 16px; }
+  .home-step-how { grid-column: 2; }
+}
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 1300px) {
@@ -4858,8 +5709,7 @@ body.toolbar-collapsed #boardContainer { height: calc(100vh - 56px); }
     padding: 4px 0 4px 12px;
   }
 
-  /* casilla de ubicación en el menú vertical mobile: no estirar; sin barra vertical */
-  .nav-location { align-self: flex-start; }
+  /* en el menú vertical mobile la barra vertical separadora no aplica */
   .nav-loc-bar { display: none; }
 
   .nav-search input { width: 100%; max-width: none; }
@@ -5030,12 +5880,12 @@ body.toolbar-collapsed #boardContainer { height: calc(100vh - 56px); }
 
 body.nav-collapsed .app-header { display: none; }
 body.nav-collapsed #tree-aside { top: 0; }
-body.nav-collapsed #boardContainer { height: calc(100vh - 52px); }
-body.nav-collapsed.toolbar-collapsed #boardContainer { height: 100vh; }
-/* editor/documents ocultan la toolbar por su cuenta (body.editor-mode): con el
+body.nav-collapsed #boardContainer { height: calc(100vh - 52px - var(--backend-gate-h)); }
+body.nav-collapsed.toolbar-collapsed #boardContainer { height: calc(100vh - var(--backend-gate-h)); }
+/* editor/documents ocultan la toolbar por su cuenta (body.full-board): con el
    nav retraído el board debe ocupar TODO el alto (sin esto quedaba "cortado" con
    el alto fijo de 100vh - 56px de la regla de editor-mode) */
-body.editor-mode.nav-collapsed #boardContainer { height: 100vh; }
+body.full-board.nav-collapsed #boardContainer { height: calc(100vh - var(--backend-gate-h)); }
 
 /* ▼ flotante para restaurar (solo visible con el nav escondido) */
 .nav-restore-btn {
@@ -5324,7 +6174,78 @@ body.nav-collapsed .nav-restore-btn { display: inline-flex; }
 }
 
 /* ===== Anotaciones de PDF (modo documents, doc 30 E3): resaltar + notas ===== */
-.doc-pdf-pagewrap { position: relative; flex: 0 0 auto; }
+/* margin auto = centrada si entra; si es más ancha que el visor (zoom), arranca en el
+   borde izquierdo y se scrollea entera (con align-items:center se cortaba la izquierda) */
+.doc-pdf-pagewrap { position: relative; flex: 0 0 auto; margin-inline: auto; }
+
+/* ===== Documents en el celular (host.docs-narrow, < 640px de board) =====
+   Una sola fila a la vista: ☰ · página · zoom. Todo lo demás (explorer, Dark, Read,
+   Edit, Download, Delete, miniaturas, Fit) vive en el desplegable del ☰, que es la
+   misma .docs-bar reubicada. Lo arma documentsMode.js (placeBurger). */
+.docs-burger, .docs-mini, .docs-side-close, .docs-menu-pdf, .docs-menu-doc, .docs-row-more { display: none !important; }
+.docs-narrow .docs-row-more { display: inline-flex !important; }
+.docs-narrow.docs-menu-open .docs-bar .docs-menu-doc { display: block !important; }
+/* en el celular las filas del explorer se tocan con el dedo: más altas */
+.docs-narrow .docs-row { min-height: 38px; }
+.docs-narrow .docs-burger { display: inline-flex !important; }
+.docs-narrow .docs-side-close { display: inline-flex !important; }
+.docs-narrow:not(.docs-has-pdfbar) .docs-mini {
+  display: flex !important; align-items: center; gap: 8px;
+  padding: 6px 10px; min-height: 34px;
+  border-bottom: 1px solid var(--surface-el); background: var(--bg);
+}
+.docs-narrow .docs-bar { display: none !important; }
+.docs-narrow.docs-menu-open .docs-bar {
+  display: flex !important;
+  position: absolute; left: 8px; right: 8px; z-index: 30;
+  flex-direction: column; align-items: stretch; flex-wrap: nowrap; gap: 6px;
+  padding: 10px; border: 1px solid var(--border-strong); border-radius: 10px;
+  background: var(--surface); box-shadow: var(--shadow-pop);
+  max-height: 70vh; overflow-y: auto;
+}
+.docs-narrow.docs-menu-open .docs-bar > * { white-space: normal; text-align: left; align-self: stretch; margin: 0; }
+.docs-narrow.docs-menu-open .docs-bar > button { width: 100%; padding: 8px 12px !important; justify-content: flex-start; gap: 8px; }
+.docs-menu-label { display: none; }
+.docs-narrow.docs-menu-open .docs-bar .docs-menu-label { display: inline; font: 13px var(--font-ui); }
+.docs-narrow.docs-has-pdfbar.docs-menu-open .docs-bar .docs-menu-pdf { display: block !important; }
+.docs-narrow .doc-pdf-thumbs-btn,
+.docs-narrow .doc-pdf-fit-btn { display: none !important; }
+/* arrastrar en el explorer: el destino se resalta (carpeta, o la lista = la raíz) */
+.docs-row.docs-drop-on { background: var(--accent-dim) !important; box-shadow: inset 0 0 0 1px var(--accent); }
+.docs-list.docs-drop-on { box-shadow: inset 0 0 0 2px var(--accent); background: color-mix(in srgb, var(--accent) 6%, transparent); }
+.docs-row[draggable="true"] { -webkit-user-drag: element; }
+
+/* selector «Mover a…»: una lista de carpetas para tocar */
+.docs-picker-overlay {
+  position: fixed; inset: 0; z-index: 9998;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,.45); padding: 16px;
+}
+.docs-picker {
+  width: min(380px, 100%); max-height: min(70vh, 560px);
+  display: flex; flex-direction: column; gap: 10px;
+  background: var(--surface); border: 1px solid var(--border-strong); border-radius: 12px;
+  box-shadow: var(--shadow-pop); padding: 14px; color: var(--text); font: 13px var(--font-ui);
+}
+.docs-picker-title { font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.docs-picker-list { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+.docs-picker-item {
+  display: flex; align-items: center; gap: 8px; min-height: 36px;
+  padding: 6px 12px; border: 1px solid transparent; border-radius: 8px;
+  background: transparent; color: inherit; font: 13px var(--font-ui); text-align: left; cursor: pointer;
+}
+.docs-picker-item:hover:not(:disabled) { background: var(--accent-dim); border-color: var(--accent); }
+.docs-picker-item:disabled { opacity: .55; cursor: default; }
+.docs-picker-tag { font-size: 11px; color: var(--text-muted); }
+.docs-picker-actions { display: flex; justify-content: space-between; gap: 8px; }
+.docs-picker-actions button {
+  padding: 7px 12px; border-radius: 8px; border: 1px solid var(--border-strong);
+  background: var(--bg); color: var(--text); font: 13px var(--font-ui); cursor: pointer;
+}
+
+/* el explorer en el celular tapa el visor entero (al lado le dejaba ~100px) */
+.docs-narrow.docs-side-open #docs-explorer { width: 100% !important; min-width: 0 !important; border-right: 0 !important; }
+.docs-narrow.docs-side-open #docs-viewer { display: none !important; }
 .pdfa-layer { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
 
 /* textLayer de pdf.js: spans transparentes seleccionables sobre el canvas */
@@ -5893,7 +6814,7 @@ body.rich-resizing * { cursor: inherit !important; user-select: none; }
   stroke-dasharray: 6 5;
   opacity: .85;
 }
-#act-arrowhead path { fill: var(--accent); }
+.act-arrowhead-default path { fill: var(--accent); }
 
 .act-node {
   position: absolute;
@@ -5906,7 +6827,9 @@ body.rich-resizing * { cursor: inherit !important; user-select: none; }
   padding: 8px 14px;
   border: 1.5px solid var(--border-strong);
   border-radius: 14px;
-  background: var(--box-color, var(--surface));
+  /* con color elegido lo pinta buildNodeEl de renderActivities.js: borde con el color
+     y el interior teñido (§70) */
+  background: var(--surface);
   color: var(--text);
   box-shadow: 0 2px 8px rgba(0,0,0,.18);
   z-index: 2;
@@ -6219,7 +7142,7 @@ body.rich-resizing * { cursor: inherit !important; user-select: none; }
   stroke: var(--text-muted);
   stroke-width: 1.5;
 }
-#act-gantt-arrowhead path { fill: var(--text-muted); }
+.act-gantt-arrowhead path { fill: var(--text-muted); }
 .act-gantt-link-critical {
   stroke: #ffffff !important;
   stroke-width: 2.6 !important;
@@ -6358,3 +7281,1146 @@ body.rich-resizing * { cursor: inherit !important; user-select: none; }
 .qz-score { margin: auto; text-align: center; display: flex; flex-direction: column; gap: 12px; align-items: center; }
 .qz-score-num { font: 800 56px/1 'Inter', system-ui, sans-serif; color: var(--accent); }
 .qz-score-txt { color: var(--text-muted); font-size: 15px; }
+
+
+
+/* ===== Navbar: los menús de PROYECTO solo dentro de un proyecto ===== */
+/* File / Edit / View / Move no tienen sentido en el Home: no hay diagrama sobre el
+   cual actuar. Se colapsan con la MISMA técnica que el panel "Options ›" del toolbar
+   (max-width + opacity), que ya es el lenguaje de animación de la app. `display:none`
+   no serviría: no se puede animar. */
+.nav-item.nav-project {
+  overflow: hidden;
+  max-width: 140px;
+  opacity: 1;
+  transition: max-width .25s ease, opacity .2s ease, margin .25s ease;
+}
+/* ⚠️ El `overflow: hidden` de arriba es lo que hace el colapso… y también RECORTABA
+   el menú desplegable (que es `position:absolute` DENTRO del <li>): se veía cortado a
+   140px de ancho y a la altura del ítem, o sea "los selects no andan". Mientras un
+   menú está abierto, el <li> deja de recortar. En el Home los menús están cerrados,
+   así que la animación de colapso no se ve afectada. */
+.nav-item.nav-project:has(details[open]) { overflow: visible; }
+body.view-home .nav-item.nav-project {
+  max-width: 0;
+  opacity: 0;
+  pointer-events: none;
+  /* sin esto queda un hueco: el <li> aporta gap del flex aunque mida 0 de ancho */
+  margin-left: -6px;
+}
+/* En el menú vertical de mobile el colapso horizontal no aplica: ahí se esconde. */
+@media (max-width: 860px) {
+  body.view-home .nav-item.nav-project { display: none; }
+}
+
+/* ===== Navbar: subir el brillo del texto ===== */
+/* Estaba en --text-muted (el token de "labels y meta"), y con el fondo oscuro del
+   navbar los menús se leían apagados. --text-secondary es el token de CUERPO: es lo
+   que corresponde a un ítem accionable. El hover y el abierto ya se encargan del resto. */
+.nav-item summary,
+.nav-home-btn { color: var(--text-secondary); }
+.nav-lang-select { color: var(--text-secondary); }
+/* Los pills (AI / Settings) también estaban en --text-muted y, una vez subidos los
+   menús, quedaban notoriamente más apagados: el navbar se veía disparejo. */
+.nav-pill, #ia-btn { color: var(--text-secondary); }
+
+/* ===== Navbar: elasticidad de los items ===== */
+/* Con la casilla de ubicación reemplazada por el botón "Projects" (etiqueta fija),
+   ya no hay ningún item elástico: el navbar no puede romperse por un nombre largo
+   porque los nombres se mudaron al aside. Se conserva `min-width: 0` en `.nav-list`
+   (sin eso desbordaba el <nav> en vez de apretar a sus hijos) y el `flex: 0 0 auto`
+   de los items, que es lo que impide que a los menús se les recorte la flechita. */
+.nav-list { min-width: 0; }
+.nav-list > li:not(.nav-spacer) { flex: 0 0 auto; }
+/* Los pills de la derecha son lo último que debe ceder: son acciones fijas. El <li>
+   de AI+Settings no tenía clase (por eso no lo agarraba un selector previo): ahora es
+   `.nav-actions`. Sin `flex-shrink: 0` sus botones partían en dos líneas y el navbar
+   pasaba de 34 a 60px de alto. */
+li.nav-actions { flex: 0 0 auto; white-space: nowrap; display: flex; align-items: center; }
+
+/* Los nombres largos también desbordaban el menú desplegable (se leía el texto por
+   encima del borde). Se trunca ahí igual, con el nombre completo en el tooltip. */
+.menu button {
+  max-width: 360px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+/* ===================== TUTORIALES (spotlight) ===================== */
+/* Oscurece todo, recorta el área de la que habla la tarjeta. El recorte NO es un
+   agujero real: es un div transparente con una sombra enorme alrededor — así el
+   "oscurecido" se dibuja con un solo elemento y acompaña bordes redondeados. */
+/* por encima de TODO lo demás: en la app ya hay z-index de 9999 y 99999 (menús
+   anclados, menú contextual del editor rico). Si el overlay quedara debajo, esa pieza
+   se vería sin oscurecer y el spotlight perdería sentido. */
+.dm-tour { position: fixed; inset: 0; z-index: 100000; }
+.dm-tour-hole {
+  position: fixed;
+  border-radius: 12px;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, .62);
+  outline: 2px solid var(--accent);
+  outline-offset: 0;
+  pointer-events: none;                 /* el clic lo come el overlay, no el recorte */
+  transition: left .18s ease, top .18s ease, width .18s ease, height .18s ease;
+}
+/* `.hidden` no es global: se declara por componente */
+.dm-tour-hole.hidden { display: none; }
+/* sin recorte (paso de bienvenida) el fondo lo pone el propio overlay */
+.dm-tour:has(.dm-tour-hole.hidden) { background: rgba(0, 0, 0, .62); }
+
+.dm-tour-card {
+  position: fixed;
+  width: min(330px, calc(100vw - 24px));
+  padding: 16px 18px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 14px;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, .45);
+  transition: left .18s ease, top .18s ease;
+}
+.dm-tour-title { margin: 0 0 6px; font: 600 15px/1.3 'Inter', system-ui, sans-serif; color: var(--text); }
+.dm-tour-text  { margin: 0; font: 500 13px/1.5 'Inter', system-ui, sans-serif; color: var(--text-secondary); }
+/* selector de idioma de la primera tarjeta (elegís en qué idioma ver el tutorial) */
+.dm-tour-lang { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+.dm-tour-lang.hidden { display: none; }
+.dm-tour-lang span { font: 600 11px/1 'Inter', system-ui; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; }
+.dm-tour-lang select {
+  flex: 1;
+  padding: 7px 9px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  color: var(--text);
+  font: 500 13px/1 'Inter', system-ui;
+  cursor: pointer;
+}
+.dm-tour-lang select:hover { border-color: var(--accent); }
+
+.dm-tour-foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 14px;
+}
+.dm-tour-count { font: 600 11px/1 'Inter', system-ui; color: var(--text-muted); letter-spacing: .04em; }
+.dm-tour-btns { display: flex; gap: 6px; }
+.dm-tour-btn {
+  padding: 7px 12px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  color: var(--text-secondary);
+  font: 500 12px/1 'Inter', system-ui;
+  cursor: pointer;
+}
+.dm-tour-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--text); background: var(--accent-dim); }
+.dm-tour-btn:disabled { opacity: .4; cursor: default; }
+.dm-tour-btn.is-primary { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); font-weight: 600; }
+/* mientras corre el tutorial no se scrollea el fondo (el recorte quedaría desalineado) */
+body.dm-tour-open { overflow: hidden; }
+
+/* Los tutoriales corren SOLO en pantalla de computadora (NO_TOUR_MAX = 1300 en
+   `app/tutorial.js`): es el mismo 1300 con el que el navbar de acá abajo colapsa a
+   burger, y con el navbar colapsado media docena de pasos señalan botones invisibles.
+   El motor ya lo bloquea; acá se esconde el ítem del menú Ayuda para que no quede un
+   botón que no hace nada. Los tres números se mueven juntos. */
+@media (max-width: 1300px) {
+  .help-tutorial-li { display: none; }
+}
+
+/* ===========================================================================
+   VOZ — dictado y modo llamada  (app/voice/*, doc 35)
+   Nota: `.hidden` NO es global en esta hoja; cada componente declara la suya.
+   =========================================================================== */
+
+/* --- micrófono del composer del chat + botón de llamada --- */
+.ia-chat-mic-btn.is-recording,
+.ia-chat-mic-btn[aria-pressed="true"] {
+  color: var(--danger);
+  background: rgba(201, 68, 68, .14);
+  border-color: var(--danger);
+  animation: voice-mic-pulse 1.6s ease-in-out infinite;
+}
+.ia-chat-call-btn.is-active { color: var(--accent); background: var(--accent-dim); }
+
+@keyframes voice-mic-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(201, 68, 68, .35); }
+  50%      { box-shadow: 0 0 0 5px rgba(201, 68, 68, 0); }
+}
+
+/* --- botón de dictado en la toolbar del editor rico --- */
+.rich-tb-btn.is-recording {
+  color: var(--danger);
+  background: rgba(201, 68, 68, .14);
+  animation: voice-mic-pulse 1.6s ease-in-out infinite;
+}
+
+/* --- píldora flotante: lo que se está escuchando ---
+   Es la única forma de mostrar el parcial cuando el destino es un <textarea>
+   (no se puede pintar texto fantasma adentro). z-index por encima del editor
+   maximizado (1100) y de los modales (1000). */
+.dictation-pill {
+  position: fixed;
+  z-index: 1350;
+  display: flex; align-items: center; gap: 8px;
+  max-width: 260px;
+  padding: 6px 12px;
+  background: var(--surface-el);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  box-shadow: var(--shadow-pop);
+  color: var(--text-secondary);
+  font: 500 12px/1.35 'Inter', system-ui, sans-serif;
+  pointer-events: none;
+}
+.dictation-pill.hidden { display: none; }
+.dictation-pill-text {
+  max-height: 3.2em;
+  overflow: hidden;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.dictation-dot {
+  width: 8px; height: 8px; flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--danger);
+  animation: voice-mic-pulse 1.6s ease-in-out infinite;
+}
+.dictation-pill.is-speech .dictation-dot { background: var(--accent); }
+.dictation-pill.is-working .dictation-dot { background: var(--text-muted); }
+
+/* --- modo llamada: barra flotante + panel ---
+   NO es un modal: la app se sigue usando con la llamada abierta, así que el
+   contenedor no captura clicks (pointer-events: none) y solo los reciben sus
+   cajas. Va abajo a la DERECHA para no chocar con la barra del lector TTS, que
+   vive abajo al centro. */
+.voice-call {
+  position: fixed;
+  right: 16px; bottom: 16px;
+  z-index: 1380;
+  width: min(380px, calc(100vw - 32px));
+  display: flex; flex-direction: column; align-items: stretch;
+  gap: 8px;
+  pointer-events: none;
+}
+.voice-call.hidden { display: none; }
+.voice-call-panel, .voice-call-bar { pointer-events: auto; }
+
+.voice-call-bar {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 10px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  box-shadow: var(--shadow-pop);
+  color: var(--text);
+}
+/* el puntito de la barra late con el nivel del micro: es el orbe en chiquito,
+   para saber de un vistazo que la llamada sigue viva sin abrir el panel */
+.voice-call-dot {
+  --level: 0;
+  width: 10px; height: 10px; flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  transform: scale(calc(1 + var(--level) * .7));
+  transition: transform .08s linear, background .3s ease;
+}
+.voice-call[data-state="thinking"] .voice-call-dot { background: var(--text-muted); }
+.voice-call[data-state="speaking"] .voice-call-dot { background: #3fa16b; animation: voice-talk 1.1s ease-in-out infinite; }
+.voice-call[data-state="muted"]    .voice-call-dot { background: var(--border-strong); }
+
+.voice-call-status {
+  flex: 1; margin: 0;
+  font: 600 12px/1.2 'Inter', system-ui, sans-serif;
+  color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.voice-call-panel {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 10px;
+  max-height: min(460px, calc(100vh - 140px));
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 18px;
+  box-shadow: var(--shadow-pop);
+}
+.voice-call-panel.hidden { display: none; }
+
+.voice-call-head {
+  width: 100%;
+  display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+}
+.voice-call-title { font: 700 13px/1.2 'Inter', system-ui, sans-serif; color: var(--text); }
+.voice-call-engine {
+  font: 500 11px/1.2 'Inter', system-ui, sans-serif;
+  color: var(--text-muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 55%;
+}
+
+/* la bolita: crece con el nivel del micro (--level lo escribe callMode.js) */
+.voice-orb {
+  --level: 0;
+  position: relative;
+  width: 96px; height: 96px;
+  display: flex; align-items: center; justify-content: center;
+}
+.voice-orb-core {
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, var(--accent), var(--accent-hover, #2f56a8));
+  transform: scale(calc(1 + var(--level) * .38));
+  transition: transform .08s linear, background .3s ease;
+}
+.voice-orb-ring {
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  opacity: calc(.10 + var(--level) * .55);
+  transform: scale(calc(.72 + var(--level) * .28));
+  transition: transform .12s linear, opacity .12s linear;
+}
+.voice-orb-ring2 { inset: 12px; opacity: calc(.08 + var(--level) * .4); }
+
+/* estados: el color dice quién tiene la palabra */
+.voice-call[data-state="thinking"] .voice-orb-core { background: var(--text-muted); animation: voice-think 1.2s ease-in-out infinite; }
+.voice-call[data-state="thinking"] .voice-orb-ring { border-color: var(--text-muted); }
+.voice-call[data-state="speaking"] .voice-orb-core { background: radial-gradient(circle at 35% 30%, #3fa16b, #2b7a50); animation: voice-talk 1.1s ease-in-out infinite; }
+.voice-call[data-state="speaking"] .voice-orb-ring { border-color: #3fa16b; opacity: .35; }
+.voice-call[data-state="muted"] .voice-orb-core { background: var(--surface2); }
+.voice-call[data-state="muted"] .voice-orb-ring { border-color: var(--border-strong); opacity: .3; }
+
+@keyframes voice-think { 0%,100% { transform: scale(.92); } 50% { transform: scale(1.04); } }
+@keyframes voice-talk  { 0%,100% { transform: scale(1); }   50% { transform: scale(1.12); } }
+
+.voice-call-live {
+  margin: 0; min-height: 1.3em; width: 100%;
+  text-align: center;
+  font: 400 13px/1.35 'Inter', system-ui, sans-serif;
+  color: var(--text-secondary);
+}
+.voice-call-log {
+  width: 100%; flex: 1; min-height: 0; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.voice-call-log:empty { display: none; }
+.voice-log-line {
+  font: 400 12px/1.4 'Inter', system-ui, sans-serif;
+  color: var(--text-secondary);
+  padding: 5px 8px;
+  border-radius: 8px;
+  background: var(--surface-el);
+  white-space: pre-wrap; word-break: break-word;
+}
+.voice-log-line.is-user { background: var(--accent-dim); color: var(--text); align-self: flex-end; max-width: 88%; }
+.voice-log-line.is-ai   { max-width: 92%; }
+.voice-log-line.is-sys  { background: none; color: var(--danger); font-size: 11px; }
+
+.voice-call-btn {
+  padding: 6px 11px;
+  background: none;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  color: var(--text-secondary);
+  font: 600 11px/1 'Inter', system-ui, sans-serif;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.voice-call-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--text); background: var(--accent-dim); }
+.voice-call-btn:disabled { opacity: .4; cursor: default; }
+.voice-call-btn.is-off { border-color: var(--danger); color: var(--danger); }
+.voice-call-btn.is-hang { border-color: var(--danger); background: rgba(201, 68, 68, .14); color: var(--danger); }
+.voice-call-btn.is-hang:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
+.voice-call-icon { padding: 6px 9px; font-size: 13px; line-height: 1; }
+
+.voice-call-hint {
+  margin: 0; text-align: center;
+  font: 400 11px/1.4 'Inter', system-ui, sans-serif;
+  color: var(--text-muted);
+}
+
+/* --- ajustes de voz (panel lateral) --- */
+.voice-select, .voice-input {
+  max-width: 190px;
+  padding: 5px 8px;
+  background: var(--surface-el);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  color: var(--text);
+  font: 500 12px/1.2 'Inter', system-ui, sans-serif;
+}
+.side-panel-row.voice-cloud-only.hidden { display: none; }
+.side-panel-check {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 6px 0;
+  font: 400 12px/1.4 'Inter', system-ui, sans-serif;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.side-panel-check input { margin-top: 2px; accent-color: var(--accent); }
+.voice-hint {
+  margin: 6px 0 0;
+  font: 400 11px/1.45 'Inter', system-ui, sans-serif;
+  color: var(--text-muted);
+}
+.voice-hint.is-warn { color: var(--danger); }
+
+@media (max-width: 560px) {
+  /* la barra del lector TTS ocupa todo el ancho abajo: la llamada se corre arriba */
+  .voice-call { left: 8px; right: 8px; bottom: 84px; width: auto; }
+  .voice-call-bar { flex-wrap: wrap; justify-content: center; border-radius: 16px; }
+  .voice-call-status { flex-basis: 100%; text-align: center; }
+  .voice-orb { width: 76px; height: 76px; }
+}
+
+
+/* ===========================================================================
+   CARPETA MONTADA (tipo `editor`) · app/mountedFolder.js
+   Lo que quedó del modo editor después de F3 (doc 37): no es una herramienta,
+   es una FICHA que dice qué carpeta real está montada y deja cambiarla. Los
+   archivos los tocan los agentes del orquestador, no esta pantalla.
+   Ojo: `.hidden` NO es global en esta hoja; cada componente declara la suya.
+   =========================================================================== */
+.mf-panel {
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; min-height: 60vh; padding: 24px;
+  box-sizing: border-box;
+}
+.mf-box {
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  max-width: 460px; padding: 28px 26px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  text-align: center;
+}
+.mf-icon { color: var(--accent); }
+.mf-icon svg { width: 34px; height: 34px; }
+.mf-title { margin: 0; color: var(--text); font: 650 17px var(--font-ui); }
+.mf-sub { margin: 0; color: var(--text-muted); font-size: 13.5px; line-height: 1.55; }
+.mf-path {
+  max-width: 100%;
+  padding: 7px 11px;
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  color: var(--text);
+  font: 12.5px var(--font-mono, ui-monospace, monospace);
+  word-break: break-all;
+}
+.mf-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.mf-btn {
+  padding: 7px 14px;
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  color: #fff;
+  font: 600 12.5px var(--font-ui);
+  cursor: pointer;
+}
+.mf-btn:hover { filter: brightness(1.07); }
+.mf-btn.is-ghost {
+  background: var(--surface-el);
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+.mf-btn.is-ghost:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); filter: none; }
+.mf-foot {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: 11.5px; line-height: 1.5;
+}
+
+/* ===== Aviso de versión nueva (doc 37 §F17) =====
+   Abajo a la derecha y por encima del board, pero DEBAJO de los modales (z-index
+   menor que .dlg-overlay): si se abre un diálogo, el aviso no compite con él.
+   `.hidden` no es global en esta hoja; este componente se saca del DOM, no se esconde. */
+.dm-update {
+  position: fixed;
+  right: 18px; bottom: 18px;
+  z-index: 9000;
+  display: flex; align-items: center; gap: 14px;
+  max-width: min(380px, calc(100vw - 36px));
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  box-shadow: 0 8px 28px rgba(0,0,0,.22);
+  animation: dm-fadeup .35s ease-out both;
+}
+.dm-update-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.dm-update-title { color: var(--text); font: 650 13px var(--font-ui); }
+.dm-update-sub { color: var(--text-muted); font: 12px var(--font-mono, ui-monospace, monospace); }
+.dm-update-acts { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+.dm-update-btn {
+  padding: 6px 12px;
+  background: var(--accent); border: 1px solid var(--accent); color: #fff;
+  border-radius: 8px; font: 600 12px var(--font-ui); cursor: pointer;
+}
+.dm-update-btn:hover:not(:disabled) { filter: brightness(1.07); }
+.dm-update-btn:disabled { opacity: .6; cursor: default; }
+.dm-update-x {
+  background: none; border: none; padding: 2px 4px;
+  color: var(--text-muted); font-size: 13px; cursor: pointer;
+}
+.dm-update-x:hover { color: var(--text); }
+
+/* En pantallas angostas ocupa el ancho, para que el botón no quede apretado. */
+@media (max-width: 520px) {
+  .dm-update { left: 18px; right: 18px; max-width: none; }
+}
+
+/* ===== Modales de diálogo — reemplazo de alert/confirm/prompt (app/ui/modals.js) =====
+   Los nativos son del chrome del navegador: no siguen el tema, congelan el hilo y el
+   navegador los puede suprimir. Estos son de la app y se rellenan por JS.
+   z-index 100100: por ENCIMA de todo, incluido el tour (100000) — un aviso que queda
+   tapado es peor que ninguno. Ojo: `.hidden` no es global, va declarado por pieza. */
+.dlg-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--overlay);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 100100;
+}
+.dlg-overlay.hidden { display: none; }
+
+.dlg {
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 16px;            /* DS: modales 16px */
+  padding: 22px;
+  width: 420px;
+  max-width: 100%;
+  max-height: 82vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 16px 48px rgba(0,0,0,.4);
+}
+
+.dlg-title {
+  margin: 0;
+  font: 600 11px/1 'Inter', system-ui, sans-serif;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* pre-wrap: los mensajes heredados traen "\n" que el alert nativo respetaba */
+.dlg-msg {
+  margin: 0;
+  font: 13px/1.55 'Inter', system-ui, sans-serif;
+  color: var(--text);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;        /* rutas y URLs largas no ensanchan el cuadro */
+}
+.dlg-msg.hidden { display: none; }
+
+.dlg-field { display: flex; flex-direction: column; gap: 6px; }
+.dlg-field.hidden { display: none; }
+
+.dlg-input, .dlg-textarea {
+  background: var(--surface2);
+  border: 1px solid var(--border-strong);
+  border-radius: 9px;
+  color: var(--text);
+  font: 13px/1.5 'Inter', system-ui, sans-serif;
+  padding: 9px 12px;
+  outline: none;
+  width: 100%;
+  transition: border-color .12s;
+}
+.dlg-textarea { resize: vertical; min-height: 84px; }
+.dlg-input:focus, .dlg-textarea:focus { border-color: var(--accent); }
+.dlg-input.hidden, .dlg-textarea.hidden { display: none; }
+
+.dlg-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.dlg-actions button {
+  padding: 8px 18px;
+  border-radius: 9px;
+  font: 600 13px 'Inter', system-ui, sans-serif;
+  cursor: pointer;
+  transition: background .12s, opacity .12s;
+}
+.dlg-ok {
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  color: var(--accent-text);
+}
+.dlg-ok:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+.dlg-ok.is-danger {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: var(--danger-text);
+}
+.dlg-ok.is-danger:hover { background: var(--danger-hover); border-color: var(--danger-hover); }
+.dlg-cancel {
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  color: var(--text-muted);
+}
+.dlg-cancel:hover { color: var(--text); border-color: var(--text-muted); }
+.dlg-cancel.hidden { display: none; }
+/* Tercer botón (sólo en modalChoice): la salida del medio — típicamente "descartar".
+   Se ve más marcada que Cancelar y menos que el botón principal. */
+.dlg-alt {
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  color: var(--text);
+}
+.dlg-alt:hover { border-color: var(--danger); color: var(--danger); }
+.dlg-alt.hidden { display: none; }
+
+/* ===== HOME rediseñado (2026-10-08, hecho con Claude Design): todo bajo #home-screen ===== */
+/* =====================================================================
+   HOME — DiagraMinder
+   Todo scopeado a #home-screen y con prefijo home-. Solo variables del tema.
+   Reemplaza las reglas viejas .home-* / dm-float* del home anterior.
+   ===================================================================== */
+
+#home-screen {
+  --home-ink: color-mix(in srgb, var(--accent) 62%, var(--text));   /* acento legible como texto en ambos temas */
+  --home-line: color-mix(in srgb, var(--border) 70%, transparent);
+  --home-mono: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  --home-w: 1240px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui, 'Inter', system-ui, sans-serif);
+  -webkit-font-smoothing: antialiased;
+}
+#home-screen *, #home-screen *::before, #home-screen *::after { box-sizing: border-box; }
+#home-screen a { color: var(--home-ink); text-decoration: none; }
+#home-screen a:hover { color: var(--text); }
+#home-screen h1, #home-screen h2, #home-screen h3, #home-screen p { margin: 0; }
+#home-screen code { font-family: var(--home-mono); }
+#home-screen .home-desk-inline { display: none; }
+.dm-desktop #home-screen .home-desk-inline { display: inline; }
+
+/* ---------- HERO ---------- */
+#home-screen .home-hero {
+  position: relative;
+  max-width: var(--home-w);
+  margin: 0 auto;
+  padding: clamp(36px, 6vh, 72px) 32px 48px;
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 56px;
+  align-items: center;
+}
+#home-screen .home-hero-bg {
+  position: absolute; inset: 0 -50vw;
+  background-image: radial-gradient(var(--border) 1px, transparent 1px);
+  background-size: 22px 22px;
+  -webkit-mask-image: radial-gradient(ellipse 60% 70% at 70% 45%, #000 0%, transparent 75%);
+          mask-image: radial-gradient(ellipse 60% 70% at 70% 45%, #000 0%, transparent 75%);
+  pointer-events: none;
+  opacity: .8;
+}
+#home-screen .home-hero-copy { position: relative; display: flex; flex-direction: column; gap: 22px; }
+#home-screen .home-eyebrow {
+  display: inline-flex; align-items: center; gap: 9px; align-self: flex-start;
+  font-size: 13px; font-weight: 600; color: var(--text-secondary, var(--text-muted));
+  padding: 5px 12px 5px 10px; border: 1px solid var(--border); border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+}
+#home-screen .home-eyebrow-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+#home-screen .home-h1 {
+  font-size: clamp(30px, 3.5vw, 48px);
+  font-weight: 680;
+  letter-spacing: -.032em;
+  line-height: 1.07;
+  text-wrap: balance;
+}
+/* Slogans del hero: 5 frases apiladas en la misma celda; cada una ocupa 1/5 del ciclo
+   (entra, queda, sale) con su delay. fill-mode both = antes de su turno está invisible.
+   Hover pausa (para terminar de leer). Con reduced-motion queda fija la primera. */
+#home-screen .home-slogans { display: grid; }
+#home-screen .home-slogan {
+  grid-area: 1 / 1;
+  align-self: center;          /* el alto lo fija el más largo: los cortos van al medio */
+  opacity: 0;
+  animation: home-slogan 25s ease-in-out infinite both;
+}
+#home-screen .home-slogan:nth-child(2) { animation-delay: 5s; }
+#home-screen .home-slogan:nth-child(3) { animation-delay: 10s; }
+#home-screen .home-slogan:nth-child(4) { animation-delay: 15s; }
+#home-screen .home-slogan:nth-child(5) { animation-delay: 20s; }
+@keyframes home-slogan {
+  0%   { opacity: 0; transform: translateY(14px);  filter: blur(4px); }
+  3%   { opacity: 1; transform: none;              filter: none; }
+  17%  { opacity: 1; transform: none;              filter: none; }
+  20%  { opacity: 0; transform: translateY(-14px); filter: blur(4px); }
+  100% { opacity: 0; transform: translateY(-14px); filter: blur(4px); }
+}
+#home-screen .home-slogan-dots { display: flex; gap: 6px; margin-top: -8px; }
+#home-screen .home-slogan-dots i {
+  width: 18px; height: 3px; border-radius: 3px;
+  background: var(--border-strong);
+  animation: home-slogan-dot 25s linear infinite both;
+}
+#home-screen .home-slogan-dots i:nth-child(2) { animation-delay: 5s; }
+#home-screen .home-slogan-dots i:nth-child(3) { animation-delay: 10s; }
+#home-screen .home-slogan-dots i:nth-child(4) { animation-delay: 15s; }
+#home-screen .home-slogan-dots i:nth-child(5) { animation-delay: 20s; }
+/* el 0% va APAGADO: con fill-mode both, una rayita que todavía no llegó a su delay
+   muestra el 0% — si fuera el acento, se verían todas prendidas al cargar. */
+@keyframes home-slogan-dot {
+  0%           { background: var(--border-strong); }
+  0.01%, 20%   { background: var(--accent); }
+  20.01%, 100% { background: var(--border-strong); }
+}
+#home-screen .home-hero-copy:hover .home-slogan,
+#home-screen .home-hero-copy:hover .home-slogan-dots i { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) {
+  #home-screen .home-slogan, #home-screen .home-slogan-dots i { animation: none; }
+  #home-screen .home-slogan:first-child { opacity: 1; }
+  #home-screen .home-slogan-dots { display: none; }
+}
+#home-screen .home-lede {
+  font-size: clamp(15px, 1.25vw, 17.5px);
+  line-height: 1.6;
+  color: var(--text-secondary, var(--text-muted));
+  max-width: 520px;
+  text-wrap: pretty;
+}
+
+#home-screen .home-actions { display: flex; flex-direction: column; gap: 14px; margin-top: 6px; }
+#home-screen .home-dl {
+  display: inline-flex; align-self: flex-start; align-items: stretch;
+  background: var(--accent); border: 1px solid var(--accent); border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 1px 0 rgba(255,255,255,.12) inset, 0 8px 24px -8px var(--accent);
+}
+#home-screen .home-dl-label {
+  display: flex; align-items: center;
+  padding: 0 18px; font-size: 15px; font-weight: 650; color: var(--accent-text, #fff);
+  border-right: 1px solid rgba(255,255,255,.22);
+}
+#home-screen .home-dl-os {
+  display: flex; align-items: center;
+  padding: 13px 16px; font-size: 14.5px; font-weight: 600;
+  color: var(--accent-text, #fff);
+  transition: background .12s;
+}
+#home-screen .home-dl-os + .home-dl-os { border-left: 1px solid rgba(255,255,255,.14); }
+#home-screen .home-dl-os:hover { background: var(--accent-hover, rgba(0,0,0,.15)); color: var(--accent-text, #fff); }
+
+#home-screen .home-actions-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+#home-screen .home-btn {
+  appearance: none; font: inherit; font-size: 14px; font-weight: 600; line-height: 1;
+  padding: 11px 16px; border-radius: 9px; cursor: pointer;
+  color: var(--text); background: var(--surface); border: 1px solid var(--border-strong);
+  transition: border-color .12s, background .12s;
+}
+#home-screen .home-btn:hover { border-color: var(--accent); }
+#home-screen .home-btn-ghost { background: transparent; }
+/* En desktop "New diagram" es la acción principal */
+.dm-desktop #home-screen .home-btn-new {
+  font-size: 15.5px; padding: 14px 24px;
+  background: var(--accent); border-color: var(--accent); color: var(--accent-text, #fff);
+  box-shadow: 0 8px 24px -8px var(--accent);
+}
+.dm-desktop #home-screen .home-btn-new:hover { background: var(--accent-hover, var(--accent)); border-color: var(--accent-hover, var(--accent)); }
+.dm-desktop #home-screen .home-btn-new + .home-btn { font-size: 15.5px; padding: 14px 22px; }
+#home-screen .home-jump {
+  appearance: none; background: none; border: 0; font: inherit; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 14px; font-weight: 600; color: var(--home-ink);
+  padding: 10px 10px; border-radius: 8px;
+}
+#home-screen .home-jump:hover { background: var(--accent-dim); }
+#home-screen .home-jump-arrow { transition: transform .15s; }
+#home-screen .home-jump:hover .home-jump-arrow { transform: translateY(2px); }
+#home-screen .home-actions-meta { font-size: 13px; color: var(--text-muted); }
+
+/* ---------- DEMO (el loop) ---------- */
+#home-screen .home-demo {
+  position: relative;
+  border: 1px solid var(--border-strong);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: var(--shadow-deep, 0 24px 60px rgba(0,0,0,.35));
+  overflow: hidden;
+}
+#home-screen .home-demo-bar {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  height: 38px; padding: 0 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px; color: var(--text-muted);
+}
+#home-screen .home-demo-title { font-family: var(--home-mono); }
+#home-screen .home-demo-live { display: inline-flex; align-items: center; gap: 7px; font-weight: 600; color: var(--home-ink); }
+#home-screen .home-live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); animation: home-pulse 1.6s ease-in-out infinite; }
+#home-screen .home-demo-body { display: grid; grid-template-columns: minmax(0, 42fr) minmax(0, 58fr); height: 430px; }
+
+#home-screen .home-term {
+  display: flex; flex-direction: column; gap: 3px;
+  padding: 14px 16px; overflow: hidden;
+  font: 11.5px/1.55 var(--home-mono);
+  color: var(--text-secondary, var(--text-muted));
+  border-right: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 55%, var(--bg));
+}
+#home-screen .home-term-head { color: var(--text-muted); padding-bottom: 8px; margin-bottom: 4px; border-bottom: 1px dashed var(--border); }
+#home-screen .home-tl { display: flex; gap: 8px; align-items: baseline; }
+#home-screen .home-tl-user { color: var(--text); padding: 6px 0 8px; }
+#home-screen .home-tl-caret { color: var(--home-ink); }
+#home-screen .home-tl-bullet { flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); transform: translateY(-1px); }
+#home-screen .home-tl-bullet-dim { background: var(--border-strong); }
+#home-screen .home-tl > span:last-child { min-width: 0; }
+#home-screen .home-tl-call { display: inline-flex; flex-wrap: wrap; column-gap: .6em; }
+#home-screen .home-tl-tool { color: var(--home-ink); font-weight: 600; }
+#home-screen .home-tl-arg { color: var(--text); }
+#home-screen .home-tl-out { padding-left: 14px; color: var(--text-muted); margin-bottom: 5px; }
+#home-screen .home-tl-out::before { content: ""; flex: none; width: 7px; height: 7px; margin-right: -2px; border-left: 1px solid var(--border-strong); border-bottom: 1px solid var(--border-strong); transform: translateY(-2px); }
+#home-screen .home-tl-done { color: var(--text); margin-top: 4px; }
+#home-screen .home-tl-check { color: var(--success, var(--home-ink)); }
+#home-screen .home-tl-cursor { padding-top: 4px; }
+#home-screen .home-cursor { display: inline-block; width: 7px; height: 13px; background: var(--text-muted); animation: home-blink 1s steps(1) infinite; }
+
+#home-screen .home-cv { position: relative; display: flex; flex-direction: column; min-width: 0; }
+#home-screen .home-cv-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px; font-size: 12px;
+  border-bottom: 1px solid var(--border);
+}
+#home-screen .home-cv-mode { font-weight: 650; color: var(--text); }
+#home-screen .home-cv-path { font-family: var(--home-mono); color: var(--text-muted); }
+#home-screen .home-cv-board {
+  position: relative; flex: 1; min-height: 0;
+  background-color: var(--bg);
+  background-image: radial-gradient(var(--border) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+/* SVG compartido: nodos + flechas en el mismo sistema de coordenadas */
+#home-screen .home-sv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; overflow: visible; font-family: var(--font-ui, 'Inter', system-ui, sans-serif); }
+#home-screen .home-mk path { fill: var(--border-strong); }
+#home-screen .home-mk-accent path { fill: var(--accent); }
+#home-screen .home-sv-edge { fill: none; stroke: var(--border-strong); stroke-width: 1.5; }
+#home-screen .home-sv-edge-new { stroke: var(--accent); stroke-width: 2; stroke-dasharray: 1; stroke-dashoffset: 0; }
+#home-screen .home-sv-node rect { fill: var(--surface2, var(--surface)); stroke: var(--border-strong); stroke-width: 1; }
+#home-screen .home-sv-node-new > rect:first-child { stroke: var(--accent); stroke-width: 1.5; filter: drop-shadow(0 0 4px var(--accent-dim)); }
+#home-screen .home-sv-node-root rect { stroke: var(--accent); stroke-width: 1.5; }
+#home-screen .home-sv-t { fill: var(--text); font-size: 13px; font-weight: 650; }
+#home-screen .home-sv-s { fill: var(--text-muted); font: 10.5px var(--home-mono); }
+#home-screen .home-sv-mono { fill: var(--text); font: 600 12px var(--home-mono); }
+#home-screen .home-sv-tag { fill: var(--home-ink); font-size: 8.5px; font-weight: 700; letter-spacing: .08em; }
+#home-screen .home-sv-task { fill: var(--text-secondary, var(--text)); font-size: 11.5px; }
+#home-screen .home-sv-task-done { fill: var(--text-muted); text-decoration: line-through; }
+#home-screen .home-sv-task-next { fill: var(--text); font-weight: 600; }
+#home-screen .home-sv-node .home-sv-box { fill: none; stroke: var(--border-strong); }
+#home-screen .home-sv-node .home-sv-box-done { fill: var(--border-strong); }
+#home-screen .home-sv-node .home-sv-box-next { fill: var(--accent-dim); stroke: var(--accent); }
+#home-screen .home-sv-foot > rect:first-child { fill: var(--surface); stroke: var(--border-strong); }
+#home-screen .home-sv-foot-t { fill: var(--text-secondary, var(--text)); font-size: 11px; }
+#home-screen .home-sv-undo { fill: var(--accent-dim); }
+#home-screen .home-sv-undo-t { fill: var(--home-ink); font-size: 10.5px; font-weight: 650; }
+
+/* Coreografía: un solo reloj de 16s; cada beat aparece en su porcentaje y todos se van juntos. */
+#home-screen .home-a1 { animation: home-k1 16s ease-out infinite; }
+#home-screen .home-a2 { animation: home-k2 16s ease-out infinite; }
+#home-screen .home-a3 { animation: home-k3 16s ease-out infinite; }
+#home-screen .home-a4 { animation: home-k4 16s ease-out infinite; }
+#home-screen .home-tl-out.home-a1 { animation-name: home-k1b; }
+#home-screen .home-e2 { animation: home-d2 16s ease-in-out infinite; }
+#home-screen .home-e3 { animation: home-d3 16s ease-in-out infinite; }
+
+@keyframes home-k1  { 0%, 7%  { opacity: 0; transform: translateY(4px); } 10%, 93% { opacity: 1; transform: none; } 98%, 100% { opacity: 0; } }
+@keyframes home-k1b { 0%, 12% { opacity: 0; transform: translateY(4px); } 15%, 93% { opacity: 1; transform: none; } 98%, 100% { opacity: 0; } }
+@keyframes home-k2  { 0%, 27% { opacity: 0; transform: translateY(4px); } 31%, 93% { opacity: 1; transform: none; } 98%, 100% { opacity: 0; } }
+@keyframes home-k3  { 0%, 48% { opacity: 0; transform: translateY(4px); } 52%, 93% { opacity: 1; transform: none; } 98%, 100% { opacity: 0; } }
+@keyframes home-k4  { 0%, 68% { opacity: 0; transform: translateY(4px); } 72%, 93% { opacity: 1; transform: none; } 98%, 100% { opacity: 0; } }
+@keyframes home-d2  { 0%, 25% { stroke-dashoffset: 1; opacity: 1; } 31%, 93% { stroke-dashoffset: 0; opacity: 1; } 98%, 100% { stroke-dashoffset: 0; opacity: 0; } }
+@keyframes home-d3  { 0%, 46% { stroke-dashoffset: 1; opacity: 1; } 51%, 93% { stroke-dashoffset: 0; opacity: 1; } 98%, 100% { stroke-dashoffset: 0; opacity: 0; } }
+@keyframes home-pulse { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
+@keyframes home-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+
+/* ---------- POR QUÉ ---------- */
+#home-screen .home-why {
+  max-width: var(--home-w);
+  margin: 0 auto;
+  padding: 0 32px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+}
+#home-screen .home-why-item {
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 26px 28px 8px 0;
+  border-top: 1px solid var(--border);
+}
+#home-screen .home-why-item + .home-why-item { padding-left: 28px; border-left: 1px solid var(--home-line); }
+#home-screen .home-why-k { font: 600 12px var(--home-mono); color: var(--home-ink); }
+#home-screen .home-why-t { font-size: 16.5px; font-weight: 650; letter-spacing: -.01em; }
+#home-screen .home-why-d { font-size: 14px; line-height: 1.6; color: var(--text-muted); text-wrap: pretty; }
+
+/* ---------- SECCIONES ---------- */
+#home-screen .home-sec { max-width: var(--home-w); margin: 0 auto; padding: 112px 32px 0; }
+#home-screen .home-sec-top { display: flex; flex-direction: column; gap: 12px; max-width: 680px; margin-bottom: 36px; }
+#home-screen .home-eyebrow-plain { font: 600 12px var(--home-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--home-ink); }
+#home-screen .home-h2x { font-size: clamp(26px, 3vw, 38px); font-weight: 680; letter-spacing: -.028em; line-height: 1.1; text-wrap: balance; }
+#home-screen .home-intro { font-size: 15.5px; line-height: 1.6; color: var(--text-muted); text-wrap: pretty; }
+#home-screen .home-fine { margin-top: 18px; font-size: 13px; color: var(--text-muted); }
+
+/* ---------- MODOS (bento) ---------- */
+#home-screen .home-bento { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 16px; }
+#home-screen .home-mode {
+  grid-column: span 2;
+  display: flex; flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  transition: border-color .15s;
+}
+#home-screen .home-mode:hover { border-color: var(--border-strong); }
+#home-screen .home-mode-lg { grid-column: span 3; }
+#home-screen .home-mode-flag { border-color: color-mix(in srgb, var(--accent) 55%, var(--border)); }
+#home-screen .home-prev {
+  position: relative;
+  height: 160px;
+  background-color: var(--bg);
+  background-image: radial-gradient(var(--border) 1px, transparent 1px);
+  background-size: 14px 14px;
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+}
+#home-screen .home-mode-lg .home-prev { height: 240px; }
+#home-screen .home-mode-txt { display: flex; flex-direction: column; gap: 6px; padding: 18px 20px 22px; }
+#home-screen .home-mode-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; }
+#home-screen .home-mode-n { font-size: 17px; font-weight: 680; letter-spacing: -.01em; }
+#home-screen .home-mode-lg .home-mode-n { font-size: 20px; }
+#home-screen .home-mode-r { font: 600 11.5px var(--home-mono); letter-spacing: .04em; text-transform: uppercase; color: var(--home-ink); }
+#home-screen .home-mode-d { font-size: 14px; line-height: 1.55; color: var(--text-muted); text-wrap: pretty; }
+
+/* Canvas */
+#home-screen .home-prev-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+#home-screen .home-prev-svg path { fill: none; stroke: var(--border-strong); stroke-width: .5; }
+#home-screen .home-pn {
+  position: absolute; transform: translate(-50%, -50%);
+  padding: 7px 11px; font-size: 12px; font-weight: 600; white-space: nowrap;
+  background: var(--surface2, var(--surface)); border: 1px solid var(--border-strong); border-radius: 8px;
+  box-shadow: var(--shadow-el, none);
+}
+#home-screen .home-pn-accent { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+#home-screen .home-pc1 { left: 22%; top: 30%; }
+#home-screen .home-pc2 { left: 46%; top: 48%; }
+#home-screen .home-pc3 { left: 74%; top: 26%; }
+#home-screen .home-pc4 { left: 36%; top: 76%; }
+#home-screen .home-pc5 { left: 72%; top: 72%; }
+
+/* IA Orchestrator — la estructura del modo real, en sobrio: tarjetas neutras, el tipo como un punto de color, un solo flujo activo en acento */
+#home-screen .home-o-dept { fill: color-mix(in srgb, var(--surface) 35%, transparent); stroke: var(--border-strong); stroke-width: 1; stroke-dasharray: 4 4; }
+#home-screen .home-o-dept-t { fill: var(--text-muted); font: 600 9.5px var(--home-mono); letter-spacing: .04em; }
+#home-screen .home-o-card rect { fill: var(--surface2, var(--surface)); stroke: var(--border-strong); stroke-width: 1; filter: drop-shadow(0 2px 6px rgba(0,0,0,.18)); }
+#home-screen .home-o-card-on rect { stroke: var(--accent); stroke-width: 1.5; filter: drop-shadow(0 0 6px var(--accent-dim)); }
+#home-screen .home-o-kind { fill: var(--text-muted); font: 600 8.5px var(--home-mono); letter-spacing: .08em; }
+#home-screen .home-o-name { fill: var(--text); font-size: 13.5px; font-weight: 650; }
+#home-screen .home-o-state { fill: var(--home-ink); font-size: 9px; font-weight: 600; }
+#home-screen .home-o-dot-task  { fill: var(--node-task, #f0b429); }
+#home-screen .home-o-dot-agent { fill: var(--node-agent, #7c6ceb); }
+#home-screen .home-o-dot-data  { fill: var(--node-mcp, #34c2d6); }
+#home-screen .home-o-edge { fill: none; stroke: var(--border-strong); stroke-width: 1.4; }
+#home-screen .home-o-edge-on { stroke: var(--accent); stroke-width: 1.8; stroke-dasharray: 5 4; animation: home-flow 1.2s linear infinite; }
+#home-screen .home-o-lbl { fill: var(--text-muted); font-size: 9.5px; font-weight: 500; paint-order: stroke; stroke: var(--bg); stroke-width: 4px; stroke-linejoin: round; }
+@keyframes home-flow { to { stroke-dashoffset: -9; } }
+
+/* Activities — nodos redondeados, inicio en pastilla rellena, flechas de acento con punta */
+#home-screen .home-a-edge { fill: none; stroke: var(--accent); stroke-width: 2; }
+#home-screen .home-a-start rect { fill: var(--accent); filter: drop-shadow(0 0 4px var(--accent-dim)); }
+#home-screen .home-a-start text { fill: var(--accent-text, #fff); font-size: 11px; font-weight: 700; }
+#home-screen .home-a-node rect { fill: var(--surface2, var(--surface)); stroke: var(--border-strong); stroke-width: 1.25; }
+#home-screen .home-a-node text { fill: var(--text); font-size: 12px; font-weight: 600; }
+#home-screen .home-a-done rect { fill: var(--surface); stroke-dasharray: 3 2; }
+#home-screen .home-a-done text { fill: var(--text-muted); }
+#home-screen .home-a-now rect { stroke: var(--accent); stroke-width: 1.75; }
+
+/* Object */
+#home-screen .home-prev-obj { display: flex; align-items: flex-start; justify-content: center; gap: 16px; padding: 18px 16px 0; }
+#home-screen .home-obj { display: flex; flex-direction: column; min-width: 0; font: 11px/1.4 var(--home-mono); background: var(--surface2, var(--surface)); border: 1px solid var(--border-strong); border-radius: 8px; overflow: hidden; }
+#home-screen .home-obj-h { padding: 5px 9px; font-weight: 700; color: var(--text); border-bottom: 1px solid var(--border); }
+#home-screen .home-obj-f { padding: 2px 9px; color: var(--text-muted); white-space: nowrap; }
+#home-screen .home-obj-f:last-child { padding-bottom: 6px; }
+#home-screen .home-obj-req {
+  position: absolute; right: 14px; bottom: 14px;
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 5px 9px; font: 600 11px var(--home-mono);
+  background: var(--surface); border: 1px solid var(--accent); border-radius: 7px;
+}
+#home-screen .home-obj-verb { color: var(--home-ink); }
+#home-screen .home-obj-code { color: var(--success, var(--home-ink)); }
+
+/* ---------- ONBOARDING ---------- */
+#home-screen .home-route-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 14px; }
+#home-screen .home-route-tab {
+  display: flex; flex-direction: column; gap: 5px;
+  padding: 16px 18px; cursor: pointer;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  transition: border-color .12s, background .12s;
+}
+#home-screen .home-route-tab:hover { border-color: var(--border-strong); }
+#home-screen .home-route-name { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 15.5px; font-weight: 650; }
+#home-screen .home-route-desc { font-size: 13.5px; line-height: 1.5; color: var(--text-muted); }
+#home-screen #home-path-app:checked ~ .home-route-tabs label[for="home-path-app"],
+#home-screen #home-path-web:checked ~ .home-route-tabs label[for="home-path-web"] {
+  border-color: var(--accent); background: var(--surface2, var(--surface)); box-shadow: 0 0 0 1px var(--accent);
+}
+#home-screen .home-tag {
+  display: inline-flex; font-size: 11px; font-weight: 650; line-height: 1.4;
+  padding: 1px 8px; border-radius: 999px; border: 1px solid var(--border-strong); color: var(--text-muted);
+}
+#home-screen .home-tag-accent { border-color: transparent; background: var(--accent-dim); color: var(--home-ink); }
+
+#home-screen .home-flow { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+#home-screen .home-flow-web { display: none; }
+#home-screen #home-path-web:checked ~ .home-flow-web { display: block; }
+#home-screen #home-path-web:checked ~ .home-flow-app { display: none; }
+#home-screen .home-fs {
+  position: relative;
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  gap: 4px 20px;
+  align-items: start;
+  padding: 22px 24px;
+}
+#home-screen .home-fs + .home-fs { border-top: 1px solid var(--border); }
+/* el riel que une los números: ritmo visual de "flujo", no de lista */
+#home-screen .home-fs:not(:last-child)::after {
+  content: ""; position: absolute; left: 43px; top: 58px; bottom: -22px; border-left: 1px dashed var(--border-strong);
+}
+#home-screen .home-fs-n {
+  position: relative; z-index: 1;
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font: 700 13px var(--home-mono); color: var(--home-ink);
+  background: var(--surface); border: 1px solid var(--accent);
+  box-shadow: 0 0 0 4px var(--surface), inset 0 0 0 20px var(--accent-dim);
+}
+#home-screen .home-fs-opt .home-fs-n { border-style: dashed; border-color: var(--border-strong); color: var(--text-muted); box-shadow: 0 0 0 4px var(--surface); }
+#home-screen .home-fs-main { display: flex; flex-direction: column; gap: 4px; padding-top: 4px; min-width: 0; }
+#home-screen .home-fs-t { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 16.5px; font-weight: 650; letter-spacing: -.01em; }
+#home-screen .home-fs-s { font-size: 14px; line-height: 1.55; color: var(--text-muted); }
+#home-screen .home-fs-act { padding-top: 2px; display: flex; justify-content: flex-end; }
+#home-screen .home-fs code:not(.home-chip) {
+  font-size: 12.5px; padding: 1px 5px; border-radius: 5px; overflow-wrap: anywhere;
+  background: var(--surface2, var(--bg)); border: 1px solid var(--border); color: var(--text);
+}
+#home-screen .home-more { margin-top: 6px; }
+#home-screen .home-more > summary {
+  display: inline-flex; align-items: center; gap: 6px;
+  list-style: none; cursor: pointer;
+  font-size: 13px; font-weight: 600; color: var(--home-ink);
+  padding: 3px 0; border-radius: 5px;
+}
+#home-screen .home-more > summary::-webkit-details-marker { display: none; }
+#home-screen .home-more > summary::before {
+  content: ""; width: 6px; height: 6px;
+  border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg); transition: transform .15s;
+}
+#home-screen .home-more[open] > summary::before { transform: rotate(45deg) translate(-1px, -1px); }
+#home-screen .home-more > summary:hover { color: var(--text); }
+#home-screen .home-more > p {
+  font-size: 13.5px; line-height: 1.6; color: var(--text-secondary, var(--text));
+  margin-top: 8px; max-width: 640px;
+}
+#home-screen .home-more a { text-decoration: underline; text-underline-offset: 2px; }
+
+#home-screen .home-os { display: flex; flex-wrap: wrap; gap: 6px; }
+#home-screen .home-os-a {
+  padding: 8px 14px; font-size: 13.5px; font-weight: 600; color: var(--text);
+  border: 1px solid var(--border-strong); border-radius: 8px; background: var(--bg);
+  transition: border-color .12s, background .12s;
+}
+#home-screen .home-os-a:hover { border-color: var(--accent); background: var(--accent-dim); color: var(--text); }
+#home-screen .home-chip {
+  display: inline-flex; padding: 7px 11px; font: 600 12.5px var(--home-mono); color: var(--text);
+  background: var(--bg); border: 1px solid var(--border); border-radius: 7px; white-space: nowrap;
+}
+#home-screen .home-chip-ui { font-family: inherit; }
+#home-screen .home-levels { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; max-width: 340px; }
+#home-screen .home-level { font-size: 12px; font-weight: 600; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--border); color: var(--text-muted); white-space: nowrap; }
+#home-screen .home-level-on { border-color: var(--accent); background: var(--accent-dim); color: var(--home-ink); }
+
+/* ---------- CONFIANZA ---------- */
+#home-screen .home-trust {
+  display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 48px; align-items: start;
+  padding: 44px; border: 1px solid var(--border); border-radius: 20px;
+  background:
+    radial-gradient(120% 140% at 0% 0%, var(--accent-dim), transparent 55%),
+    var(--surface);
+}
+#home-screen .home-trust-lead { display: flex; flex-direction: column; gap: 14px; }
+#home-screen .home-link { align-self: flex-start; margin-top: 6px; font-size: 14px; font-weight: 600; border-bottom: 1px solid currentColor; padding-bottom: 1px; }
+#home-screen .home-trust-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+#home-screen .home-trust-item {
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 22px; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+}
+#home-screen .home-trust-item::before { content: ""; width: 10px; height: 10px; border-radius: 3px; background: var(--accent); margin-bottom: 6px; }
+#home-screen .home-trust-t { font-size: 18px; font-weight: 680; letter-spacing: -.015em; line-height: 1.25; }
+#home-screen .home-trust-d { font-size: 14px; line-height: 1.55; color: var(--text-muted); text-wrap: pretty; }
+
+/* ---------- PIE ---------- */
+#home-screen .home-foot {
+  max-width: var(--home-w); margin: 96px auto 0; padding: 24px 32px 40px;
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+  border-top: 1px solid var(--border); font-size: 13px; color: var(--text-muted);
+}
+#home-screen .home-foot-brand { font-weight: 680; color: var(--text); }
+#home-screen .home-foot-links { display: flex; flex-wrap: wrap; gap: 20px; }
+#home-screen .home-foot-links a { color: var(--text-muted); }
+#home-screen .home-foot-links a:hover { color: var(--text); }
+
+/* ---------- RESPONSIVE ---------- */
+@media (max-width: 1080px) {
+  #home-screen .home-hero { grid-template-columns: minmax(0, 1fr); gap: 40px; }
+  #home-screen .home-lede { max-width: 640px; }
+  #home-screen .home-trust { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+}
+@media (max-width: 820px) {
+  #home-screen .home-mode, #home-screen .home-mode-lg { grid-column: span 6; }
+  #home-screen .home-why { grid-template-columns: minmax(0, 1fr); }
+  #home-screen .home-why-item, #home-screen .home-why-item + .home-why-item { padding: 20px 0 16px; border-left: 0; }
+  #home-screen .home-why-item + .home-why-item { border-top: 1px solid var(--home-line); }
+  #home-screen .home-fs { grid-template-columns: 40px minmax(0, 1fr); }
+  #home-screen .home-fs-act { grid-column: 2; justify-content: flex-start; padding-top: 10px; }
+  #home-screen .home-levels { justify-content: flex-start; }
+  #home-screen .home-sec { padding-top: 80px; }
+}
+@media (max-width: 600px) {
+  #home-screen .home-hero, #home-screen .home-why, #home-screen .home-sec, #home-screen .home-foot { padding-left: 18px; padding-right: 18px; }
+  #home-screen .home-hero-bg { inset: 0; }
+  #home-screen .home-dl { align-self: stretch; flex-wrap: wrap; }
+  #home-screen .home-dl-label { flex: 1 1 100%; justify-content: center; padding: 11px 16px; border-right: 0; border-bottom: 1px solid rgba(255,255,255,.22); }
+  #home-screen .home-dl-os { flex: 1 1 0; justify-content: center; padding: 12px 8px; }
+  #home-screen .home-demo-body { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 330px; height: auto; }
+  #home-screen .home-term { border-right: 0; border-bottom: 1px solid var(--border); }
+  #home-screen .home-route-tabs { grid-template-columns: minmax(0, 1fr); }
+  #home-screen .home-fs { padding: 18px 16px; gap: 4px 12px; grid-template-columns: 34px minmax(0, 1fr); }
+  #home-screen .home-fs:not(:last-child)::after { left: 32px; }
+  #home-screen .home-trust { padding: 24px 18px; }
+  #home-screen .home-trust-grid { grid-template-columns: minmax(0, 1fr); }
+  #home-screen .home-prev-obj { gap: 10px; }
+  #home-screen .home-mode-lg .home-prev { height: 210px; }
+}
+@media (max-width: 400px) {
+  #home-screen .home-pn { font-size: 11px; padding: 6px 8px; }
+}
+
+/* ---------- MOVIMIENTO REDUCIDO: el estado final, quieto ---------- */
+@media (prefers-reduced-motion: reduce) {
+  #home-screen .home-a1, #home-screen .home-a2, #home-screen .home-a3, #home-screen .home-a4,
+  #home-screen .home-e2, #home-screen .home-e3,
+  #home-screen .home-live-dot, #home-screen .home-cursor, #home-screen .home-o-edge-on { animation: none !important; opacity: 1; transform: none; stroke-dashoffset: 0; }
+  #home-screen * { transition: none !important; }
+}
