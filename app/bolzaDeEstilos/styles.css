@@ -2827,8 +2827,11 @@ html[data-theme=light] { --ag-mix: 12%; }
 .orch-insp-call.err { color: var(--danger); }
 .orch-insp-turn > div { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .orch-insp-path { font: 400 12px/1.5 var(--font-mono); color: var(--text-secondary); overflow-wrap: anywhere; }
-/* con el panel abierto, los controles de zoom del canvas se corren a su izquierda */
-body.orch-panel-open #zoom-controls { right: calc(min(var(--orch-pw, 460px), 100vw) + 16px); }
+/* con el panel abierto, los controles de zoom se esconden (como con el chat de IA), y el
+   panel va al nivel del chat: los dos viven en el mismo borde y se cierran entre sí */
+body.orch-panel-open #zoom-controls { display: none; }
+.orch-panel { z-index: 71; }
+.orch-pop { z-index: 80; }
 /* en el diálogo chico, «Descartar» va en línea con los otros (la regla angosta de
    Design lo mandaba a una fila entera porque el diálogo mide 420px) */
 .qz-modal.orch-modal.is-dialog .orch-modal-foot > .orch-foot-start { flex: 0 0 auto; margin-right: auto; }
