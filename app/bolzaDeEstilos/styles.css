@@ -1593,6 +1593,8 @@ body.full-board .backend-gate { margin-left: 0; }
 }
 /* hover: al pasar por la hitbox se ilumina la línea (sin agrandar) */
 .free-arrow-hit:hover + .free-arrow-vis { filter: brightness(1.7); }
+/* seleccionada (clic sin arrastrar): más gruesa y con un halo, como en Obsidian */
+.free-arrow-vis.selected { stroke-width: 3.5; filter: drop-shadow(0 0 3px var(--accent)); }
 /* cabeza default (las flechas con color usan su propio marker con fill) */
 .free-arrows .free-arrowhead-default path { fill: var(--accent); }
 /* label de flecha como pill HTML (legible sobre la línea) */
@@ -2884,6 +2886,67 @@ body.full-board .backend-gate { margin-left: 0; }
 .free-node-bar-btn svg { width: 15px; height: 15px; }
 .free-node-bar-btn:hover { background: var(--surface2); color: var(--text); }
 .free-node-bar-btn.free-node-del:hover { background: var(--danger-dim); color: var(--danger); }
+
+/* La barra de la FLECHA seleccionada: los mismos botones, en el punto medio de la curva
+   (el JS le pone left/top en coords lógicas, dentro de .free-layer). Siempre visible
+   mientras existe: se crea al seleccionar y se borra al soltar. */
+.free-arrow-bar {
+  position: absolute;
+  transform: translate(-50%, calc(-100% - 14px));
+  display: flex; gap: 0;
+  padding: 2px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 6px);
+  z-index: 6;
+  white-space: nowrap;
+}
+.zoom-far .free-arrow-bar,
+.ver-preview-board .free-arrow-bar { display: none; }
+
+/* Desplegable de la barra (color, dirección), como el menú de Obsidian */
+.free-pop {
+  position: fixed;
+  z-index: 1000;
+  min-width: 180px;
+  padding: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md, 8px);
+  box-shadow: var(--shadow-pop);
+}
+.free-pop-row {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%;
+  padding: 7px 10px;
+  border: none; border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  font: 400 13px/1.2 'Inter', system-ui, sans-serif;
+  text-align: left;
+  cursor: pointer;
+}
+.free-pop-row svg { color: var(--text-muted); flex: 0 0 auto; }
+.free-pop-row:hover { background: var(--surface2); }
+.free-pop-row.selected::after {             /* el ✓ a la derecha, como en Obsidian */
+  content: ""; margin-left: auto;
+  width: 10px; height: 5px;
+  border-left: 2px solid var(--text-muted); border-bottom: 2px solid var(--text-muted);
+  transform: rotate(-45deg) translateY(-2px);
+}
+.free-pop-swatches { display: flex; gap: 6px; padding: 4px; }
+.free-pop-swatch {
+  position: relative;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  border: none; padding: 0;
+  cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.free-pop-swatch.is-default { background: var(--accent); }
+.free-pop-swatch.is-custom { background: var(--surface2); color: var(--text-muted); overflow: hidden; }
+.free-pop-swatch.is-custom input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.free-pop-swatch.selected { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--text); }
 
 /* Options → «Default node» */
 .toolbar-default-type { display: inline-flex; align-items: center; gap: 6px; }
@@ -5163,16 +5226,18 @@ body:has(.modal-overlay:not(.hidden)) #webhub-cursors { display: none !important
   .versiones-body { grid-template-columns: 1fr; grid-template-rows: minmax(0, 38%) minmax(0, 1fr); }
   .ver-preview { flex-basis: 240px; }
 }
-.arrow-swatches { display: flex; gap: 6px; flex-wrap: wrap; }
+.arrow-swatches { display: flex; gap: 8px; flex-wrap: wrap; padding: 2px; }
 .arrow-swatch {
-  width: 22px; height: 22px;
+  width: 24px; height: 24px;
   border-radius: 50%;
-  border: 2px solid var(--border-strong);
+  border: none;
   cursor: pointer;
   padding: 0;
+  transition: transform .1s;
 }
+.arrow-swatch:hover { transform: scale(1.08); }
 .arrow-swatch[data-color="default"] { background: var(--accent); }
-.arrow-swatch.selected { outline: 2px solid var(--text); outline-offset: 2px; }
+.arrow-swatch.selected { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--text); }
 
 /* ícono de paleta al final de la fila: abre el selector de color nativo */
 .arrow-swatch-palette {
@@ -5190,7 +5255,27 @@ body:has(.modal-overlay:not(.hidden)) #webhub-cursors { display: none !important
   color: var(--text);
 }
 .arrow-swatch-palette:hover { border-color: var(--accent); }
-.arrow-swatch-palette.selected { outline: 2px solid var(--text); outline-offset: 2px; }
+.arrow-swatch-palette.selected { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--text); }
+
+/* puntas de la flecha en el modal: control segmentado */
+.arrow-dir-seg {
+  display: flex; gap: 2px; padding: 3px;
+  background: var(--surface2); border: 1px solid var(--border); border-radius: 9px;
+}
+.arrow-dir-opt {
+  flex: 1 1 0;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 7px 8px;
+  border: none; border-radius: 7px;
+  background: transparent; color: var(--text-muted);
+  font: 500 12px/1 'Inter', system-ui, sans-serif;
+  cursor: pointer;
+}
+.arrow-dir-opt:hover { color: var(--text); }
+.arrow-dir-opt.selected { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,.25); }
+.arrow-dir-opt span { white-space: nowrap; }
+/* el de flecha es más ancho que los .modal-narrow: «Bidireccional» no entraba */
+#arrow-modal-overlay .modal { width: 420px; }
 .arrow-swatch-palette svg { width: 14px; height: 14px; pointer-events: none; }
 .arrow-swatch-palette input[type="color"] {
   position: absolute; inset: 0;
@@ -5280,6 +5365,35 @@ body:has(.modal-overlay:not(.hidden)) #webhub-cursors { display: none !important
   transition: opacity .12s;
 }
 .modal-actions button:hover { opacity: .82; }
+
+/* Lo GENERAL de los modales de esta cáscara (2026-10-09). Solo el de nodo tenía estilo
+   (por id: #modal-titulo, #modal-save) y el resto —flecha, actividad, carpeta, media…—
+   salía con el input BLANCO y los botones del navegador. Con :where() la especificidad
+   es cero: lo que ya tenga estilo propio sigue ganando. */
+:where(.modal) :where(input[type="text"], input[type="number"], input[type="url"], input:not([type]), select) {
+  background: var(--surface2);
+  border: 1px solid var(--border-strong);
+  border-radius: 9px;
+  color: var(--text);
+  font: 400 14px/1.2 'Inter', system-ui, sans-serif;
+  padding: 9px 12px;
+  outline: none;
+  width: 100%;
+  transition: border-color .12s;
+}
+:where(.modal) :where(input[type="text"], input[type="number"], input[type="url"], input:not([type]), select):focus {
+  border-color: var(--accent);
+}
+:where(.modal-actions) :where(button) {
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  color: var(--text-muted);
+}
+.modal-actions button.is-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
 
 #modal-cancel {
   background: transparent;

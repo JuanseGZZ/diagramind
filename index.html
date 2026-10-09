@@ -21,7 +21,7 @@
   <!-- ?v= rompe el cache del borde cuando cambia el CSS. El nginx de infra/web ya
        manda no-cache, pero una copia vieja YA cacheada sobrevive hasta su TTL: subir
        este número la invalida al instante (index.html se sirve siempre fresco). -->
-  <link rel="stylesheet" href="app/bolzaDeEstilos/styles.css?v=75">
+  <link rel="stylesheet" href="app/bolzaDeEstilos/styles.css?v=76">
 </head>
 
 <body>
@@ -692,7 +692,7 @@
       </div>
       <div class="modal-actions">
         <button id="media-picker-cancel">Cancel</button>
-        <button id="media-picker-ok">Add</button>
+        <button id="media-picker-ok" class="is-primary">Add</button>
       </div>
     </div>
   </div>
@@ -711,7 +711,7 @@
       </div>
       <div class="modal-actions">
         <button id="shape-img-cancel">Cancel</button>
-        <button id="shape-img-ok">Add</button>
+        <button id="shape-img-ok" class="is-primary">Add</button>
       </div>
     </div>
   </div>
@@ -761,7 +761,7 @@
         <input id="folder-name-input" type="text" placeholder="Folder name" />
       </div>
       <div class="modal-actions">
-        <button id="folder-create-confirm">Create</button>
+        <button id="folder-create-confirm" class="is-primary">Create</button>
         <button id="folder-create-cancel">Cancel</button>
       </div>
     </div>
@@ -790,7 +790,7 @@
       <p class="modal-hint">Custom node catalog</p>
       <div id="custom-catalog-grid" class="catalog-grid"></div>
       <div class="modal-actions">
-        <button id="custom-make-yours">Make yours</button>
+        <button id="custom-make-yours" class="is-primary">Make yours</button>
         <button id="custom-catalog-cancel">Cancel</button>
       </div>
     </div>
@@ -819,9 +819,14 @@
           </label>
         </div>
       </div>
+      <!-- puntas de la flecha (solo en el canvas libre; los botones los arma el JS) -->
+      <div class="modal-field" id="arrow-dir-field">
+        <label>Direction</label>
+        <div class="arrow-dir-seg" id="arrow-dir-seg"></div>
+      </div>
       <div class="modal-actions">
         <button id="arrow-cancel">Cancel</button>
-        <button id="arrow-save">Save</button>
+        <button id="arrow-save" class="is-primary">Save</button>
       </div>
     </div>
   </div>
@@ -868,7 +873,7 @@
       </div>
       <div class="modal-actions">
         <button id="act-cancel">Cancel</button>
-        <button id="act-save">Save</button>
+        <button id="act-save" class="is-primary">Save</button>
       </div>
     </div>
   </div>
@@ -1003,7 +1008,7 @@
         </div>
         <div class="modal-actions">
           <button id="doc-config-reset">Reset</button>
-          <button id="doc-config-done">Done</button>
+          <button id="doc-config-done" class="is-primary">Done</button>
         </div>
       </div>
     </div>
@@ -1707,7 +1712,7 @@
   <!-- ?v= igual que en el CSS: mientras el zone setting "Browser Cache TTL" de
        Cloudflare pise el no-cache del origen, subir este número es lo único que
        invalida el bundle YA cacheado en los navegadores. -->
-  <script type="module" src="./dist/bundle.js?v=75"></script>
+  <script type="module" src="./dist/bundle.js?v=76"></script>
   <!-- el aviso de estadísticas: solo en diagraminder.com, y el beacon solo si se acepta -->
   <script src="/legal/consent.js?v=2" defer></script>
 </body>
