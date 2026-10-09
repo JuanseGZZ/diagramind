@@ -21,7 +21,7 @@
   <!-- ?v= rompe el cache del borde cuando cambia el CSS. El nginx de infra/web ya
        manda no-cache, pero una copia vieja YA cacheada sobrevive hasta su TTL: subir
        este número la invalida al instante (index.html se sirve siempre fresco). -->
-  <link rel="stylesheet" href="app/bolzaDeEstilos/styles.css?v=78">
+  <link rel="stylesheet" href="app/bolzaDeEstilos/styles.css?v=79">
 </head>
 
 <body>
@@ -146,7 +146,7 @@
             <span class="tunnel-badge-dot" aria-hidden="true"></span><span>Tunnel</span>
           </button>
           <button id="chat-btn" class="nav-pill" title="Chat with the AI"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>AI</button>
-          <button id="ia-btn" class="nav-pill" title="Settings, connectors and appearance"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5 15.4 17.5M15.4 6.5 8.6 10.5"/></svg>Settings</button>
+          <button id="ia-btn" class="nav-pill" title="Settings, connectors and appearance"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>Settings</button>
         </li>
       </ul>
       <button id="nav-collapse-btn" class="nav-collapse-btn" title="Hide top bar" aria-label="Hide top bar"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg></button>
@@ -201,16 +201,27 @@
     </div>
   </aside>
 
+  <!-- Settings (polish v1, Claude Design 2026-10-09): cada grupo = cabecera (título +
+       para qué sirve, en una línea) + filas (etiqueta a la izquierda, control a la
+       derecha). Los ids son los de siempre: los cablean localDownload.js, iaApis.js,
+       localBackend.js, voice y ui.js (tema). -->
   <aside id="ia-aside" class="side-panel side-panel-right">
     <div class="side-panel-header">
       <span class="side-panel-title">Settings</span>
       <button class="side-panel-close" data-close="ia-aside" title="Close">✕</button>
     </div>
     <div class="side-panel-body">
-      <section class="side-panel-group">
-        <p class="side-panel-group-title">Backend</p>
-        <button class="side-panel-btn dm-web-only" id="ia-download-local">Download backend</button>
-      <div class="ia-download hidden dm-web-only" id="ia-download-options">
+      <!-- el grupo ENTERO es solo-web: en desktop antes quedaba el título sin nada abajo -->
+      <section class="side-panel-group dm-web-only">
+        <header class="sp-group-head">
+          <h3 class="side-panel-group-title">Local backend</h3>
+          <p class="sp-group-desc">Lets Claude Code reach this canvas over MCP.</p>
+        </header>
+        <div class="sp-row">
+          <div class="sp-row-label"><b>Backend app</b><span class="sp-row-sub">macOS · Windows · Linux</span></div>
+          <div class="sp-row-ctl"><button class="side-panel-btn dm-web-only" id="ia-download-local">Download backend</button></div>
+        </div>
+      <div class="ia-download hidden" id="ia-download-options">
 
         <div class="ia-dl-group">
           <p class="ia-dl-title">The whole app <span class="ia-dl-badge">recommended</span></p>
@@ -266,61 +277,73 @@
           ↗ View the code on GitHub
         </a>
       </div>
-
-
       </section>
 
       <section class="side-panel-group">
-        <p class="side-panel-group-title">Connections</p>
-        <button class="side-panel-btn" id="ia-manage-apis">Add API</button>
-      <div class="ia-apis hidden" id="ia-apis-panel">
-        <ul class="ia-apis-list" id="ia-apis-list"></ul>
-        <form class="ia-apis-form" id="ia-apis-form">
-          <input class="ia-apis-input" id="ia-api-name" type="text" placeholder="Name (e.g. My Anthropic key)" required />
-          <select class="ia-apis-input" id="ia-api-provider">
-            <option value="anthropic">Anthropic (Claude)</option>
-            <option value="openai">OpenAI (GPT)</option>
-            <option value="google">Google (Gemini)</option>
-            <option value="other">Other</option>
-          </select>
-          <input class="ia-apis-input" id="ia-api-key" type="password" placeholder="API key" autocomplete="off" required />
-          <input class="ia-apis-input ia-apis-other-only hidden" id="ia-api-url" type="text" placeholder="Endpoint URL (OpenAI-compatible)" autocomplete="off" />
-          <input class="ia-apis-input ia-apis-other-only hidden" id="ia-api-model" type="text" placeholder="Model (e.g. gpt-4o-mini, llama-3.1…)" autocomplete="off" />
-          <button class="ia-apis-add" type="submit">Add API</button>
-        </form>
-      </div>
+        <header class="sp-group-head">
+          <h3 class="side-panel-group-title">AI providers</h3>
+          <p class="sp-group-desc">API keys the AI chat can use. Stored on this machine.</p>
+        </header>
+        <div class="sp-row">
+          <div class="sp-row-label"><b>API keys</b><span class="sp-row-sub" id="ia-apis-count">None yet</span></div>
+          <div class="sp-row-ctl"><button class="side-panel-btn" id="ia-manage-apis">Add API</button></div>
+        </div>
+        <div class="ia-apis hidden" id="ia-apis-panel">
+          <ul class="ia-apis-list" id="ia-apis-list"></ul>
+          <form class="ia-apis-form" id="ia-apis-form">
+            <input class="ia-apis-input" id="ia-api-name" type="text" placeholder="Name (e.g. My Anthropic key)" required />
+            <select class="ia-apis-input" id="ia-api-provider">
+              <option value="anthropic">Anthropic (Claude)</option>
+              <option value="openai">OpenAI (GPT)</option>
+              <option value="google">Google (Gemini)</option>
+              <option value="other">Other</option>
+            </select>
+            <input class="ia-apis-input" id="ia-api-key" type="password" placeholder="API key" autocomplete="off" required />
+            <input class="ia-apis-input ia-apis-other-only hidden" id="ia-api-url" type="text" placeholder="Endpoint URL (OpenAI-compatible)" autocomplete="off" />
+            <input class="ia-apis-input ia-apis-other-only hidden" id="ia-api-model" type="text" placeholder="Model (e.g. gpt-4o-mini, llama-3.1…)" autocomplete="off" />
+            <div class="sp-actions"><button class="ia-apis-add side-panel-btn is-primary" type="submit">Add API</button></div>
+          </form>
+        </div>
+      </section>
 
       <!-- Dónde guarda TODO el backend local (su raíz en disco). Solo tiene
            sentido con el backend conectado: sin él no hay nada que mover. -->
-      <div class="side-panel-row" id="local-root-row">
-        <span class="side-panel-row-label">Storage folder</span>
-        <span class="side-panel-row-value" id="local-root-path">—</span>
-      </div>
-      <button class="side-panel-btn" id="local-root-change">Change storage folder</button>
-
+      <section class="side-panel-group" id="local-root-row">
+        <header class="sp-group-head">
+          <h3 class="side-panel-group-title">Storage</h3>
+          <p class="sp-group-desc">Where your projects are saved on disk.</p>
+        </header>
+        <code class="sp-path" id="local-root-path">—</code>
+        <div class="sp-row-ctl"><button class="side-panel-btn" id="local-root-change">Change storage folder</button></div>
       </section>
 
       <section class="side-panel-group">
-        <p class="side-panel-group-title">Voice</p>
-        <div class="side-panel-row">
-          <span class="side-panel-row-label">Speech engine</span>
-          <select class="voice-select" id="voice-engine">
-            <option value="auto">Automatic</option>
-            <option value="webspeech">Browser (free)</option>
-            <option value="cloud">Cloud (API key)</option>
-          </select>
+        <header class="sp-group-head">
+          <h3 class="side-panel-group-title">Voice</h3>
+          <p class="sp-group-desc">Dictation and voice calls with the AI.</p>
+        </header>
+        <div class="sp-row">
+          <div class="sp-row-label"><label for="voice-engine">Speech engine</label></div>
+          <div class="sp-row-ctl">
+            <select class="voice-select" id="voice-engine">
+              <option value="auto">Automatic</option>
+              <option value="webspeech">Browser (free)</option>
+              <option value="cloud">Cloud (API key)</option>
+            </select>
+          </div>
         </div>
-        <div class="side-panel-row voice-cloud-only hidden">
-          <span class="side-panel-row-label">Transcription key</span>
-          <select class="voice-select" id="voice-api"></select>
+        <div class="sp-row voice-cloud-only hidden">
+          <div class="sp-row-label"><label for="voice-api">Transcription key</label></div>
+          <div class="sp-row-ctl"><select class="voice-select" id="voice-api"></select></div>
         </div>
-        <div class="side-panel-row voice-cloud-only hidden">
-          <span class="side-panel-row-label">Transcription model</span>
-          <input class="voice-input" id="voice-model" type="text" placeholder="Provider default" autocomplete="off" />
+        <div class="sp-row voice-cloud-only hidden">
+          <div class="sp-row-label"><label for="voice-model">Transcription model</label></div>
+          <div class="sp-row-ctl"><input class="voice-input" id="voice-model" type="text" placeholder="Provider default" autocomplete="off" /></div>
         </div>
-        <div class="side-panel-row">
-          <span class="side-panel-row-label">Language</span>
-          <select class="voice-select" id="voice-lang">
+        <div class="sp-row">
+          <div class="sp-row-label"><label for="voice-lang">Language</label></div>
+          <div class="sp-row-ctl">
+            <select class="voice-select" id="voice-lang">
             <option value="auto">Same as the app</option>
             <option value="es-ES">Spanish (Spain)</option>
             <option value="es-419">Spanish (Latin America)</option>
@@ -331,48 +354,61 @@
             <option value="it-IT">Italian</option>
             <option value="de-DE">German</option>
           </select>
+          </div>
         </div>
-        <div class="side-panel-row">
-          <span class="side-panel-row-label">Pause that ends a sentence</span>
-          <select class="voice-select" id="voice-silence">
-            <option value="600">Short (0.6s)</option>
-            <option value="900">Normal (0.9s)</option>
-            <option value="1400">Long (1.4s)</option>
-            <option value="2000">Very long (2s)</option>
-          </select>
+        <div class="sp-row">
+          <div class="sp-row-label"><label for="voice-silence">Pause that ends a sentence</label></div>
+          <div class="sp-row-ctl">
+            <select class="voice-select" id="voice-silence">
+              <option value="600">Short (0.6s)</option>
+              <option value="900">Normal (0.9s)</option>
+              <option value="1400">Long (1.4s)</option>
+              <option value="2000">Very long (2s)</option>
+            </select>
+          </div>
         </div>
-        <label class="side-panel-check">
+        <label class="sp-check">
           <input type="checkbox" id="voice-commands" />
-          <span>Punctuation commands while dictating ("period", "comma", "new line")</span>
+          <span>Punctuation commands while dictating<small>"period", "comma", "new line"</small></span>
         </label>
-        <label class="side-panel-check">
+        <label class="sp-check">
           <input type="checkbox" id="voice-bargein" />
           <span>Talking over the AI interrupts it during a call</span>
         </label>
-        <p class="voice-hint" id="voice-hint"></p>
+        <p class="voice-hint sp-hint" id="voice-hint"></p>
       </section>
 
       <section class="side-panel-group">
-        <p class="side-panel-group-title">Appearance</p>
-        <div class="side-panel-row">
-          <span class="side-panel-row-label">Theme</span>
-          <button id="theme-toggle" title="Toggle theme">☀</button>
+        <header class="sp-group-head">
+          <h3 class="side-panel-group-title">Appearance</h3>
+        </header>
+        <div class="sp-row">
+          <div class="sp-row-label"><b>Theme</b></div>
+          <div class="sp-row-ctl">
+            <!-- un solo botón con un solo handler (ui.js): la mitad marcada sigue a html[data-theme] -->
+            <button id="theme-toggle" type="button" title="Toggle theme" aria-label="Theme">
+              <span class="sp-seg-opt" data-v="light"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>Light</span>
+              <span class="sp-seg-opt" data-v="dark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg>Dark</span>
+            </button>
+          </div>
         </div>
       </section>
     </div>
 
-    <!-- footer pinneado al fondo: conectar local + estado de conexión, con línea separadora -->
-    <div class="side-panel-footer">
-      <p class="side-panel-group-title">Backend connection</p>
-      <button class="side-panel-btn dm-web-only" id="ia-connect-local">Connect backend</button>
-      <!-- Solo en desktop: es la info de ESTE programa (puerto, carpetas, token, CLIs).
-           En la web no hay programa del que hablar. -->
-      <button class="side-panel-btn dm-desktop-only" id="ia-local-panel">This program</button>
-      <div class="ia-status" id="ia-status" data-state="disconnected">
-        <span class="ia-status-dot"></span>
-        <span class="ia-status-text">Disconnected</span>
+    <!-- footer pinneado al fondo: estado de la conexión + conectar (web) / This program (desktop) -->
+    <footer class="side-panel-footer">
+      <h3 class="side-panel-group-title">Backend connection</h3>
+      <div class="sp-row">
+        <!-- el punto lo dibuja el CSS según data-state (los tests leen data-state, no el texto) -->
+        <div class="ia-status" id="ia-status" data-state="disconnected">
+          <span class="ia-status-text">Disconnected</span>
+        </div>
+        <button class="side-panel-btn dm-web-only" id="ia-connect-local">Connect backend</button>
+        <!-- Solo en desktop: es la info de ESTE programa (puerto, carpetas, token, CLIs).
+             En la web no hay programa del que hablar. -->
+        <button class="side-panel-btn dm-desktop-only" id="ia-local-panel">This program</button>
       </div>
-    </div>
+    </footer>
   </aside>
 
 
@@ -974,7 +1010,7 @@
       <div class="editor-max-actions">
         <!-- Save con indicador de cambios (bolita): aplica a las dos sesiones —
              nodo (guarda el nodo sin cerrar) y docs (reescribe el .docx) -->
-        <button id="editor-max-save" class="modal-mode-btn" title="Save (Ctrl+S)"><svg class="modal-mode-ico" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 2.5h9L13.5 4.5v9a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1v-10a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M5 2.5V6h5V2.5M4.5 14.5V10h7v4.5" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg> Save<span id="editor-max-dirty" class="max-dirty hidden"></span></button>
+        <button id="editor-max-save" class="modal-mode-btn is-primary" title="Save (Ctrl+S)"><svg class="modal-mode-ico" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 2.5h9L13.5 4.5v9a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1v-10a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M5 2.5V6h5V2.5M4.5 14.5V10h7v4.5" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg> Save<span id="editor-max-dirty" class="max-dirty hidden"></span></button>
         <div class="max-menu-wrap">
           <button id="editor-max-view" class="modal-mode-btn" title="View options"><svg class="modal-mode-ico" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 8s2.6-4.5 7-4.5S15 8 15 8s-2.6 4.5-7 4.5S1 8 1 8z" stroke="currentColor" stroke-width="1.1"/><circle cx="8" cy="8" r="1.9" stroke="currentColor" stroke-width="1.1"/></svg> View</button>
           <div id="editor-max-view-menu" class="max-menu hidden">
@@ -1712,7 +1748,7 @@
   <!-- ?v= igual que en el CSS: mientras el zone setting "Browser Cache TTL" de
        Cloudflare pise el no-cache del origen, subir este número es lo único que
        invalida el bundle YA cacheado en los navegadores. -->
-  <script type="module" src="./dist/bundle.js?v=78"></script>
+  <script type="module" src="./dist/bundle.js?v=79"></script>
   <!-- el aviso de estadísticas: solo en diagraminder.com, y el beacon solo si se acepta -->
   <script src="/legal/consent.js?v=2" defer></script>
 </body>
