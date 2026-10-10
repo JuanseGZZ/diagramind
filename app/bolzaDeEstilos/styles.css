@@ -7829,6 +7829,11 @@ body:has(.modal-overlay:not(.hidden)) #webhub-cursors { display: none !important
 .aside-row.exp-item { height: auto; min-height: 30px; gap: 9px; padding: 0 8px 0 calc(6px + var(--depth, 0) * 14px); }
 .aside-row.exp-item > .aside-chevron { margin-right: -4px; }
 
+/* el Resumen trae su PROPIO padding (.obj-summary-body, 8px 12px) además del de
+   .free-node-body: la cabecera quedaba metida adentro. El margen va al contenido. */
+.free-node.type-objsummary .obj-summary-body { padding: 0 0 8px; }
+.free-node.type-objsummary .obj-summary-body > :not(.obj-badge) { margin-left: 12px; margin-right: 12px; }
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 1300px) {
   .nav-toggle {
