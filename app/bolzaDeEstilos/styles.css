@@ -6077,6 +6077,11 @@ body.aside-collapsed .toolbar        { margin-left: 40px; }
 body.view-home #tree-aside { display: none; }
 body.view-home .orch-bar,
 body.view-home .cart-peek { display: none; }
+/* el panel del nodo y el popover del orquestador tampoco se ven en el Home: quedaban
+   abiertos ENCIMA de él. Se esconden sin cerrarse (un cambio sin guardar no se pierde):
+   al volver al diagrama, el panel sigue donde estaba. */
+body.view-home .orch-panel,
+body.view-home .orch-pop { display: none !important; }
 
 body.full-board #tree-aside { display: none; }
 body.full-board .toolbar { display: none; }
