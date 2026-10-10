@@ -21,7 +21,7 @@
   <!-- ?v= rompe el cache del borde cuando cambia el CSS. El nginx de infra/web ya
        manda no-cache, pero una copia vieja YA cacheada sobrevive hasta su TTL: subir
        este número la invalida al instante (index.html se sirve siempre fresco). -->
-  <link rel="stylesheet" href="app/bolzaDeEstilos/styles.css?v=86">
+  <link rel="stylesheet" href="app/bolzaDeEstilos/styles.css?v=87">
 </head>
 
 <body>
@@ -616,6 +616,7 @@
         <button id="obj-env-btn" class="obj-env-btn" type="button" title="Environments and variables ({{name}})" aria-label="Environments and variables ({{name}})"></button>
       </div>
       <div class="toolbar-sep"></div>
+      <button id="obj-mock-btn" class="obj-import-btn obj-mock-btn" title="Mock server: the Endpoint nodes answer at a local URL"><svg class="toolbar-btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="7" rx="1.5"/><rect x="3" y="13" width="18" height="7" rx="1.5"/><path d="M7 7.5h.01M7 16.5h.01M11 7.5h6M11 16.5h6"/></svg>Mock</button>
       <button id="obj-import-btn" class="obj-import-btn" title="Build the diagram from a JSON body you already have"><svg class="toolbar-btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M8 11l4 4 4-4"/><path d="M4 17v2a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-2"/></svg>Import JSON</button>
     </div>
 
@@ -1757,7 +1758,7 @@
   <!-- ?v= igual que en el CSS: mientras el zone setting "Browser Cache TTL" de
        Cloudflare pise el no-cache del origen, subir este número es lo único que
        invalida el bundle YA cacheado en los navegadores. -->
-  <script type="module" src="./dist/bundle.js?v=86"></script>
+  <script type="module" src="./dist/bundle.js?v=87"></script>
   <!-- el aviso de estadísticas: solo en diagraminder.com, y el beacon solo si se acepta -->
   <script src="/legal/consent.js?v=2" defer></script>
 </body>

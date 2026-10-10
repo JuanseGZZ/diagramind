@@ -1168,6 +1168,7 @@ body {
 .free-node.type-objcollection { --obj-c: var(--node-task); }
 .free-node.type-objfetch      { --obj-c: var(--node-fetch); }
 .free-node.type-objburst      { --obj-c: var(--node-mcp); }
+.free-node.type-objendpoint   { --obj-c: var(--node-resource); }
 .free-node.type-objsummary    { --obj-c: var(--node-summary); }
 .free-node.type-objgroup      { --obj-c: var(--node-dept); }
 /* readable tint of the node colour for text, in either theme */
@@ -1221,6 +1222,7 @@ body {
 .obj-badge-objcollection { --obj-c: var(--node-task); }
 .obj-badge-objfetch      { --obj-c: var(--node-fetch); }
 .obj-badge-objburst      { --obj-c: var(--node-mcp); }
+.obj-badge-objendpoint   { --obj-c: var(--node-resource); }
 .obj-badge-objgroup      { --obj-c: var(--node-dept); }
 .obj-badge-objsummary    { --obj-c: var(--node-summary); }
 
@@ -2036,6 +2038,79 @@ body {
 .obj-import-btn:active { background: var(--press-wash); }
 .obj-import-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .obj-import-btn > svg { display: none; }       /* if your button already carries an icon, CSS one wins */
+/* Mock (doc 23 §Mock): the same button, with a server icon */
+.obj-mock-btn {
+  --oi-braces: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='7' rx='1.5'/%3E%3Crect x='3' y='13' width='18' height='7' rx='1.5'/%3E%3Cpath d='M11 7.5h6M11 16.5h6'/%3E%3C/svg%3E");
+}
+
+/* ---------- Endpoint node (objendpoint): the mock, doc 23 §Mock ---------- */
+.obj-endpoint-body.is-off { opacity: .55; }
+.obj-endpoint-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 0 12px; margin-top: 6px; }
+.obj-endpoint-status {
+  font: 600 11px/1.2 var(--font-mono);
+  color: color-mix(in srgb, var(--success) 75%, var(--text));
+}
+.obj-endpoint-status[data-status="3xx"] { color: color-mix(in srgb, var(--node-mcp) 75%, var(--text)); }
+.obj-endpoint-status:is([data-status="4xx"], [data-status="5xx"]) { color: color-mix(in srgb, var(--danger) 80%, var(--text)); }
+.obj-endpoint-delay, .obj-endpoint-flag {
+  padding: 1px 6px; border-radius: 999px;
+  font: 500 10.5px/1.4 var(--font-mono); color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+.obj-endpoint-flag.is-off { color: var(--text); border-color: var(--border-strong); }
+.obj-endpoint-url { display: block; padding: 0 12px; margin-top: 6px; }
+.obj-endpoint-url.obj-resp-err { color: color-mix(in srgb, var(--danger) 80%, var(--text)); }
+.obj-endpoint-warn {
+  margin: 6px 12px 0; font: 500 11px/1.35 var(--font-ui);
+  color: color-mix(in srgb, var(--danger) 80%, var(--text));
+}
+.obj-endpoint-nums { display: flex; gap: 12px; }
+.obj-endpoint-nums > div { flex: 1; min-width: 0; }
+.obj-endpoint-nums .obj-endpoint-num { width: 100%; box-sizing: border-box; }
+.obj-endpoint-full { margin-bottom: 4px; }
+
+/* ---------- Mock panel (toolbar «Mock») ---------- */
+.qz-modal.obj-mock-modal { width: min(720px, calc(100vw - 32px)); }
+.obj-mock-intro { margin: 0 0 4px; font: 400 13px/1.5 var(--font-ui); color: var(--text-secondary); }
+.obj-mock-base, .obj-mock-route { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.obj-mock-url {
+  flex: 1; min-width: 0; padding: 7px 10px; overflow-wrap: anywhere;
+  background: var(--obj-code, var(--surface2)); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  font: 400 12.5px/1.4 var(--font-mono); color: var(--text);
+}
+.obj-mock-copy { flex: 0 0 auto; }
+.obj-mock-state { margin-top: 8px; font: 500 12.5px/1.4 var(--font-ui); color: var(--text-muted); }
+.obj-mock-state::before { content: "●"; margin-right: 6px; }
+.obj-mock-state.is-on  { color: color-mix(in srgb, var(--success) 80%, var(--text)); }
+.obj-mock-state.is-err { color: color-mix(in srgb, var(--danger) 80%, var(--text)); }
+.obj-mock-state.is-off::before { content: "○"; }
+.obj-mock-routes { display: flex; flex-direction: column; gap: 6px; }
+.obj-mock-route { padding: 4px 0; border-bottom: 1px solid var(--border); }
+.obj-mock-route.is-off { opacity: .55; }
+.obj-mock-route-url {
+  flex: 1; min-width: 0; text-align: left; padding: 0; border: 0; background: none; cursor: pointer;
+  font: 400 12.5px/1.4 var(--font-mono); color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.obj-mock-route-url:hover { text-decoration: underline; }
+.obj-mock-route-status, .obj-mock-route-off { font: 500 11.5px/1 var(--font-mono); color: var(--text-muted); }
+.obj-mock-logbtns { display: flex; gap: 4px; }
+.obj-mock-log { display: flex; flex-direction: column; gap: 2px; max-height: 260px; overflow: auto; }
+.obj-mock-hit summary {
+  display: flex; align-items: center; gap: 8px; padding: 4px 2px; cursor: pointer; list-style: none;
+  font: 400 12px/1.4 var(--font-mono); color: var(--text-secondary);
+}
+.obj-mock-hit summary::-webkit-details-marker { display: none; }
+.obj-mock-hit-time { color: var(--text-muted); }
+.obj-mock-hit-path { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
+.obj-mock-hit-status { color: color-mix(in srgb, var(--success) 75%, var(--text)); }
+.obj-mock-hit.is-err .obj-mock-hit-status { color: color-mix(in srgb, var(--danger) 80%, var(--text)); }
+.obj-mock-hit-route { color: var(--text-muted); font-family: var(--font-ui); }
+.obj-mock-hit-body {
+  margin: 0 0 6px; padding: 6px 8px; max-height: 160px; overflow: auto;
+  background: var(--obj-code, var(--surface2)); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  font: 400 11.5px/1.45 var(--font-mono); color: var(--text-secondary); white-space: pre-wrap; word-break: break-all;
+}
 
 /* ---------- 10. unchanged: other modes / large modals / indicators ---------- */
 .free-node.type-class .free-node-titulo { font-weight: 700; }
@@ -7754,6 +7829,7 @@ body:has(.modal-overlay:not(.hidden)) #webhub-cursors { display: none !important
 .exp-chip[data-type="objcollection"] { --c: var(--node-task); }
 .exp-chip[data-type="objfetch"]      { --c: var(--node-fetch); }
 .exp-chip[data-type="objburst"]      { --c: var(--node-mcp); }
+.exp-chip[data-type="objendpoint"]   { --c: var(--node-resource); }
 .exp-chip[data-type="objsummary"]    { --c: var(--node-summary); }
 .exp-chip[data-type="objgroup"]      { --c: var(--node-dept); }
 .exp-chip-n { font: 500 10.5px/1 var(--font-mono); color: var(--text-muted); }
@@ -7776,7 +7852,7 @@ body:has(.modal-overlay:not(.hidden)) #webhub-cursors { display: none !important
        <span class="exp-name">Person</span>
        <span class="exp-kind">class</span>
      </div>
-   data-type = objclass | objinstance | objcollection | objfetch | objburst | objsummary | objgroup
+   data-type = objclass | objinstance | objcollection | objfetch | objburst | objendpoint | objsummary | objgroup
    Search matches: wrap the matched substring in <mark> inside .exp-name. */
 .exp-list { display: flex; flex-direction: column; gap: 1px; padding: var(--space-2) var(--space-2); }
 .exp-item {
@@ -7794,6 +7870,7 @@ body:has(.modal-overlay:not(.hidden)) #webhub-cursors { display: none !important
 .exp-item[data-type="objcollection"] { --c: var(--node-task);     --ic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01'/%3E%3C/svg%3E"); }
 .exp-item[data-type="objfetch"]      { --c: var(--node-fetch);    --ic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 2 11 13M22 2l-7 20-4-9-9-4z'/%3E%3C/svg%3E"); }
 .exp-item[data-type="objburst"]      { --c: var(--node-mcp);      --ic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M13 2 4 14h7l-1 8 9-12h-7z'/%3E%3C/svg%3E"); }
+.exp-item[data-type="objendpoint"]   { --c: var(--node-resource); --ic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='7' rx='1.5'/%3E%3Crect x='3' y='13' width='18' height='7' rx='1.5'/%3E%3Cpath d='M11 7.5h6M11 16.5h6'/%3E%3C/svg%3E"); }
 .exp-item[data-type="objsummary"]    { --c: var(--node-summary);  --ic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 7 2 2 4-4M4 17l2 2 4-4M14 7h6M14 17h6'/%3E%3C/svg%3E"); }
 .exp-item[data-type="objgroup"]      { --c: var(--node-dept);     --ic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-dasharray='3 3'%3E%3Crect x='3' y='3' width='18' height='18' rx='3'/%3E%3C/svg%3E"); }
 .exp-ico {
