@@ -7834,6 +7834,14 @@ body:has(.modal-overlay:not(.hidden)) #webhub-cursors { display: none !important
 .free-node.type-objsummary .obj-summary-body { padding: 0 0 8px; }
 .free-node.type-objsummary .obj-summary-body > :not(.obj-badge) { margin-left: 12px; margin-right: 12px; }
 
+/* barra del run: un texto largo (el «done — …» con el resultado) no se achicaba
+   (nowrap, sin min-width:0) y, como la barra corta con overflow:hidden, empujaba AFUERA
+   los controles — la ✕ para cerrarla incluida. El texto se corta con «…» (entero en el
+   tooltip); el gasto y los botones no se achican nunca. */
+.orch-bar-status { flex: 0 1 auto; min-width: 0; }
+.orch-bar-status > span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.orch-bar-spend, .orch-bar-ctrls { flex: none; }
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 1300px) {
   .nav-toggle {
@@ -9743,49 +9751,31 @@ body.dm-tour-open { overflow: hidden; }
   line-height: 1.07;
   text-wrap: balance;
 }
-/* Slogans del hero: 5 frases apiladas en la misma celda; cada una ocupa 1/5 del ciclo
-   (entra, queda, sale) con su delay. fill-mode both = antes de su turno está invisible.
-   Hover pausa (para terminar de leer). Con reduced-motion queda fija la primera. */
+/* Slogans del hero: 5 frases apiladas en la misma celda. Las rota app/homeSlogans.js
+   (is-on = la visible; is-out = la que se va, hacia arriba). Antes era una animación CSS
+   pausada con hover, y la pausa congelaba el frame: si el mouse llegaba durante el
+   cambio, la frase quedaba borrosa a medio camino. Ahora el hover solo frena el PASO a
+   la siguiente; una transición en curso siempre termina. Reduced-motion: la primera, fija. */
 #home-screen .home-slogans { display: grid; }
 #home-screen .home-slogan {
   grid-area: 1 / 1;
   align-self: center;          /* el alto lo fija el más largo: los cortos van al medio */
   opacity: 0;
-  animation: home-slogan 25s ease-in-out infinite both;
+  transform: translateY(14px);
+  filter: blur(4px);
+  transition: opacity .75s ease-in-out, transform .75s ease-in-out, filter .75s ease-in-out;
 }
-#home-screen .home-slogan:nth-child(2) { animation-delay: 5s; }
-#home-screen .home-slogan:nth-child(3) { animation-delay: 10s; }
-#home-screen .home-slogan:nth-child(4) { animation-delay: 15s; }
-#home-screen .home-slogan:nth-child(5) { animation-delay: 20s; }
-@keyframes home-slogan {
-  0%   { opacity: 0; transform: translateY(14px);  filter: blur(4px); }
-  3%   { opacity: 1; transform: none;              filter: none; }
-  17%  { opacity: 1; transform: none;              filter: none; }
-  20%  { opacity: 0; transform: translateY(-14px); filter: blur(4px); }
-  100% { opacity: 0; transform: translateY(-14px); filter: blur(4px); }
-}
+#home-screen .home-slogan.is-on  { opacity: 1; transform: none; filter: none; }
+#home-screen .home-slogan.is-out { opacity: 0; transform: translateY(-14px); filter: blur(4px); }
 #home-screen .home-slogan-dots { display: flex; gap: 6px; margin-top: -8px; }
 #home-screen .home-slogan-dots i {
   width: 18px; height: 3px; border-radius: 3px;
   background: var(--border-strong);
-  animation: home-slogan-dot 25s linear infinite both;
+  transition: background-color .3s ease;
 }
-#home-screen .home-slogan-dots i:nth-child(2) { animation-delay: 5s; }
-#home-screen .home-slogan-dots i:nth-child(3) { animation-delay: 10s; }
-#home-screen .home-slogan-dots i:nth-child(4) { animation-delay: 15s; }
-#home-screen .home-slogan-dots i:nth-child(5) { animation-delay: 20s; }
-/* el 0% va APAGADO: con fill-mode both, una rayita que todavía no llegó a su delay
-   muestra el 0% — si fuera el acento, se verían todas prendidas al cargar. */
-@keyframes home-slogan-dot {
-  0%           { background: var(--border-strong); }
-  0.01%, 20%   { background: var(--accent); }
-  20.01%, 100% { background: var(--border-strong); }
-}
-#home-screen .home-hero-copy:hover .home-slogan,
-#home-screen .home-hero-copy:hover .home-slogan-dots i { animation-play-state: paused; }
+#home-screen .home-slogan-dots i.is-on { background: var(--accent); }
 @media (prefers-reduced-motion: reduce) {
-  #home-screen .home-slogan, #home-screen .home-slogan-dots i { animation: none; }
-  #home-screen .home-slogan:first-child { opacity: 1; }
+  #home-screen .home-slogan { transition: none; }
   #home-screen .home-slogan-dots { display: none; }
 }
 #home-screen .home-lede {
