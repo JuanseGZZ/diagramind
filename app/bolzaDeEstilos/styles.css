@@ -10311,3 +10311,78 @@ body.dm-tour-open { overflow: hidden; }
   #home-screen .home-live-dot, #home-screen .home-cursor, #home-screen .home-o-edge-on { animation: none !important; opacity: 1; transform: none; stroke-dashoffset: 0; }
   #home-screen * { transition: none !important; }
 }
+
+/* ==========================================================================
+   Documents · DIBUJO (.draw, doc 30 §5c) — cuaderno / pizarra estilo GoodNotes
+   ========================================================================== */
+.draw-root { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; outline: none; background: var(--bg); }
+.draw-bar {
+  flex: 0 0 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 4px;
+  padding: 5px 8px; border-bottom: 1px solid var(--surface-el); background: var(--bg);
+}
+.draw-btn {
+  display: inline-grid; place-items: center; width: 30px; height: 30px; padding: 0;
+  border: 1px solid transparent; border-radius: 7px; background: transparent; color: var(--text-secondary); cursor: pointer;
+}
+.draw-btn:hover:not(:disabled) { background: var(--hover-wash); color: var(--text); }
+.draw-btn.is-on { background: color-mix(in srgb, var(--accent) 18%, transparent); border-color: color-mix(in srgb, var(--accent) 45%, transparent); color: var(--text); }
+.draw-btn:disabled { opacity: .35; cursor: default; }
+.draw-sep { width: 1px; height: 20px; margin: 0 4px; background: var(--border); }
+.draw-colors, .draw-widths { display: inline-flex; align-items: center; gap: 3px; }
+.draw-swatch {
+  width: 20px; height: 20px; padding: 0; border-radius: 50%; cursor: pointer;
+  background: var(--sw); border: 2px solid var(--bg); box-shadow: 0 0 0 1px var(--border-strong);
+}
+.draw-swatch.is-on { box-shadow: 0 0 0 2px var(--accent); }
+.draw-width { display: inline-grid; place-items: center; width: 26px; height: 26px; padding: 0; border: 1px solid transparent; border-radius: 6px; background: transparent; cursor: pointer; }
+.draw-width i { display: block; border-radius: 50%; background: var(--text-secondary); }
+.draw-width.is-on { border-color: color-mix(in srgb, var(--accent) 50%, transparent); }
+.draw-width.is-on i { background: var(--text); }
+.draw-root[data-tool="eraser"] .draw-colors, .draw-root[data-tool="hand"] .draw-colors,
+.draw-root[data-tool="eraser"] .draw-widths, .draw-root[data-tool="hand"] .draw-widths { opacity: .4; }
+.draw-zoom, .draw-pagenum { min-width: 42px; text-align: center; font: 500 11.5px/1 var(--font-mono); color: var(--text-muted); }
+.draw-stage { position: relative; flex: 1; min-height: 0; overflow: hidden; background: #0f0f12; }
+.draw-root[data-bg="light"] .draw-stage { background: #d9d8d3; }
+.draw-root[data-mode="board"][data-bg="light"] .draw-stage { background: #fbfaf6; }
+.draw-canvas { position: absolute; inset: 0; touch-action: none; }
+.draw-live { cursor: crosshair; }
+.draw-root[data-tool="hand"] .draw-live { cursor: grab; }
+.draw-root[data-tool="eraser"] .draw-live { cursor: cell; }
+.draw-menu-wrap { position: relative; display: inline-flex; }
+.draw-menu {
+  position: absolute; top: calc(100% + 4px); left: 0; z-index: 20; min-width: 150px; padding: 4px;
+  background: var(--bg); border: 1px solid var(--border-strong); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.45);
+}
+.draw-menu.hidden { display: none; }
+.draw-menu-title { padding: 6px 10px 2px; font: 600 10.5px/1 var(--font-ui); letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); }
+.draw-menu-item { display: block; width: 100%; text-align: left; padding: 6px 10px; border: 0; border-radius: 5px; background: transparent; color: var(--text); font: 13px var(--font-ui); cursor: pointer; }
+.draw-menu-item:hover { background: var(--surface-el); }
+.draw-menu-item.is-on::after { content: " ✓"; color: var(--accent); }
+
+/* pantalla dividida: el dibujo al costado (o abajo en el celular) */
+.docs-split-div, .docs-split-pane { display: none; }
+.docs-view-wrap.is-split .docs-split-div {
+  display: block; flex: 0 0 6px; cursor: col-resize; background: var(--surface-el); touch-action: none;
+}
+.docs-view-wrap.is-split .docs-split-div:hover { background: color-mix(in srgb, var(--accent) 45%, transparent); }
+.docs-view-wrap.is-split .docs-split-pane { display: flex; flex-direction: column; flex: 0 0 var(--split, 50%); min-width: 0; min-height: 0; }
+.docs-split-head { flex: 0 0 auto; display: flex; align-items: center; gap: 6px; padding: 4px 6px 4px 10px; border-bottom: 1px solid var(--surface-el); font: 12px var(--font-ui); color: var(--text-secondary); }
+.docs-split-head span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.docs-split-head button { padding: 2px 6px; border-radius: 4px; }
+.docs-split-body { flex: 1; min-height: 0; display: flex; }
+#docs-split.is-on { border-color: var(--accent); color: var(--accent); }
+.docs-narrow .docs-view-wrap.is-split { flex-direction: column; }
+.docs-narrow .docs-view-wrap.is-split .docs-split-div { cursor: row-resize; flex-basis: 8px; }
+
+/* «Nuevo documento»: el tipo en tarjetas */
+.docs-new-types { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
+.docs-new-card {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 3px; padding: 10px 12px;
+  border: 1px solid var(--border-strong); border-radius: var(--radius-md); background: transparent; color: var(--text-secondary);
+  cursor: pointer; text-align: left;
+}
+.docs-new-card b { font: 600 13px var(--font-ui); color: var(--text); }
+.docs-new-card span { font: 11.5px var(--font-ui); color: var(--text-muted); }
+.docs-new-card:hover { background: var(--hover-wash); }
+.docs-new-card.is-on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--accent); }
+@media (max-width: 520px) { .docs-new-types { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
