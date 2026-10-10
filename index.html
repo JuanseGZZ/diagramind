@@ -21,7 +21,7 @@
   <!-- ?v= rompe el cache del borde cuando cambia el CSS. El nginx de infra/web ya
        manda no-cache, pero una copia vieja YA cacheada sobrevive hasta su TTL: subir
        este número la invalida al instante (index.html se sirve siempre fresco). -->
-  <link rel="stylesheet" href="app/bolzaDeEstilos/styles.css?v=82">
+  <link rel="stylesheet" href="app/bolzaDeEstilos/styles.css?v=83">
 </head>
 
 <body>
@@ -161,8 +161,12 @@
       <button id="aside-toggle" class="aside-toggle" title="Hide / show panel">◀</button>
     </div>
     <div class="aside-search-wrap">
-      <input id="aside-search" type="search" placeholder="Search…" aria-label="Search explorer" />
+      <label class="exp-search">
+        <input id="aside-search" class="exp-search-input" type="search" placeholder="Search…" aria-label="Search explorer" />
+      </label>
     </div>
+    <!-- filtro por tipo (solo en el modo Object): los chips los arma renderAside() -->
+    <div id="aside-type-filter" class="exp-filter hidden" role="group" aria-label="Filter by type"></div>
     <div id="aside-tree" class="aside-tree"></div>
     <div id="aside-resizer" class="aside-resizer" title="Drag to resize width"></div>
   </aside>
@@ -1753,7 +1757,7 @@
   <!-- ?v= igual que en el CSS: mientras el zone setting "Browser Cache TTL" de
        Cloudflare pise el no-cache del origen, subir este número es lo único que
        invalida el bundle YA cacheado en los navegadores. -->
-  <script type="module" src="./dist/bundle.js?v=82"></script>
+  <script type="module" src="./dist/bundle.js?v=83"></script>
   <!-- el aviso de estadísticas: solo en diagraminder.com, y el beacon solo si se acepta -->
   <script src="/legal/consent.js?v=2" defer></script>
 </body>

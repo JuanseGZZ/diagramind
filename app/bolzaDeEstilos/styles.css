@@ -6044,26 +6044,9 @@ body.aside-resizing .toolbar { transition: none; }
 .aside-toggle:hover { background: var(--hover-wash); color: var(--text); }
 .aside-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
-.aside-search-wrap {
-  flex: 0 0 auto;
-  padding: 0 var(--space-2) var(--space-2);
-}
-.aside-search-wrap input[type="search"] {
-  width: 100%;
-  height: 30px;
-  box-sizing: border-box;
-  padding: 0 10px 0 30px;
-  background: var(--bg) var(--i-search-muted) 9px 50% / 14px no-repeat;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--text);
-  font: 400 13px/1 var(--font-ui);
-  outline: none;
-  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
-}
-.aside-search-wrap input[type="search"]:hover { border-color: var(--border-strong); }
-.aside-search-wrap input[type="search"]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
-.aside-search-wrap input::placeholder { color: var(--text-muted); }
+/* el buscador lo dibuja .exp-search (explorer-search.css, polish Object): acá solo
+   queda el contenedor, que es lo que esconde el aside colapsado */
+.aside-search-wrap { flex: 0 0 auto; padding: 0; }
 
 .aside-tree {
   flex: 1 1 auto; overflow: auto; padding: var(--space-1) var(--space-2) var(--space-4);
@@ -6079,6 +6062,7 @@ body.aside-resizing .toolbar { transition: none; }
 body.aside-collapsed #tree-aside { width: 40px; }
 body.aside-collapsed .aside-title,
 body.aside-collapsed .aside-search-wrap,
+body.aside-collapsed .exp-filter,
 body.aside-collapsed .aside-tree { display: none; }
 body.aside-collapsed .aside-header { justify-content: center; padding: 0; }
 body.aside-collapsed .aside-toggle::before { transform: scaleX(-1); }
@@ -7659,11 +7643,13 @@ body:has(.modal-overlay:not(.hidden)) #webhub-cursors { display: none !important
 /* el editor de texto (modal de la carta y donde se use) scrollea con la barra NATIVA,
    que en Chrome/Safari pinta un riel blanco sobre el fondo oscuro. Misma barra fina que
    los paneles: riel transparente, pulgar con los tokens del tema (anda en los dos). */
-.rich-editor { scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
-.rich-editor::-webkit-scrollbar { width: 10px; height: 10px; }
-.rich-editor::-webkit-scrollbar-track { background: transparent; }
-.rich-editor::-webkit-scrollbar-thumb { background: var(--border-strong); border: 3px solid var(--bg); border-radius: 99px; }
-.rich-editor::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+/* (solo en el editor del modal y del modo Word: los nodos del canvas tienen su propia
+   barra, invisible en reposo — e2e-free-grupos) */
+.modal-editor-wrap .rich-editor { scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
+.modal-editor-wrap .rich-editor::-webkit-scrollbar { width: 10px; height: 10px; }
+.modal-editor-wrap .rich-editor::-webkit-scrollbar-track { background: transparent; }
+.modal-editor-wrap .rich-editor::-webkit-scrollbar-thumb { background: var(--border-strong); border: 3px solid var(--bg); border-radius: 99px; }
+.modal-editor-wrap .rich-editor::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
 /* polish Object: «(no URL)» lo escribe el JS con tr() (el CSS de Design lo ponía con
    content:, que no se traduce): acá solo se apaga */
@@ -7679,6 +7665,169 @@ body:has(.modal-overlay:not(.hidden)) #webhub-cursors { display: none !important
 /* en la cabecera del nodo se corta primero el TIPO («Collection · List»), no el nombre */
 .free-node[class*="type-obj"] .obj-badge-name { flex: 0 0 auto; max-width: 75%; }
 .free-node[class*="type-obj"] .obj-badge-kind { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* polish Object — la cabecera va AL RAS de la tarjeta (franja teñida con ⋯ y ✕ adentro,
+   como en el mock). El padding genérico de .free-node-body (8px 10px) la dejaba como una
+   caja metida adentro; las filas ya traen su propio margen lateral. */
+.free-node[class*="type-obj"]:not(.type-objgroup) > .free-node-body { padding: 0; }
+/* el marcador «[ ]» de una lista se CORTABA (quedaba una rayita): en la clase el tipo ya
+   dice «Item[]», así que ahí sobra; en el objeto no se encoge nunca. La clave tampoco se
+   come entera: el valor es lo que se corta primero. */
+.type-objclass .obj-v.is-list::after { display: none; }
+.obj-v.is-list::after { flex: 0 0 auto; }
+.free-node[class*="type-obj"] .obj-k { flex: 0 0 auto; max-width: 55%; }
+.free-node[class*="type-obj"] .obj-v { flex: 0 1 auto; }
+
+/* ##### polish Object (Claude Design, 2026-10-09): explorer-search.css ##### */
+/* Explorer search — polish v1. Separate from object.css because the explorer is global.
+   Markup (keep your id / handlers on the input):
+     <label class="exp-search">
+       <input type="search" class="exp-search-input" placeholder="Search…" aria-label="Search">
+     </label>
+   type="search" gives a native clear (✕) button, styled below. No JS needed. */
+.exp-search {
+  --exp-i-search: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E");
+  --exp-i-x: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.6' stroke-linecap='round'%3E%3Cpath d='M17 7 7 17M7 7l10 10'/%3E%3C/svg%3E");
+  position: relative; display: flex; align-items: center;
+  margin: 0 var(--space-3) var(--space-2);
+  color: var(--text-muted);
+}
+.exp-search::before {
+  content: ""; position: absolute; left: 10px; top: 50%; translate: 0 -50%;
+  width: 14px; height: 14px; background: currentColor; pointer-events: none;
+  -webkit-mask: var(--exp-i-search) center/contain no-repeat; mask: var(--exp-i-search) center/contain no-repeat;
+  transition: background-color var(--dur) var(--ease);
+}
+.exp-search:focus-within { color: var(--text-secondary); }
+.exp-search-input {
+  appearance: none; -webkit-appearance: none;
+  width: 100%; box-sizing: border-box;
+  height: var(--ctl-h); padding: 0 8px 0 31px;
+  background: color-mix(in srgb, var(--bg) 55%, var(--surface));
+  border: 1px solid var(--border); border-radius: var(--radius-md);
+  color: var(--text); font: 400 13px/1 var(--font-ui);
+  outline: none;
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease), background-color var(--dur) var(--ease);
+}
+[data-theme="light"] .exp-search-input { background: var(--surface2); }
+.exp-search-input::placeholder { color: var(--text-muted); opacity: 1; }
+.exp-search-input:hover:not(:focus) { border-color: var(--border-strong); }
+.exp-search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+/* native clear button → themed ✕ */
+.exp-search-input::-webkit-search-decoration { display: none; }
+.exp-search-input::-webkit-search-cancel-button {
+  -webkit-appearance: none; appearance: none;
+  width: 18px; height: 18px; margin: 0; border-radius: var(--radius-sm); cursor: pointer;
+  background: var(--text-muted);
+  -webkit-mask: var(--exp-i-x) center/11px no-repeat; mask: var(--exp-i-x) center/11px no-repeat;
+}
+.exp-search-input::-webkit-search-cancel-button:hover { background: var(--text); }
+
+/* ---------- type filter chips (under the search) ----------
+   <div class="exp-filter" role="group" aria-label="Filter by type">
+     <button class="exp-chip" aria-pressed="true">All</button>
+     <button class="exp-chip" data-type="objclass" aria-pressed="false">Class <span class="exp-chip-n">3</span></button>
+     …
+   </div>
+   Single-select; toggle aria-pressed. Hide chips whose count is 0. */
+.exp-filter {
+  display: flex; flex-wrap: wrap; gap: 4px;
+  margin: 0 var(--space-3) var(--space-3);
+}
+.exp-chip {
+  --c: var(--text-muted);
+  display: inline-flex; align-items: center; gap: 5px;
+  height: 22px; padding: 0 8px; box-sizing: border-box;
+  border: 1px solid var(--border); border-radius: 999px;
+  background: transparent; color: var(--text-secondary);
+  font: 500 11.5px/1 var(--font-ui); white-space: nowrap; cursor: pointer;
+  transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.exp-chip[data-type]::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--c); flex: 0 0 auto; }
+.exp-chip[data-type="objclass"]      { --c: var(--node-agent); }
+.exp-chip[data-type="objinstance"]   { --c: var(--node-instance); }
+.exp-chip[data-type="objcollection"] { --c: var(--node-task); }
+.exp-chip[data-type="objfetch"]      { --c: var(--node-fetch); }
+.exp-chip[data-type="objburst"]      { --c: var(--node-mcp); }
+.exp-chip[data-type="objsummary"]    { --c: var(--node-summary); }
+.exp-chip[data-type="objgroup"]      { --c: var(--node-dept); }
+.exp-chip-n { font: 500 10.5px/1 var(--font-mono); color: var(--text-muted); }
+.exp-chip:hover { background: var(--hover-wash); border-color: var(--border-strong); color: var(--text); }
+.exp-chip:active { background: var(--press-wash); }
+.exp-chip[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--c) 16%, transparent);
+  border-color: color-mix(in srgb, var(--c) 55%, transparent);
+  color: var(--text);
+}
+.exp-chip:not([data-type])[aria-pressed="true"] { --c: var(--accent); }
+.exp-chip[aria-pressed="true"] .exp-chip-n { color: var(--text-secondary); }
+.exp-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.exp-empty { padding: 18px 12px; text-align: center; font: 400 12.5px/1.4 var(--font-ui); color: var(--text-muted); }
+
+/* ---------- explorer items: "<class> Person" → [icon] Person ····· class ----------
+   Markup per item (keep your handlers / ids):
+     <div class="exp-item" data-type="objclass">
+       <span class="exp-ico"></span>
+       <span class="exp-name">Person</span>
+       <span class="exp-kind">class</span>
+     </div>
+   data-type = objclass | objinstance | objcollection | objfetch | objburst | objsummary | objgroup
+   Search matches: wrap the matched substring in <mark> inside .exp-name. */
+.exp-list { display: flex; flex-direction: column; gap: 1px; padding: var(--space-2) var(--space-2); }
+.exp-item {
+  --c: var(--text-muted);
+  --ic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='4'/%3E%3C/svg%3E");
+  display: flex; align-items: center; gap: 9px;
+  min-height: 30px; padding: 0 8px 0 6px; box-sizing: border-box;
+  border-radius: var(--radius-sm);
+  font: 500 13px/1.2 var(--font-ui); color: var(--text-secondary);
+  cursor: pointer; user-select: none;
+  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.exp-item[data-type="objclass"]      { --c: var(--node-agent);    --ic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='16' rx='2'/%3E%3Cpath d='M3 10h18'/%3E%3C/svg%3E"); }
+.exp-item[data-type="objinstance"]   { --c: var(--node-instance); --ic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 8 12 3 3 8v8l9 5 9-5z'/%3E%3Cpath d='m3 8 9 5 9-5M12 13v8'/%3E%3C/svg%3E"); }
+.exp-item[data-type="objcollection"] { --c: var(--node-task);     --ic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01'/%3E%3C/svg%3E"); }
+.exp-item[data-type="objfetch"]      { --c: var(--node-fetch);    --ic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 2 11 13M22 2l-7 20-4-9-9-4z'/%3E%3C/svg%3E"); }
+.exp-item[data-type="objburst"]      { --c: var(--node-mcp);      --ic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M13 2 4 14h7l-1 8 9-12h-7z'/%3E%3C/svg%3E"); }
+.exp-item[data-type="objsummary"]    { --c: var(--node-summary);  --ic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 7 2 2 4-4M4 17l2 2 4-4M14 7h6M14 17h6'/%3E%3C/svg%3E"); }
+.exp-item[data-type="objgroup"]      { --c: var(--node-dept);     --ic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-dasharray='3 3'%3E%3Crect x='3' y='3' width='18' height='18' rx='3'/%3E%3C/svg%3E"); }
+.exp-ico {
+  flex: 0 0 auto; position: relative;
+  width: 22px; height: 22px; border-radius: 6px;
+  background: color-mix(in srgb, var(--c) 16%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 22%, transparent);
+  transition: background-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.exp-ico::before {
+  content: ""; position: absolute; inset: 0;
+  background: color-mix(in srgb, var(--c) 80%, var(--text));
+  -webkit-mask: var(--ic) center/12px no-repeat; mask: var(--ic) center/12px no-repeat;
+}
+.exp-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.exp-name mark {
+  background: color-mix(in srgb, var(--accent) 28%, transparent); color: var(--text);
+  border-radius: 3px; padding: 0 1px; margin: 0 -1px;
+}
+.exp-kind {
+  flex: 0 0 auto;
+  font: 500 10.5px/1 var(--font-mono); color: var(--text-muted);
+  opacity: 0; translate: 4px 0;
+  transition: opacity var(--dur) var(--ease), translate var(--dur) var(--ease);
+}
+.exp-item:hover { background: var(--hover-wash); color: var(--text); }
+.exp-item:hover .exp-ico { background: color-mix(in srgb, var(--c) 26%, transparent); }
+.exp-item:hover .exp-kind, .exp-item.is-active .exp-kind { opacity: 1; translate: 0 0; }
+.exp-item:active { background: var(--press-wash); }
+.exp-item.is-active { background: var(--accent-dim); color: var(--text); }
+.exp-item.is-active .exp-ico { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 55%, transparent), 0 0 10px -2px color-mix(in srgb, var(--c) 60%, transparent); }
+.exp-item:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+@media (prefers-reduced-motion: reduce) { .exp-kind { translate: 0 0; } }
+
+/* adaptaciones al DOM real del explorador: las filas de Object son .aside-row (el click,
+   la búsqueda y el colapsado de grupos cuelgan de esa clase) + .exp-item */
+.exp-filter.hidden { display: none; }
+.aside-row.exp-item { height: auto; min-height: 30px; gap: 9px; padding: 0 8px 0 calc(6px + var(--depth, 0) * 14px); }
+.aside-row.exp-item > .aside-chevron { margin-right: -4px; }
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 1300px) {
