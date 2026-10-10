@@ -21,7 +21,7 @@
   <!-- ?v= rompe el cache del borde cuando cambia el CSS. El nginx de infra/web ya
        manda no-cache, pero una copia vieja YA cacheada sobrevive hasta su TTL: subir
        este número la invalida al instante (index.html se sirve siempre fresco). -->
-  <link rel="stylesheet" href="app/bolzaDeEstilos/styles.css?v=81">
+  <link rel="stylesheet" href="app/bolzaDeEstilos/styles.css?v=82">
 </head>
 
 <body>
@@ -604,10 +604,15 @@
          import de un JSON. Se muestran/esconden en updateToolbarForType(). -->
     <div id="obj-toolbar-controls" class="hidden obj-toolbar-controls">
       <div class="toolbar-sep"></div>
-      <select id="obj-env-select" class="act-unit-select" title="Environment used by the fetches"></select>
-      <button id="obj-env-btn" class="toolbar-btn" title="Environments and variables ({{name}})"><svg class="toolbar-btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>Env…</button>
+      <!-- polish Object: entorno = UN control dividido [● entorno ▾ | ⚙]. El punto va
+           verde con un entorno activo y hueco en «(no environment)» (value=""). El
+           botón ya no tiene texto: el rótulo va en title/aria-label. Los ids son los de siempre. -->
+      <div class="obj-env-group">
+        <select id="obj-env-select" title="Environment used by the fetches" aria-label="Environment used by the fetches"></select>
+        <button id="obj-env-btn" class="obj-env-btn" type="button" title="Environments and variables ({{name}})" aria-label="Environments and variables ({{name}})"></button>
+      </div>
       <div class="toolbar-sep"></div>
-      <button id="obj-import-btn" class="toolbar-btn" title="Build the diagram from a JSON body you already have"><svg class="toolbar-btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M8 11l4 4 4-4"/><path d="M4 17v2a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-2"/></svg>Import JSON</button>
+      <button id="obj-import-btn" class="obj-import-btn" title="Build the diagram from a JSON body you already have"><svg class="toolbar-btn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M8 11l4 4 4-4"/><path d="M4 17v2a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-2"/></svg>Import JSON</button>
     </div>
 
     <div id="act-toolbar-controls" class="hidden act-toolbar-controls">
@@ -1748,7 +1753,7 @@
   <!-- ?v= igual que en el CSS: mientras el zone setting "Browser Cache TTL" de
        Cloudflare pise el no-cache del origen, subir este número es lo único que
        invalida el bundle YA cacheado en los navegadores. -->
-  <script type="module" src="./dist/bundle.js?v=81"></script>
+  <script type="module" src="./dist/bundle.js?v=82"></script>
   <!-- el aviso de estadísticas: solo en diagraminder.com, y el beacon solo si se acepta -->
   <script src="/legal/consent.js?v=2" defer></script>
 </body>
