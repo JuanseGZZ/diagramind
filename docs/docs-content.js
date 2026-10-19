@@ -290,6 +290,36 @@ const DOCS = [
   },
 },
 {
+  id: "mode-codemap", g: "modes",
+  t: { en: "Code map: how your code is wired", es: "Mapa de código: cómo está conectado tu código" },
+  b: {
+    en: `<p class="lead">Point it at the folder of a JavaScript project and it maps the code: which file imports which, which function calls which, and every event with the chain of functions it sets off — with the file and line of each one.</p>
+<h2>From the whole to one function</h2>
+<ul>
+  <li><b>Overview</b>: every folder as a card with its files; the folders that use others come first. Hover a file and its imports show up: what it imports in blue, who imports it in green. If there is an <b>import cycle</b>, the shortest loops that close it are listed, and you can show them on the map.</li>
+  <li><b>A folder</b>: its files and the imports between them.</li>
+  <li><b>A file</b>: what it imports, who imports it, and its functions and events.</li>
+  <li><b>A function or an event</b>: <i>what it calls</i>, <i>who calls it</i>, or both, as deep as you want. Every box says its line, and they are grouped by file.</li>
+</ul>
+<p>On the left, the <b>Events</b> list is where things start: every <code>addEventListener</code> and <code>onclick</code> of the project, grouped by file. Each one is named after the element it listens on — <code>#save · click</code>, <code>&lt;button.close&gt; · click</code> — not after the variable that holds it. Pick one and you see everything it sets off. <b>Functions</b> lists every function file by file, to go straight to one; <b>Classes</b>, every class with its methods, what it extends, what extends it and what creates it; <b>Files</b>, every file; and <b>Full</b> shows the whole project in one map — every event, function and method with every call between them (hover to read it, or show all the arrows at once). Hovering any box lights up what it uses (blue) and what uses it (green) and lists them by name. One click selects a box: its connections stay lit and its details show on the right (in the full map, clicking is the only way: hovering does nothing there; and its left panel is the project tree — pick a file and the map jumps to it; clicking a box leaves only it and what it connects to, file by file — click the empty space to get everything back). An event is fired by the browser, not by your code, so it shows who <i>registers</i> it instead; and every function also lists what it uses from outside the project (<code>String()</code>, <code>fetch()</code>…). A double click opens it. Every box can be dragged, and the overview and the full map run sideways: scroll to move along them.</p>
+<h2>Keep a chain</h2>
+<p><b>Send to canvas</b> turns the chain you are looking at into a normal Canvas — one sector per file — so you can annotate it and keep it as project memory.</p>
+<div class="note">The files are read <b>in your browser</b>: your code never leaves the computer. node_modules, dist, vendor and minified files are skipped. JavaScript only for now, and the AI does not read the map yet.</div>`,
+    es: `<p class="lead">Elegí la carpeta de un proyecto JavaScript y te arma el mapa del código: qué archivo importa a cuál, qué función llama a cuál, y cada evento con la cadena de funciones que dispara — con el archivo y la línea de cada una.</p>
+<h2>De lo general a una función</h2>
+<ul>
+  <li><b>Vista general</b>: cada carpeta como una tarjeta con sus archivos; las carpetas que usan a otras van primero. Pasás por un archivo y aparecen sus imports: lo que importa en azul, quién lo importa en verde. Si hay un <b>ciclo de imports</b>, se listan los círculos más cortos que lo cierran, y los podés mostrar en el mapa.</li>
+  <li><b>Una carpeta</b>: sus archivos y los imports entre ellos.</li>
+  <li><b>Un archivo</b>: lo que importa, quién lo importa, y sus funciones y eventos.</li>
+  <li><b>Una función o un evento</b>: <i>lo que llama</i>, <i>quién la llama</i>, o las dos cosas, tan hondo como quieras. Cada caja dice su línea, y van agrupadas por archivo.</li>
+</ul>
+<p>A la izquierda, la lista de <b>Eventos</b> es donde empieza todo: cada <code>addEventListener</code> y <code>onclick</code> del proyecto, agrupados por archivo. Cada uno se nombra por el elemento que escucha — <code>#save · click</code>, <code>&lt;button.close&gt; · click</code> — y no por la variable que lo guarda. Elegís uno y ves todo lo que dispara. <b>Funciones</b> lista todas las funciones archivo por archivo, para ir directo a una; <b>Clases</b>, cada clase con sus métodos, de quién hereda, quién hereda de ella y quién la crea; <b>Archivos</b>, todos los archivos; y <b>Todo</b> muestra el proyecto entero en un mapa — cada evento, función y método con todas las llamadas entre ellos (se lee pasando el mouse, o mostrando todas las flechas a la vez). Pasar por cualquier caja enciende lo que usa (azul) y lo que la usa (verde) y los lista por nombre. Un click selecciona una caja: sus conexiones quedan encendidas y su ficha aparece a la derecha (en el mapa completo es la única forma: pasar el mouse no hace nada ahí; y su panel izquierdo es el árbol del proyecto — elegís un archivo y el mapa va hasta él; un click en una caja deja solo esa caja y lo que conecta, archivo por archivo — click en el espacio vacío devuelve todo). A un evento lo dispara el navegador, no tu código, así que se muestra quién lo <i>registra</i>; y cada función lista también lo que usa de afuera del proyecto (<code>String()</code>, <code>fetch()</code>…). Doble click la abre. Todas las cajas se pueden arrastrar, y la vista general y el mapa completo van de costado: con la rueda te movés a lo largo.</p>
+<h2>Guardar una cadena</h2>
+<p><b>Mandar al Canvas</b> convierte la cadena que estás mirando en un Canvas normal — un sector por archivo — para anotarla y guardarla como memoria del proyecto.</p>
+<div class="note">Los archivos se leen <b>en tu navegador</b>: tu código no sale de la computadora. Se saltean node_modules, dist, vendor y los minificados. Por ahora solo JavaScript, y la IA todavía no lee el mapa.</div>`,
+  },
+},
+{
   id: "mode-questionnaire", g: "modes",
   t: { en: "Questionnaire: study", es: "Cuestionario: estudiar" },
   b: {
