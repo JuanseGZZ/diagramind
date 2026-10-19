@@ -358,6 +358,7 @@ body {
 .cm-root-name { display: flex; align-items: center; gap: 6px; font: 600 14px var(--font-mono); color: var(--text); overflow-wrap: anywhere; }
 .cm-root-name svg { color: var(--accent); flex: 0 0 auto; }
 .cm-scanned { font-size: 11px; color: var(--text-muted); }
+.cm-scan-path { font-family: var(--font-mono, ui-monospace, monospace); font-size: 10.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cm-side-actions { display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
 .cm-stats { display: flex; flex-wrap: wrap; gap: 5px; }
 .cm-chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px; border-radius: 99px; background: var(--surface-el); color: var(--text-secondary); font: 500 11px var(--font-ui); font-variant-numeric: tabular-nums; border: 0; }

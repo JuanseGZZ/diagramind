@@ -306,7 +306,9 @@ const DOCS = [
 <p>The <b>Find</b> tab has filters to dig in: functions nothing calls, exported functions nothing in the project uses, events that are never registered, functions called by — or calling — many others, long functions, calls matched only by name and files nobody imports. Pick one and the full map lights up what matches. Each filter says what it measures: a function with no visible calls is a candidate to check, not a verdict.</p>
 <h2>Keep a chain</h2>
 <p><b>Send to canvas</b> turns the chain you are looking at into a normal Canvas — one sector per file — so you can annotate it and keep it as project memory.</p>
-<div class="note">The files are read <b>in your browser</b>: your code never leaves the computer. node_modules, dist, vendor and minified files are skipped. JavaScript only for now, and the AI does not read the map yet.</div>`,
+<div class="note">The files are read <b>in your browser</b>: your code never leaves the computer. node_modules, dist, vendor and minified files are skipped. JavaScript only for now.</div>
+<h2>Your agent reads it too</h2>
+<p>Through the <a href="#mcp">MCP</a>, your coding agent can scan a project and ask the map before touching the code: who calls this function, what depends on this file, which user actions end up running it. A map the agent made shows up here by itself, with the folder it came from, and <b>Rescan</b> reads that folder again without asking for it.</p>`,
     es: `<p class="lead">Elegí la carpeta de un proyecto JavaScript y te arma el mapa del código: qué archivo importa a cuál, qué función llama a cuál, y cada evento con la cadena de funciones que dispara — con el archivo y la línea de cada una.</p>
 <h2>De lo general a una función</h2>
 <ul>
@@ -320,7 +322,9 @@ const DOCS = [
 <p>La pestaña <b>Buscar</b> tiene filtros para escarbar: funciones que nadie llama, exportadas que nada del proyecto usa, eventos que nunca se registran, funciones que llaman — o a las que llaman — muchas otras, funciones largas, llamadas resueltas solo por nombre y archivos que nadie importa. Elegís uno y el mapa completo enciende lo que coincide. Cada filtro dice qué mide: una función sin llamadas visibles es algo para revisar, no una sentencia.</p>
 <h2>Guardar una cadena</h2>
 <p><b>Mandar al Canvas</b> convierte la cadena que estás mirando en un Canvas normal — un sector por archivo — para anotarla y guardarla como memoria del proyecto.</p>
-<div class="note">Los archivos se leen <b>en tu navegador</b>: tu código no sale de la computadora. Se saltean node_modules, dist, vendor y los minificados. Por ahora solo JavaScript, y la IA todavía no lee el mapa.</div>`,
+<div class="note">Los archivos se leen <b>en tu navegador</b>: tu código no sale de la computadora. Se saltean node_modules, dist, vendor y los minificados. Por ahora solo JavaScript.</div>
+<h2>Tu agente también lo lee</h2>
+<p>Por el <a href="#mcp">MCP</a>, tu agente de código puede escanear un proyecto y preguntarle al mapa antes de tocar el código: quién llama a esta función, qué depende de este archivo, qué acciones del usuario terminan pasando por ahí. Un mapa que armó el agente aparece acá solo, con la carpeta de donde salió, y <b>Re-escanear</b> vuelve a leer esa carpeta sin pedírtela.</p>`,
   },
 },
 {
@@ -386,6 +390,17 @@ const DOCS = [
   <tr><td><b>memory_link</b> / <b>memory_unlink</b></td><td>Canvas: draws or removes an arrow, with its label.</td></tr>
   <tr><td><b>memory_delete</b></td><td>Deletes a node (a branch, in an organigram, only if asked).</td></tr>
 </table>
+<h2>Code map: a memory of the code</h2>
+<p>Before changing code, the agent can ask a <a href="#mode-codemap">Code map</a> instead of reading the whole repo. Every answer comes with file and line, and says whether the map is still current — if the code changed since the scan, it says which files.</p>
+<table>
+  <tr><th>Tool</th><th>What it does</th></tr>
+  <tr><td><b>code_map_scan</b></td><td>Scans a JavaScript folder and saves its map (you see it appear). Scanning the same folder again refreshes it — the agent does it after editing. Needs the files level, and only inside your folder.</td></tr>
+  <tr><td><b>code_map_overview</b></td><td>The shape of the code: folders, the most called functions, the most imported files, import cycles.</td></tr>
+  <tr><td><b>code_find</b></td><td>Finds functions, methods, classes, events or files by name.</td></tr>
+  <tr><td><b>code_who_calls</b> / <b>code_calls</b></td><td>Who calls a function, or what it calls, as many levels as asked.</td></tr>
+  <tr><td><b>code_impact</b></td><td>What depends on a function or a file: its callers, the user actions that reach it, who imports it, whether it is in an import cycle.</td></tr>
+</table>
+<p>The chat and the orchestrator's agents get the same tools. It is static analysis: calls made dynamically are not seen, and the answers say so.</p>
 <h2>Why it cannot break your work</h2>
 <ul>
   <li>If you edited the same diagram a moment ago, the write is <b>refused</b> and the agent is told to re-read and reapply — it never silently overwrites you.</li>
@@ -397,8 +412,8 @@ const DOCS = [
 <p>It is a switch with three levels, in <b>Settings → This program → What the MCP can do</b> (or the <b>MCP</b> section of the backend's own panel). It starts <b>on</b> and at the lowest one.</p>
 <table>
   <tr><th>Level</th><th>What the agent gets</th></tr>
-  <tr><td><b>Diagrams only</b> (default)</td><td>The diagram and memory tools above. Nothing else.</td></tr>
-  <tr><td><b>Diagrams + files</b></td><td>Also read, write, edit, search, version and git — <b>only inside a folder you pick</b>.</td></tr>
+  <tr><td><b>Diagrams only</b> (default)</td><td>The diagram and memory tools above, and querying a code map. Nothing else.</td></tr>
+  <tr><td><b>Diagrams + files</b></td><td>Also read, write, edit, search, version, git and scan code — <b>only inside a folder you pick</b>.</td></tr>
   <tr><td><b>Diagrams + files + commands</b></td><td>Also run commands.</td></tr>
 </table>
 <p>Asking for a file level without picking a folder does not open your whole disk: it falls back to diagrams. And the check lives in the program, not in this page — once you paste the config, the agent already has the address and the password, so a switch in a web page would not switch anything off.</p>
@@ -433,6 +448,17 @@ const DOCS = [
   <tr><td><b>memory_link</b> / <b>memory_unlink</b></td><td>Canvas: dibuja o saca una flecha, con su etiqueta.</td></tr>
   <tr><td><b>memory_delete</b></td><td>Borra un nodo (una rama del organigrama, solo si se lo pide).</td></tr>
 </table>
+<h2>Mapa de código: una memoria del código</h2>
+<p>Antes de cambiar código, el agente le puede preguntar a un <a href="#mode-codemap">Mapa de código</a> en vez de leer el repo entero. Cada respuesta trae archivo y línea, y dice si el mapa sigue al día — si el código cambió desde el escaneo, dice qué archivos.</p>
+<table>
+  <tr><th>Herramienta</th><th>Qué hace</th></tr>
+  <tr><td><b>code_map_scan</b></td><td>Escanea una carpeta JavaScript y guarda su mapa (lo ves aparecer). Escanear la misma carpeta otra vez lo refresca — el agente lo hace después de editar. Necesita el nivel de archivos, y solo adentro de tu carpeta.</td></tr>
+  <tr><td><b>code_map_overview</b></td><td>La forma del código: carpetas, las funciones más llamadas, los archivos más importados, los ciclos de imports.</td></tr>
+  <tr><td><b>code_find</b></td><td>Encuentra funciones, métodos, clases, eventos o archivos por nombre.</td></tr>
+  <tr><td><b>code_who_calls</b> / <b>code_calls</b></td><td>Quién llama a una función, o a qué llama, tantos niveles como se pida.</td></tr>
+  <tr><td><b>code_impact</b></td><td>Qué depende de una función o de un archivo: quién la llama, qué acciones del usuario llegan ahí, quién lo importa, si está en un ciclo de imports.</td></tr>
+</table>
+<p>El chat y los agentes del orquestador tienen las mismas herramientas. Es análisis estático: las llamadas dinámicas no se ven, y las respuestas lo dicen.</p>
 <h2>Por qué no te puede romper el trabajo</h2>
 <ul>
   <li>Si vos editaste ese mismo diagrama hace un momento, la escritura se <b>rechaza</b> y al agente se le dice que vuelva a leer y reaplique — nunca te pisa en silencio.</li>
@@ -444,8 +470,8 @@ const DOCS = [
 <p>Es un interruptor con tres niveles, en <b>Ajustes → Este programa → Qué puede hacer el MCP</b> (o en la sección <b>MCP</b> del panel del backend). Arranca <b>prendido</b> y en el más bajo.</p>
 <table>
   <tr><th>Nivel</th><th>Qué recibe el agente</th></tr>
-  <tr><td><b>Solo diagramas</b> (default)</td><td>Las herramientas de diagramas y de memoria de arriba. Nada más.</td></tr>
-  <tr><td><b>Diagramas + archivos</b></td><td>Además leer, escribir, editar, buscar, versionar y git — <b>solo adentro de una carpeta que elegís</b>.</td></tr>
+  <tr><td><b>Solo diagramas</b> (default)</td><td>Las herramientas de diagramas y de memoria de arriba, y consultar un mapa de código. Nada más.</td></tr>
+  <tr><td><b>Diagramas + archivos</b></td><td>Además leer, escribir, editar, buscar, versionar, git y escanear código — <b>solo adentro de una carpeta que elegís</b>.</td></tr>
   <tr><td><b>Diagramas + archivos + comandos</b></td><td>Además ejecutar comandos.</td></tr>
 </table>
 <p>Pedir un nivel de archivos sin elegir carpeta no abre tu disco entero: vuelve a diagramas. Y el chequeo vive en el programa, no en esta página — una vez que pegaste la config, el agente ya tiene la dirección y la contraseña, así que un interruptor en una web no apagaría nada.</p>
