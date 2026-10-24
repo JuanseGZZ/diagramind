@@ -1,6 +1,14 @@
+<html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>DiagraMinder</title>
+  <!-- SEO (Search Console, 2026-10-24). El título es lo que Google muestra como enlace:
+       nombre + qué es. `keywords` Google lo ignora (Bing casi); va igual, barato.
+       El backend inyecta su <script> en el PRIMER "<head>": que siga habiendo uno solo. -->
+  <title>DiagraMinder — Shared project memory for you and your AI coding agent</title>
+  <link rel="canonical" href="https://diagraminder.com/">
+  <meta name="keywords" content="diagram tool, AI coding agent, Claude Code, MCP server, project context, local-first, code map, flowchart, mind map, org chart, agent orchestration, developer tool">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#0f172a">
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <!-- La app no tenía favicon (pestaña en blanco). Es el mismo logo de la marca:
        fuente única en brand/logo.svg, de donde salen también los PNG. -->
@@ -18,10 +26,28 @@
   <meta property="og:url" content="https://diagraminder.com/">
   <meta property="og:image" content="https://diagraminder.com/brand/logo-512.png?v=2">
   <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="DiagraMinder — Diagrams that do the work">
+  <meta name="twitter:description" content="Build trees, flows, object models — and AI agent teams — on one local-first canvas. Versioned, reversible, private.">
+  <meta name="twitter:image" content="https://diagraminder.com/brand/logo-512.png?v=2">
+  <!-- Datos estructurados: Google los usa para entender QUÉ es (una app gratis de
+       escritorio). Es un bloque de datos, no un script: no lo frena ninguna CSP. -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "DiagraMinder",
+    "url": "https://diagraminder.com/",
+    "description": "A local-first canvas for diagrams, flows, object models and AI agent teams. Claude Code reads your diagrams over MCP before it touches the repo, and writes back what it learned.",
+    "applicationCategory": "DeveloperApplication",
+    "operatingSystem": "Windows, macOS, Linux",
+    "image": "https://diagraminder.com/brand/logo-512.png",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+  }
+  </script>
   <!-- ?v= rompe el cache del borde cuando cambia el CSS. El nginx de infra/web ya
        manda no-cache, pero una copia vieja YA cacheada sobrevive hasta su TTL: subir
        este número la invalida al instante (index.html se sirve siempre fresco). -->
-  <link rel="stylesheet" href="app/bolzaDeEstilos/styles.css?v=109">
+  <link rel="stylesheet" href="app/bolzaDeEstilos/styles.css?v=110">
 </head>
 
 <body>
@@ -1800,7 +1826,7 @@
   <!-- ?v= igual que en el CSS: mientras el zone setting "Browser Cache TTL" de
        Cloudflare pise el no-cache del origen, subir este número es lo único que
        invalida el bundle YA cacheado en los navegadores. -->
-  <script type="module" src="./dist/bundle.js?v=109"></script>
+  <script type="module" src="./dist/bundle.js?v=110"></script>
   <!-- el aviso de estadísticas: solo en diagraminder.com, y el beacon solo si se acepta -->
   <script src="/legal/consent.js?v=2" defer></script>
 </body>

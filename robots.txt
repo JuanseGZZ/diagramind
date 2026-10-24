@@ -1,0 +1,5 @@
+# diagraminder.com — publicado por publish-pages.sh (fuente: seo/robots.txt)
+User-agent: *
+Allow: /
+
+Sitemap: https://diagraminder.com/sitemap.xml
